@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 
+const fire = (type: string, payload?: any) => {
+  window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
+};
+
 const ZONES = [
-  { key: 'focus', label: 'Training Grounds', event: 'mos:startFocus' },
+  { key: 'focus', label: 'Training Grounds', type: 'startFocus' },
   { key: 'hypno', label: 'Hypno Temple', event: 'open-hypno-panel' },
-  { key: 'voice', label: 'Sound Studio', event: 'mos:voiceNote' },
-  { key: 'notes', label: 'Idea Forest', event: 'mos:addNote' },
-  { key: 'analyze', label: 'Arena', event: 'mos:openAnalyze' },
+  { key: 'voice', label: 'Sound Studio', type: 'voiceNote' },
+  { key: 'notes', label: 'Idea Forest', type: 'addNote' },
+  { key: 'analyze', label: 'Arena', type: 'openAnalyze' },
 ];
 
 export default function FastTravel() {
@@ -19,9 +23,10 @@ export default function FastTravel() {
 
   if (!open) return null;
 
-  const onSelect = (eventName: string) => {
+  const onSelect = (z: { type?: string; event?: string }) => {
     setOpen(false);
-    document.dispatchEvent(new CustomEvent(eventName));
+    if (z.type) fire(z.type);
+    else if (z.event) window.dispatchEvent(new CustomEvent(z.event));
   };
 
   return (
@@ -34,18 +39,18 @@ export default function FastTravel() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
           {ZONES.map(z => (
             <button key={z.key}
-              onClick={() => onSelect(z.event)}
+              onClick={() => onSelect(z)}
               className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left transition-colors"
             >
               <div className="font-medium">{z.label}</div>
               <div className="text-xs text-muted-foreground">{z.key}</div>
             </button>
           ))}
-          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect('mos:openMap')}>
+          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect({ type: 'openMap' })}>
             <div className="font-medium">Control</div>
             <div className="text-xs text-muted-foreground">Roadmaps & Tasks</div>
           </button>
-          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect('mos:voiceNote')}>
+          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect({ type: 'voiceNote' })}>
             <div className="font-medium">Archive</div>
             <div className="text-xs text-muted-foreground">Notes & Audio</div>
           </button>

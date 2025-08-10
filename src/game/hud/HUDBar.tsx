@@ -41,7 +41,7 @@ export default function HUDBar() {
                 <button className="hud-icon bag hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Bag"/>
                 <button className="hud-icon map hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Map" onClick={()=>run('openMap' as any)}/>
                 <button className="hud-icon chat hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Chat"/>
-                <button className="hud-icon stick hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Joystick" onClick={() => document.dispatchEvent(new CustomEvent('mos:toggleJoystick'))}/>
+                <button className="hud-icon stick hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Joystick" onClick={() => window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'toggleJoystick' } }))}/>
               </div>
 
               {/* Quick Slots: full width on small (second line), inline on large */}
