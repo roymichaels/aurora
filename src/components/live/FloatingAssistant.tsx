@@ -99,9 +99,9 @@ export function FloatingAssistant({ task, onUpdated }: { task: Task | null; onUp
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
         <DrawerContent
-
-          className="p-0 z-[var(--z-modal)]"
+          className="p-0"
           style={{
+            zIndex: 'var(--z-modal)',
             bottom: 'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom))',
             paddingBottom: 'env(safe-area-inset-bottom)'
           }}
