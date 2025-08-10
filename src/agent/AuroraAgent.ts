@@ -66,11 +66,7 @@ export class AuroraAgent {
     try {
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
         body: {
-          model: 'o4-mini-2025-04-16',
-          messages: [
-            { role: 'system', content: 'You are Aurora, a concise voice assistant for focus and productivity.' },
-            { role: 'user', content: text }
-          ]
+          prompt: text,
         }
       });
       if (error) throw error;

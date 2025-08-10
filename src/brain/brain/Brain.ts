@@ -1,7 +1,7 @@
-import cognition, { CognitionConfig } from './cognition';
-import behavior, { BehaviorConfig } from './behavior';
-import filters, { Filter } from './filters';
-import skills, { Skill } from './skills';
+import cognition, { CognitionConfig } from './cognition.ts';
+import behavior, { BehaviorConfig } from './behavior.ts';
+import filters, { Filter } from './filters.ts';
+import skills, { Skill } from './skills.ts';
 
 /**
  * Combined configuration for Aura's behaviour and prompts.
