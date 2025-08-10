@@ -5,7 +5,7 @@ import GameCanvas from "@/game/GameCanvas";
 import VirtualJoystick from "./VirtualJoystick";
 
 import WorldOverlayRouter, { type OverlayId } from "./WorldOverlayRouter";
-import { GameHUD } from "@/components/hud/GameHUD";
+import { GameHUD } from "@/components/game/GameHUD";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useGameStore } from "@/game/store";

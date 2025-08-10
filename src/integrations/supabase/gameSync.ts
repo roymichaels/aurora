@@ -26,9 +26,11 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
   logger.info("[gameSync] award_xp ok", data);
   // Notify UI so components like XPBar can reflect server totals instantly
   try {
-    const total = (Array.isArray(data) ? data[0]?.total_xp : (data as any)?.total_xp) ?? null;
+    const first = Array.isArray(data) ? data[0] : data as any;
+    const total = first?.total_xp ?? null;
+    const streak = first?.streak_count;
     if (typeof total === "number") {
-      window.dispatchEvent(new CustomEvent("xp-total-update", { detail: { total_xp: total } }));
+      window.dispatchEvent(new CustomEvent("xp-total-update", { detail: { total_xp: total, streak } }));
     }
   } catch (e) {
     logger.warn("[gameSync] xp-total-update event failed", e);

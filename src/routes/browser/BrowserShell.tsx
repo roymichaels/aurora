@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { GameHUD } from "@/components/hud/GameHUD";
+import { GameHUD } from "@/components/game/GameHUD";
 import WorldOverlayRouter, { type OverlayId } from "@/components/mindworld/WorldOverlayRouter";
 import { EmbedPane } from "./EmbedPane";
 
