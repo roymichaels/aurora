@@ -8,7 +8,6 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import MindWorldDashboard from "@/components/mindworld/MindWorldDashboard";
-import BrowserShell from "@/routes/browser/BrowserShell";
 import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
@@ -27,7 +26,7 @@ const App = () => (
           <Route path="/world" element={<MindWorldDashboard />} />
           <Route path="/home" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/browser" element={<BrowserShell />} />
+          <Route path="/browser" element={<Navigate to="/app/browser" replace />} />
           <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
           <Route path="/stack" element={<StackPage />} />

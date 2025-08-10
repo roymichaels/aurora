@@ -27,7 +27,7 @@ export function EmbedPane({ url }: { url: string }) {
       if (!loaded) setAssumedBlocked(true);
     }, 2500);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
-  }, [url]);
+  }, [url, loaded]);
 
   if (!url) {
     return (
@@ -49,16 +49,17 @@ export function EmbedPane({ url }: { url: string }) {
         referrerPolicy="no-referrer"
         sandbox="allow-forms allow-modals allow-pointer-lock allow-popups allow-presentation allow-same-origin allow-scripts"
         onLoad={() => setLoaded(true)}
+        onError={() => setAssumedBlocked(true)}
       />
 
-      {/* Fallback if the site blocks embedding */}
+      {/* Fallback if the site blocks embedding or fails to load */}
       {(isLikelyBlocked(url) || (!loaded && assumedBlocked)) && (
         <div className="absolute inset-0 grid place-items-center">
           <div className="glass-panel rounded-xl p-5 text-center max-w-md">
-            <h2 className="font-semibold">This site blocks embedding</h2>
-            <p className="text-sm text-muted-foreground mt-2">Open it normally and use the Aurora Companion extension to overlay the HUD on any page.</p>
+            <h2 className="font-semibold">Couldn't display this site</h2>
+            <p className="text-sm text-muted-foreground mt-2">Open it in your browser and use the Aurora Companion extension to overlay the HUD on any page.</p>
             <div className="mt-4 flex items-center justify-center gap-2">
-              <Button size="sm" onClick={() => window.open(url, "_blank")}>Open Site</Button>
+              <Button size="sm" onClick={() => window.open(url, "_blank")}>Open in Browser</Button>
               <Button size="sm" variant="secondary" onClick={() => (window.location.href = "/extension")}>Get Extension</Button>
             </div>
           </div>
