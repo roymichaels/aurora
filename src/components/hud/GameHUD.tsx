@@ -22,21 +22,24 @@ export function GameHUD() {
   };
 
   // Mobile collapse state
-  const [isMobile, setIsMobile] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [expanded, setExpanded] = useState(() => !(window.innerWidth <= 768));
+
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)');
-    const apply = () => setIsMobile(mq.matches);
-    apply();
-    const handler = () => apply();
-    // @ts-ignore cross-browser support
-    if (mq.addEventListener) mq.addEventListener('change', handler); else mq.addListener(handler);
-    return () => {
-      // @ts-ignore
-      if (mq.removeEventListener) mq.removeEventListener('change', handler); else mq.removeListener(handler);
-    };
+    const onResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
-  useEffect(() => { setExpanded(isMobile ? false : true); }, [isMobile]);
+
+  useEffect(() => {
+    setExpanded(!isMobile);
+  }, [isMobile]);
+
+  useEffect(() => {
+    const h = expanded ? (isMobile ? 148 : 132) : (isMobile ? 92 : 88);
+    document.documentElement.style.setProperty('--hud-h', `${h}px`);
+  }, [expanded, isMobile]);
+
   const showMetrics = !isMobile || expanded;
 
   // Desktop hotkeys 1..6 (preserved from legacy HUD)
