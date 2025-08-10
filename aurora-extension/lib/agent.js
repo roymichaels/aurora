@@ -1,7 +1,7 @@
 // lib/agent.js
-// Placeholder agent using OpenAI (wire later with secure key)
+// Minimal agent stub; replace with model integration when API keys are available
 
 export async function runAgent(prompt, context){
-  // Intentionally left as a stub for now
+  // Echoes inputs for development/testing purposes
   return { ok: true, prompt, context };
 }
