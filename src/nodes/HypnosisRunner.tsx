@@ -15,10 +15,6 @@ export default function HypnosisRunner({ node, onExit }: Props) {
   const duration = Math.min(180, Math.max(60, node.duration ?? 90));
   const text = node.script ?? `Close your eyes. Breathe gently. With each breath, relax deeper. Your focus gets sharper and calmer. When you open your eyes, you will feel refreshed and ready.`;
 
-  useEffect(() => {
-    return () => stopAll();
-  }, []);
-
   const start = async () => {
     if (playing) return;
     setPlaying(true);
@@ -68,6 +64,11 @@ export default function HypnosisRunner({ node, onExit }: Props) {
 
   const pct = Math.min(100, Math.round((elapsed / duration) * 100));
 
+  useEffect(() => {
+    start();
+    return () => stopAll();
+  }, []);
+
   return (
     <main className="relative min-h-svh px-4 pt-10 pb-28 grid place-items-center text-center">
       <div className="os-bg" />
@@ -84,10 +85,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
           <div className="text-sm mt-2 opacity-80">{elapsed}s / {duration}s</div>
         </div>
 
-        {!playing && !ended && (
-          <button className="rounded-md px-4 py-2 bg-[hsl(var(--primary))] text-white/95 hover:opacity-90 transition" onClick={start}>Start</button>
-        )}
-        {playing && (
+        {playing && !ended && (
           <button className="rounded-md px-4 py-2 bg-[hsl(var(--primary))] text-white/95 hover:opacity-90 transition" onClick={stop}>Stop & Wake</button>
         )}
         {ended && (
