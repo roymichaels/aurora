@@ -1,3 +1,6 @@
+/**
+ * TODO: Review subscription types when payments module is activated.
+ */
 export interface PricingTier {
   id: string;
   name: string;

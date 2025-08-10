@@ -1,5 +1,8 @@
-import { Subscription, UsageStats } from '@/payments/types/subscription'
+import { Subscription, UsageStats } from '@/modules/payments/types/subscription'
 
+/**
+ * TODO: Enable subscription API when payments module is activated.
+ */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 async function request(path: string, options: RequestInit = {}) {

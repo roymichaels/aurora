@@ -19,10 +19,17 @@ import {
   Building,
   Crown
 } from 'lucide-react';
-import { PricingTier } from '@/payments/types/subscription'
-import { createCheckoutSession } from '@/payments/api/subscription'
-import { useSubscription } from '@/payments/hooks/useSubscription'
+import { PricingTier } from '@/modules/payments/types/subscription'
+import { createCheckoutSession } from '@/modules/payments/api/subscription'
+import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
+
+/**
+ * TODO: Activate billing UI when payments module is ready.
+ */
+export function PricingPage() {
+  return null;
+}
 
 const PRICING_TIERS: PricingTier[] = [
   {
@@ -131,7 +138,7 @@ const FEATURE_COMPARISON = [
   { feature: 'Support', freemium: 'Community', personal: 'Email', pro: 'Priority', enterprise: '24/7 Phone' }
 ];
 
-export function PricingPage() {
+function PricingPageUI() {
   const [isYearly, setIsYearly] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);

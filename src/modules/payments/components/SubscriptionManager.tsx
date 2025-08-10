@@ -16,11 +16,18 @@ import {
   Users,
   MessageSquare
 } from 'lucide-react';
-import { useSubscription } from '@/payments/hooks/useSubscription'
+import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
 import { formatDistanceToNow } from 'date-fns';
 
+/**
+ * TODO: Activate billing UI when payments module is ready.
+ */
 export function SubscriptionManager() {
+  return null;
+}
+
+function SubscriptionManagerUI() {
   const { subscription, usage, isLoading, isOnTrial, trialDaysLeft, cancelSubscription, refetch } = useSubscription();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);

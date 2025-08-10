@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Subscription, UsageStats } from '@/payments/types/subscription'
-import { getSubscription, cancelSubscription, updateSubscription } from '@/payments/api/subscription'
+import { Subscription, UsageStats } from '@/modules/payments/types/subscription'
+import { getSubscription, cancelSubscription, updateSubscription } from '@/modules/payments/api/subscription'
 
+/**
+ * TODO: Enable subscription hook when payments module is activated.
+ */
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<UsageStats | null>(null);
