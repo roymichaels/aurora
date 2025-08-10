@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import { useState } from "react";
 import { StickyNote } from "lucide-react";
 
@@ -61,7 +62,7 @@ export function CurrentFocusCard({
 
     // Award XP for task completion and update streak
     try {
-      await supabase.rpc('award_xp', { activity: 'task_complete', amount: 10, metadata: { task_id: task.id } as Record<string, unknown> });
+      await awardXPRemote("task_complete", 10, { task_id: task.id });
     } catch (e) { console.error(e); }
 
     onAdvance();

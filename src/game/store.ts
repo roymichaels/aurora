@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/supabase/gameSync";
+import { supabase } from "@/integrations/supabase/client";
 import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };
@@ -15,6 +16,7 @@ export type GameState = {
   incStreak: () => void;
   resetDaily: () => void;
   setStats: (s: Partial<Stats>) => void;
+  fetchStats: () => Promise<void>;
 };
 
 const defaults: GameState = {
@@ -29,6 +31,7 @@ const defaults: GameState = {
   incStreak() {},
   resetDaily() {},
   setStats() {},
+  fetchStats: async () => {},
 };
 
 export const useGameStore = create<GameState>((set, get) => {
@@ -50,6 +53,23 @@ export const useGameStore = create<GameState>((set, get) => {
 
   return {
     ...init,
+    fetchStats: async () => {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+      if (!user) return;
+      const { data: stats } = await supabase
+        .from("user_stats")
+        .select("total_xp, streak_count")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!stats) return;
+      const total = stats.total_xp ?? 0;
+      const xp = total % 100;
+      const level = Math.floor(total / 100) + 1;
+      const patch: Partial<Stats> = { xp, level };
+      if (typeof stats.streak_count === "number") patch.streak = stats.streak_count;
+      persist({ stats: { ...get().stats, ...patch } });
+    },
     setPos: (x, y) => persist({ pos: { x, y } }),
     setMood: (m) => persist({ mood: m }),
     awardXP: (amount) => {
@@ -101,12 +121,15 @@ export const useGameStore = create<GameState>((set, get) => {
 if (typeof window !== "undefined") {
   window.addEventListener("xp-total-update", (e: any) => {
     const total = e.detail?.total_xp;
-    if (typeof total !== "number") return;
-    const streak = e.detail?.streak;
-    const xp = total % 100;
-    const level = Math.floor(total / 100) + 1;
-    const patch: Partial<Stats> = { xp, level };
-    if (typeof streak === "number") patch.streak = streak;
-    useGameStore.getState().setStats(patch);
+    if (typeof total === "number") {
+      const streak = e.detail?.streak;
+      const xp = total % 100;
+      const level = Math.floor(total / 100) + 1;
+      const patch: Partial<Stats> = { xp, level };
+      if (typeof streak === "number") patch.streak = streak;
+      useGameStore.getState().setStats(patch);
+    }
+    // Also refresh from server for accuracy
+    useGameStore.getState().fetchStats().catch(() => {});
   });
 }

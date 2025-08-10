@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
-import { supabase } from "@/integrations/supabase/client";
 import HypnoSphere from "@/components/effects/HypnoSphere";
+import { awardXPRemote } from "@/integrations/supabase/gameSync";
 
 type Props = { node: { id: string; label: string; script?: string; duration?: number }; onExit: () => void };
 
@@ -46,7 +46,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
     // Award XP + streak
     awardXP(25, { activity: "hypnosis", nodeId: node.id });
     try {
-      await supabase.rpc("award_xp", { activity: "hypnosis_session", amount: 25, metadata: { node_id: node.id } });
+      await awardXPRemote("hypnosis_session", 25, { node_id: node.id });
     } catch {}
     complete(node.id);
   };

@@ -59,7 +59,7 @@ export function GameHUD() {
             <EvolvingSphere size={44} level={stats.level} xpPct={stats.xp} mood="focused" />
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">
-                Lv. {stats.level} • Streak {stats.streak} • Mind Wizard
+                Lv. {stats.level} • Streak {stats.streak}
               </div>
               <div className="text-[15px] font-semibold truncate">Dean</div>
             </div>
