@@ -11,7 +11,14 @@ export default function AppShell() {
   const loc = useLocation();
   const open = useViewNav();
 
-  const currentRoom = useMemo(() => (views.find(v => loc.pathname.startsWith(v.path))?.id ?? "control"), [loc.pathname]);
+  const currentRoom = useMemo(() => {
+    const match = views.find((v) => {
+      const full = v.path ? `/app/${v.path}` : "/app";
+      const prefix = full.replace(/:.*/, "");
+      return loc.pathname.startsWith(prefix);
+    });
+    return match?.id ?? "control";
+  }, [loc.pathname]);
 
   useXPChime();
   const swipe = useSwipeNav();
@@ -72,7 +79,8 @@ export default function AppShell() {
           {views.map((v) => (
             <Route
               key={v.id}
-              path={v.path}
+              path={v.path || undefined}
+              index={v.path === "" ? true : undefined}
               element={
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
