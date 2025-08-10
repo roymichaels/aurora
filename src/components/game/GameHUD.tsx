@@ -4,6 +4,7 @@ import { useGameStore } from "@/game/store";
 import { quickSlots } from "@/game/hud/hud.data";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { Mic, ChevronDown, ChevronUp } from "lucide-react";
+import { useHUDActions } from "@/game/hud/useHUDActions";
 
 function fire(type: string, payload?: any) {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -11,6 +12,7 @@ function fire(type: string, payload?: any) {
 
 export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
+  const { run } = useHUDActions();
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -31,7 +33,7 @@ export function GameHUD() {
       const n = Number(e.key);
       if (n >= 1 && n <= 6) {
         const slot = quickSlots[n - 1];
-        if (slot) fire(slot.action);
+        if (slot) run(slot.action);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -72,7 +74,7 @@ export function GameHUD() {
                   className="action-chip"
                   aria-label={a.label}
                   title={a.label}
-                  onClick={() => fire(a.action)}
+                  onClick={() => run(a.action)}
                 >
                   {a.icon ? (
                     <i className={cn('hud-glyph', a.icon)} />
