@@ -23,7 +23,7 @@ export default function Onboarding() {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 grid place-items-end md:place-items-center">
+    <div className="fixed inset-0 bg-black/50 grid place-items-end md:place-items-center" style={{ zIndex: 'var(--z-modal)' }}>
       <div className="glass-panel rounded-t-2xl md:rounded-2xl w-full md:w-[520px] p-5 elev">
         <h3 className="text-lg font-semibold">Welcome to MindWorld</h3>
         <p className="text-sm text-muted-foreground mt-1">Pick your starting vibe. You’ll earn 5 XP.</p>
