@@ -7,11 +7,17 @@ import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
 import { useSwipeNav } from "@/hooks/useSwipeNav";
+import ControlView from "@/views/ControlView";
 export default function AppShell() {
   const loc = useLocation();
   const open = useViewNav();
 
-  const currentRoom = useMemo(() => (views.find(v => loc.pathname.startsWith(v.path))?.id ?? "control"), [loc.pathname]);
+  const currentRoom = useMemo(
+    () =>
+      views.find((v) => loc.pathname.startsWith(v.path ? `/app/${v.path}` : "/app"))?.id ??
+      "control",
+    [loc.pathname]
+  );
 
   useXPChime();
   const swipe = useSwipeNav();
@@ -22,7 +28,7 @@ export default function AppShell() {
   }, [open]);
 
   useEffect(() => {
-    const meta = views.find(v => loc.pathname.startsWith(v.path));
+    const meta = views.find((v) => loc.pathname.startsWith(v.path ? `/app/${v.path}` : "/app"));
     if (meta) {
       document.title = `Aurora OS — ${meta.label}`;
       // SEO: update description and canonical
@@ -49,7 +55,8 @@ export default function AppShell() {
       <div className="os-bg" />
       <AnimatePresence mode="wait">
         <Routes location={loc} key={loc.pathname + loc.search}>
-          {views.map((v) => (
+          <Route index element={<ControlView />} />
+          {views.filter((v) => v.id !== "control").map((v) => (
             <Route
               key={v.id}
               path={v.path}
@@ -68,7 +75,6 @@ export default function AppShell() {
               }
             />
           ))}
-          <Route path="/" element={<Navigate to="/app" replace />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
       </AnimatePresence>
