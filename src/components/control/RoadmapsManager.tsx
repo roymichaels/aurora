@@ -31,8 +31,22 @@ export default function RoadmapsManager() {
       .order("created_at", { ascending: true });
     if (error) { console.error(error); return; }
     const list = (data ?? []) as any[] as RoadmapItem[];
+    const actives = list.filter(r => r.status === 'active');
+    if (actives.length > 1) {
+      const toPause = actives.slice(1);
+      await Promise.all(
+        toPause.map(r =>
+          supabase
+            .from("roadmaps")
+            .update({ status: 'paused' })
+            .eq("id", r.id)
+            .eq("user_id", user.id)
+        )
+      );
+      toPause.forEach(r => { r.status = 'paused'; });
+    }
     setItems(list);
-    const active = list.find(r=> r.status === 'active');
+    const active = list.find(r => r.status === 'active');
     if (active) setSelectedId(active.id); else setSelectedId(list[0]?.id ?? null);
   };
 

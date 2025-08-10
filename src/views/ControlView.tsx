@@ -1,10 +1,10 @@
-import GameHome from "@/game/path/GameHome";
+import ControlShell from "@/routes/control/ControlShell";
 
 export default function ControlView() {
   return (
     <div className="relative min-h-svh">
       <div className="os-bg" />
-      <GameHome />
+      <ControlShell />
     </div>
   );
 }
