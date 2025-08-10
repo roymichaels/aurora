@@ -22,18 +22,8 @@ export function GameHUD() {
   };
 
   // Mobile collapse state
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
-  const [expanded, setExpanded] = useState(() => !(window.innerWidth <= 768));
-
-  useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  useEffect(() => {
-    setExpanded(!isMobile);
-  }, [isMobile]);
+  const isMobile = window.innerWidth <= 768;
+  const [expanded, setExpanded] = useState(() => !isMobile);
 
   useEffect(() => {
     const h = expanded ? (isMobile ? 148 : 132) : (isMobile ? 92 : 88);
