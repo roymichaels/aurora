@@ -39,15 +39,15 @@ export const ToolImpl = {
 
   async start_focus({ minutes = 25, hypnosis }: { minutes?: number; hypnosis?: 'focus' | 'calm' | 'confidence' | null }) {
     if (hypnosis) {
-      document.dispatchEvent(new CustomEvent('mos:startHypnosis'));
+      window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
     }
-    document.dispatchEvent(new CustomEvent('mos:startFocus'));
+    window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startFocus' } }));
     toast({ title: `Focus started`, description: `${minutes} minutes${hypnosis ? ` · with ${hypnosis}` : ''}` });
     return { ok: true };
   },
 
   async start_hypnosis({ mode, duration }: { mode: 'focus' | 'calm' | 'confidence' | 'reset'; duration?: number }) {
-    document.dispatchEvent(new CustomEvent('mos:startHypnosis'));
+    window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
     toast({ title: `Hypnosis: ${mode}`, description: duration ? `${duration}s` : undefined });
     return { ok: true };
   },

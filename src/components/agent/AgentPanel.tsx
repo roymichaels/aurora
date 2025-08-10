@@ -57,7 +57,12 @@ export default function AgentPanel() {
             >
               Hold to Talk
             </Button>
-            <Button variant="secondary" onClick={() => document.dispatchEvent(new CustomEvent('mos:openAgent'))}>Open</Button>
+            <Button
+              variant="secondary"
+              onClick={() => window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'openAgent' } }))}
+            >
+              Open
+            </Button>
           </div>
         </div>
       </section>

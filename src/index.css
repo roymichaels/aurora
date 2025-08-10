@@ -184,6 +184,9 @@ All colors MUST be HSL.
   }
 
   .os-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
     background-color: hsl(var(--background));
   }
 }

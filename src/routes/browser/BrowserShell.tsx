@@ -32,21 +32,15 @@ export default function BrowserShell() {
 
   // Handle quick actions from HUD
   useEffect(() => {
-    const map: Record<string, OverlayId> = {
-      "mos:startFocus": "focus",
-      "mos:startHypnosis": "mentor",
-      "mos:openAnalyze": "analyze",
-      "mos:openMap": "library",
-      "mos:openAgent": "agent",
-    } as const;
-    const handler = (e: Event) => {
-      const id = map[(e as CustomEvent).type];
-      if (id) setOverlay(id);
+    const onMos = (e: any) => {
+      const t = e.detail?.type;
+      if (t === 'startFocus') setOverlay('focus');
+      if (t === 'startHypnosis') setOverlay('mentor');
+      if (t === 'openAnalyze') setOverlay('analyze');
+      if (t === 'openAgent') setOverlay('agent');
     };
-    Object.keys(map).forEach((name) => document.addEventListener(name, handler as any));
-    return () => {
-      Object.keys(map).forEach((name) => document.removeEventListener(name, handler as any));
-    };
+    window.addEventListener('mos', onMos as any);
+    return () => window.removeEventListener('mos', onMos as any);
   }, []);
 
   // esc to close overlays
