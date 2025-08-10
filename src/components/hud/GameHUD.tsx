@@ -55,13 +55,17 @@ export function GameHUD() {
   }, [open]);
 
   return (
-    <footer
-      id="aurora-hud"
-      className="hud-maple fixed relative z-[120] left-[clamp(8px,2vw,20px)] right-[clamp(8px,2vw,20px)] bottom-[max(env(safe-area-inset-bottom),12px)] rounded-2xl px-4 py-3 select-none pointer-events-auto"
-      aria-label="Game HUD"
+    <div
+      className="fixed left-3 right-3"
+      style={{
+        bottom: 'max(12px, env(safe-area-inset-bottom))',
+        zIndex: 'var(--z-hud)',
+        pointerEvents: 'auto',
+      }}
     >
-      <span className="hud-spot" />
-      <div className="flex flex-col gap-3">
+      <div className="hud-panel hud-maple rounded-2xl px-4 py-3 select-none" aria-label="Game HUD">
+        <span className="hud-spot" />
+        <div className="flex flex-col gap-3">
         {/* Row 1: Identity + Actions */}
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {/* Identity */}
@@ -143,20 +147,21 @@ export function GameHUD() {
             </div>
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Mobile expand/collapse toggle */}
-      {isMobile && (
-        <button
-          type="button"
-          aria-label={expanded ? "Collapse HUD" : "Expand HUD"}
-          aria-expanded={expanded}
-          onClick={() => setExpanded((v) => !v)}
-          className="absolute right-2 bottom-2 md:hidden rounded-full bg-background/60 border px-2 py-1 text-xs hover-scale"
-        >
-          {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-        </button>
-      )}
-    </footer>
+        {/* Mobile expand/collapse toggle */}
+        {isMobile && (
+          <button
+            type="button"
+            aria-label={expanded ? "Collapse HUD" : "Expand HUD"}
+            aria-expanded={expanded}
+            onClick={() => setExpanded((v) => !v)}
+            className="absolute right-2 bottom-2 md:hidden rounded-full bg-background/60 border px-2 py-1 text-xs hover-scale"
+          >
+            {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
