@@ -1,6 +1,6 @@
 export type QuickActionKey =
   | 'startFocus' | 'startHypnosis' | 'voiceNote' | 'addNote'
-  | 'openMap' | 'openAnalyze';
+  | 'openMap' | 'openAnalyze' | 'openBrowser';
 
 export const character = {
   name: 'Dean',
@@ -18,5 +18,5 @@ export const quickSlots: { id:number; key:string; action:QuickActionKey; label:s
   { id:3, key:'3', action:'voiceNote',     label:'Voice',   icon:'mic'   },
   { id:4, key:'4', action:'addNote',       label:'Notes',   icon:'note'  },
   { id:5, key:'5', action:'openAnalyze',   label:'Analyze', icon:'anlz'  },
-  { id:6, key:'6', action:'openMap',       label:'Portal',  icon:'portal'},
+  { id:6, key:'6', action:'openBrowser',   label:'Browse',  icon:'portal'},
 ];

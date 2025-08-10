@@ -18,6 +18,7 @@ export function useHUDActions() {
       addNote: "addNote",
       openAnalyze: "openAnalyze",
       openMap: "openMap",
+      openBrowser: "openBrowser",
     };
     const name = eventMap[a];
     window.dispatchEvent(new CustomEvent("mos", { detail: { type: name } }));

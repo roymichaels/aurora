@@ -27,14 +27,19 @@ export default function AppShell() {
   const swipe = useSwipeNav();
 
   useEffect(() => {
-    const off = bus.on('nav:view', ({ id, params }) => open(id as any, params));
+    const off = bus.on('nav:view', ({ id, params }: { id: ViewId; params?: Record<string, string> }) => open(id, params));
     return off;
   }, [open]);
 
   useEffect(() => {
 
-    const onMos = (e: any) => {
-      const t = e.detail?.type as string | undefined;
+    const onMos = (e: Event) => {
+      const t = (e as CustomEvent).detail?.type as string | undefined;
+      if (t === 'openBrowser') {
+        const last = localStorage.getItem('lastBrowserUrl') || 'https://www.notion.so/';
+        open('browser', { url: last });
+        return;
+      }
       const map: Record<string, ViewId> = {
         startFocus: 'focus',
         startHypnosis: 'hypno',
@@ -46,9 +51,9 @@ export default function AppShell() {
       const vid = t ? map[t] : undefined;
       if (vid) open(vid);
     };
-    window.addEventListener('mos', onMos as any);
+    window.addEventListener('mos', onMos);
     return () => {
-      window.removeEventListener('mos', onMos as any);
+      window.removeEventListener('mos', onMos);
     };
   }, [open]);
 
