@@ -7,9 +7,11 @@ import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
 import { useSwipeNav } from "@/hooks/useSwipeNav";
+import ControlView from "@/views/ControlView";
 export default function AppShell() {
   const loc = useLocation();
   const open = useViewNav();
+
 
   const currentRoom = useMemo(() => {
     const match = views.find((v) => {
@@ -29,6 +31,7 @@ export default function AppShell() {
   }, [open]);
 
   useEffect(() => {
+
     const onMos = (e: any) => {
       const t = e.detail?.type as string | undefined;
       const map: Record<string, ViewId> = {
@@ -76,7 +79,8 @@ export default function AppShell() {
       <div className="os-bg" />
       <AnimatePresence mode="wait">
         <Routes location={loc} key={loc.pathname + loc.search}>
-          {views.map((v) => (
+          <Route index element={<ControlView />} />
+          {views.filter((v) => v.id !== "control").map((v) => (
             <Route
               key={v.id}
               path={v.path || undefined}
@@ -96,7 +100,6 @@ export default function AppShell() {
               }
             />
           ))}
-          <Route path="/" element={<Navigate to="/app" replace />} />
           <Route path="*" element={<Navigate to="/app" replace />} />
         </Routes>
       </AnimatePresence>

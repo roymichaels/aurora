@@ -25,6 +25,7 @@ export function useViewNav() {
       console.error('[useViewNav] Unknown view id', id, 'params', params);
       return;
     }
+
     const base = "/app";
     const fullPath = meta.path ? `${base}/${meta.path}` : base;
     const target = `${fullPath}${qs}`;
