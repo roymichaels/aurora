@@ -25,7 +25,10 @@ export function useSwipeNav(threshold = 60) {
     if (dt > 600) return;
     if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy)) return;
 
-    const paths = views.map((v) => v.path);
+    const paths = views.map((v) => {
+      const full = v.path ? `/app/${v.path}` : "/app";
+      return full.replace(/:.*/, "");
+    });
     const idx = paths.findIndex((p) => loc.pathname.startsWith(p));
     if (idx === -1) return;
 
