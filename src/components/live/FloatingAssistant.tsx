@@ -136,7 +136,7 @@ export function FloatingAssistant({
           style={{
             zIndex: 'var(--z-modal)',
             bottom:
-              'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom))',
+              'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom) + 12px)',
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
