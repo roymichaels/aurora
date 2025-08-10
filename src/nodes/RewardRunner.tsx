@@ -13,7 +13,8 @@ export default function RewardRunner({ node, onExit }: Props) {
   }, [awardXP, complete, node.id]);
 
   return (
-    <main className="min-h-screen px-4 pt-10 pb-28 grid place-items-center text-center">
+    <main className="relative min-h-svh px-4 pt-10 pb-28 grid place-items-center text-center">
+      <div className="os-bg" />
       <div>
         <h1 className="text-2xl font-semibold mb-2">{node.label}</h1>
         <p className="opacity-80 mb-6">You earned +20 XP</p>

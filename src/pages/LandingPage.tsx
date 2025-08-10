@@ -66,7 +66,8 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen pb-safe">
+    <div className="relative min-h-svh pb-safe">
+      <div className="os-bg" />
       <header className="px-4 pt-4 flex items-center justify-between max-w-4xl mx-auto">
         <div className="font-semibold tracking-wide">MOS</div>
         <div className="flex items-center gap-3">

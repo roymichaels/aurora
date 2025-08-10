@@ -468,7 +468,8 @@ if (!initializing && !user) {
 }
 
   return (
-    <div className="w-screen h-screen overflow-hidden relative" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+    <div className="relative min-h-svh w-screen overflow-hidden" onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+      <div className="os-bg" />
       <AppHeader />
 
       <div className="absolute inset-0 smooth" style={{ transform: translate }}>
