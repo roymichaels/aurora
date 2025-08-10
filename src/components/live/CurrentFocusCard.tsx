@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { useState } from "react";
 import { StickyNote } from "lucide-react";
-import ShareCard from "@/components/share/ShareCard";
 
 type Roadmap = {
   id: string;
@@ -31,11 +30,10 @@ export function CurrentFocusCard({
   activeRoadmap: Roadmap | null;
   task: Task | null;
   progressPercent?: number;
-  onAdvance: (next: Task | null) => void;
+  onAdvance: () => void;
 }) {
   const { user } = useSupabaseAuth();
   const [busy, setBusy] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
 
   const markDoneAndAdvance = async () => {
     if (!user) {
@@ -59,47 +57,14 @@ export function CurrentFocusCard({
       return;
     }
 
-    // 2) pick next task in this roadmap (next TODO by position, then due)
-    const { data: nextTasks, error: nextErr } = await supabase
-      .from("tasks")
-      .select("id, title, description, due_at, roadmap_id, status, position")
-      .eq("user_id", user.id)
-      .eq("roadmap_id", task.roadmap_id)
-      .eq("status", "todo")
-      .order("position", { ascending: true, nullsFirst: true })
-      .order("due_at", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: true })
-      .limit(1);
-    if (nextErr) {
-      console.error(nextErr);
-      setBusy(false);
-      return;
-    }
-
-    const next = (nextTasks?.[0] as Task) ?? null;
-
-    // 3) upsert current_focus
-    const { error: cfErr } = await supabase.from("current_focus").upsert({
-      user_id: user.id,
-      task_id: next ? next.id : null,
-      started_at: now,
-    });
-    if (cfErr) console.error(cfErr);
-
-    try { navigator.vibrate?.(10); } catch {}
-
-    toast({
-      title: next ? "Great job!" : "Well done",
-      description: next ? `Next up: ${next.title}` : "No more tasks in this roadmap.",
-    });
+    navigator.vibrate?.(10);
 
     // Award XP for task completion and update streak
     try {
-      await supabase.rpc('award_xp', { activity: 'task_complete', amount: 10, metadata: { task_id: task.id } as any });
+      await supabase.rpc('award_xp', { activity: 'task_complete', amount: 10, metadata: { task_id: task.id } as Record<string, unknown> });
     } catch (e) { console.error(e); }
 
-    onAdvance(next);
-    setShareOpen(true);
+    onAdvance();
     setBusy(false);
   };
 
@@ -122,6 +87,7 @@ export function CurrentFocusCard({
                 style={{ backgroundColor: activeRoadmap.color ?? "hsl(var(--primary))" }}
               />
               <span className="text-muted-foreground">{activeRoadmap.title}</span>
+              <span className="text-muted-foreground">{Math.round(progressPercent)}%</span>
             </div>
           )}
           {task?.due_at && (
