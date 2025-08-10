@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { views } from "@/views/registry";
+import { views, type ViewId } from "@/views/registry";
 import { GameHUD } from "@/components/hud/GameHUD";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
@@ -29,11 +29,27 @@ export default function AppShell() {
   }, [open]);
 
   useEffect(() => {
-    const meta = views.find((v) => {
-      const full = v.path ? `/app/${v.path}` : "/app";
-      const prefix = full.replace(/:.*/, "");
-      return loc.pathname.startsWith(prefix);
-    });
+    const onMos = (e: any) => {
+      const t = e.detail?.type as string | undefined;
+      const map: Record<string, ViewId> = {
+        startFocus: 'focus',
+        startHypnosis: 'hypno',
+        voiceNote: 'voice',
+        addNote: 'notes',
+        openAnalyze: 'analyze',
+        openMap: 'portal',
+      };
+      const vid = t ? map[t] : undefined;
+      if (vid) open(vid);
+    };
+    window.addEventListener('mos', onMos as any);
+    return () => {
+      window.removeEventListener('mos', onMos as any);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const meta = views.find(v => loc.pathname.startsWith(v.path));
     if (meta) {
       document.title = `Aurora OS — ${meta.label}`;
       // SEO: update description and canonical
