@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useBackgroundAudio } from "@/hooks/useBackgroundAudio";
 import { toast } from "@/hooks/use-toast";
+import logger from "@/lib/logger";
 
 type Segment = { key: string; text: string };
 
@@ -52,7 +53,7 @@ export default function HypnosisLauncher() {
   };
 
   const fetchAudioDataUrl = async (text: string): Promise<string> => {
-    console.log("[Hypnosis] Requesting TTS for", text.slice(0, 40), "...");
+    logger.debug("[Hypnosis] Requesting TTS for", text.slice(0, 40), "...");
     const { data, error } = await supabase.functions.invoke("tts-generate", {
       body: { text },
     });
@@ -99,7 +100,7 @@ export default function HypnosisLauncher() {
 
       toast({ title: "Session complete", description: "Great work. You can run it again anytime." });
     } catch (e) {
-      console.warn("Hypnosis session error:", e);
+      logger.warn("Hypnosis session error:", e);
       toast({ title: "Playback issue", description: "Please try again in a moment." });
     } finally {
       await duckOff();
