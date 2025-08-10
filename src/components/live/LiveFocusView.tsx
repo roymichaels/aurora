@@ -1,25 +1,24 @@
+import { useEffect, useState } from 'react';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { CurrentFocusCard } from './CurrentFocusCard';
+import { QuickActionsBar } from './QuickActionsBar';
+import { ProgressBar } from './ProgressBar';
+import HeroCard from './HeroCard';
+import { MoodCarousel } from './MoodCarousel';
+import ActionDock from './ActionDock';
+import PreviewCards from './PreviewCards';
 
-import { useEffect, useState } from "react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { CurrentFocusCard } from "./CurrentFocusCard";
-import { QuickActionsBar } from "./QuickActionsBar";
-import { ProgressBar } from "./ProgressBar";
-import HeroCard from "./HeroCard";
-import { MoodCarousel } from "./MoodCarousel";
-import ActionDock from "./ActionDock";
-import PreviewCards from "./PreviewCards";
+import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
+import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
+import QuickAddTaskFAB from '@/components/tasks/QuickAddTaskFAB';
+import { StreakBadge } from '@/components/live/StreakBadge';
+import { XPBar } from '@/components/live/XPBar';
+import ShareCard from '@/components/share/ShareCard';
 
-import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-import { PanelHeaderUnified } from "@/components/layout/PanelHeaderUnified";
-import QuickAddTaskFAB from "@/components/tasks/QuickAddTaskFAB";
-import { StreakBadge } from "@/components/live/StreakBadge";
-import { XPBar } from "@/components/live/XPBar";
-import ShareCard from "@/components/share/ShareCard";
- 
- type Roadmap = {
+type Roadmap = {
   id: string;
   title: string;
   description: string | null;
@@ -37,13 +36,20 @@ type Task = {
   position: number | null;
 };
 
-export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?: () => void }) {
+export default function LiveFocusView({
+  onManageRoadmaps,
+}: {
+  onManageRoadmaps?: () => void;
+}) {
   const { user, initializing } = useSupabaseAuth();
   const [activeRoadmap, setActiveRoadmap] = useState<Roadmap | null>(null);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const { percent, refresh: refreshProgress } = useRoadmapProgress(user?.id ?? null, activeRoadmap?.id ?? null);
+  const { percent, refresh: refreshProgress } = useRoadmapProgress(
+    user?.id ?? null,
+    activeRoadmap?.id ?? null
+  );
   const [reloadKey, setReloadKey] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
 
@@ -64,10 +70,10 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
 
       // All roadmaps
       const { data: rms, error: rmsErr } = await supabase
-        .from("roadmaps")
-        .select("id, title, description, color, status")
-        .eq("user_id", user.id)
-        .order("position", { ascending: true, nullsFirst: true });
+        .from('roadmaps')
+        .select('id, title, description, color, status')
+        .eq('user_id', user.id)
+        .order('position', { ascending: true, nullsFirst: true });
       if (rmsErr) {
         console.error(rmsErr);
       }
@@ -75,39 +81,46 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
       setRoadmaps(list);
 
       // Active roadmap
-      const active = list.find((r) => r.status === "active") ?? null;
+      const active = list.find((r) => r.status === 'active') ?? null;
       setActiveRoadmap(active);
 
       // Current focus
       const { data: cf, error: cfErr } = await supabase
-        .from("current_focus")
-        .select("task_id, started_at")
-        .eq("user_id", user.id)
+        .from('current_focus')
+        .select('task_id, started_at')
+        .eq('user_id', user.id)
         .maybeSingle();
       if (cfErr) console.error(cfErr);
 
       let currentTask: Task | null = null;
       if (cf?.task_id) {
         const { data: t, error: tErr } = await supabase
-          .from("tasks")
-          .select("id, title, description, due_at, roadmap_id, status, position")
-          .eq("user_id", user.id)
-          .eq("id", cf.task_id)
+          .from('tasks')
+          .select(
+            'id, title, description, due_at, roadmap_id, status, position'
+          )
+          .eq('user_id', user.id)
+          .eq('id', cf.task_id)
           .maybeSingle();
         if (!tErr && t) currentTask = t as Task;
       }
 
       // If no focus task, or it doesn't match an active roadmap, pick next one
-      if ((!currentTask || (active && currentTask.roadmap_id !== active.id)) && active) {
+      if (
+        (!currentTask || (active && currentTask.roadmap_id !== active.id)) &&
+        active
+      ) {
         const { data: next, error: nextErr } = await supabase
-          .from("tasks")
-          .select("id, title, description, due_at, roadmap_id, status, position")
-          .eq("user_id", user.id)
-          .eq("roadmap_id", active.id)
-          .eq("status", "todo")
-          .order("position", { ascending: true, nullsFirst: true })
-          .order("due_at", { ascending: true, nullsFirst: false })
-          .order("created_at", { ascending: true })
+          .from('tasks')
+          .select(
+            'id, title, description, due_at, roadmap_id, status, position'
+          )
+          .eq('user_id', user.id)
+          .eq('roadmap_id', active.id)
+          .eq('status', 'todo')
+          .order('position', { ascending: true, nullsFirst: true })
+          .order('due_at', { ascending: true, nullsFirst: false })
+          .order('created_at', { ascending: true })
           .limit(1);
         if (nextErr) {
           console.error(nextErr);
@@ -115,7 +128,7 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
         currentTask = (next?.[0] as Task) ?? null;
 
         // Persist focus
-        const { error: upErr } = await supabase.from("current_focus").upsert({
+        const { error: upErr } = await supabase.from('current_focus').upsert({
           user_id: user.id,
           task_id: currentTask ? currentTask.id : null,
           started_at: new Date().toISOString(),
@@ -139,73 +152,96 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("live-sync")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "roadmaps" }, (payload) => {
-        if ((payload.new as any)?.user_id === user.id || (payload.old as any)?.user_id === user.id) {
-          setReloadKey((k) => k + 1);
+      .channel('live-sync')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'roadmaps' },
+        (payload) => {
+          if (
+            (payload.new as any)?.user_id === user.id ||
+            (payload.old as any)?.user_id === user.id
+          ) {
+            setReloadKey((k) => k + 1);
+          }
         }
-      })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "current_focus" }, (payload) => {
-        if ((payload.new as any)?.user_id === user.id || (payload.old as any)?.user_id === user.id) {
-          setReloadKey((k) => k + 1);
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'current_focus' },
+        (payload) => {
+          if (
+            (payload.new as any)?.user_id === user.id ||
+            (payload.old as any)?.user_id === user.id
+          ) {
+            setReloadKey((k) => k + 1);
+          }
         }
-      })
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "current_focus" }, (payload) => {
-        if ((payload.new as any)?.user_id === user.id) {
-          setReloadKey((k) => k + 1);
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'current_focus' },
+        (payload) => {
+          if ((payload.new as any)?.user_id === user.id) {
+            setReloadKey((k) => k + 1);
+          }
         }
-      })
+      )
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const switchActive = async (roadmapId: string) => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to manage roadmaps." });
+      toast({
+        title: 'Sign in required',
+        description: 'Connect Supabase to manage roadmaps.',
+      });
       return;
     }
     // Pause existing active first to respect unique index
-    const currentActive = roadmaps.find((r) => r.status === "active");
+    const currentActive = roadmaps.find((r) => r.status === 'active');
     if (currentActive && currentActive.id !== roadmapId) {
       const { error: pauseErr } = await supabase
-        .from("roadmaps")
-        .update({ status: "paused" })
-        .eq("id", currentActive.id)
-        .eq("user_id", user.id);
+        .from('roadmaps')
+        .update({ status: 'paused' })
+        .eq('id', currentActive.id)
+        .eq('user_id', user.id);
       if (pauseErr) console.error(pauseErr);
     }
     // Activate the selected roadmap
     const { error: actErr } = await supabase
-      .from("roadmaps")
-      .update({ status: "active" })
-      .eq("id", roadmapId)
-      .eq("user_id", user.id);
+      .from('roadmaps')
+      .update({ status: 'active' })
+      .eq('id', roadmapId)
+      .eq('user_id', user.id);
     if (actErr) {
       console.error(actErr);
-      toast({ title: "Error", description: "Could not activate roadmap." });
+      toast({ title: 'Error', description: 'Could not activate roadmap.' });
       return;
     }
-    toast({ title: "Activated", description: "Roadmap set as live." });
+    toast({ title: 'Activated', description: 'Roadmap set as live.' });
     // Reload minimal state
     const newActive = roadmaps.find((r) => r.id === roadmapId) ?? null;
-    if (newActive) newActive.status = "active";
+    if (newActive) newActive.status = 'active';
     setActiveRoadmap(newActive);
     // Force pick next task for new roadmap
     if (newActive) {
       const { data: next, error: nextErr } = await supabase
-        .from("tasks")
-        .select("id, title, description, due_at, roadmap_id, status, position")
-        .eq("user_id", user.id)
-        .eq("roadmap_id", newActive.id)
-        .eq("status", "todo")
-        .order("position", { ascending: true, nullsFirst: true })
-        .order("due_at", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: true })
+        .from('tasks')
+        .select('id, title, description, due_at, roadmap_id, status, position')
+        .eq('user_id', user.id)
+        .eq('roadmap_id', newActive.id)
+        .eq('status', 'todo')
+        .order('position', { ascending: true, nullsFirst: true })
+        .order('due_at', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: true })
         .limit(1);
       if (!nextErr) {
         const nextTask = (next?.[0] as Task) ?? null;
         setTask(nextTask);
-        await supabase.from("current_focus").upsert({
+        await supabase.from('current_focus').upsert({
           user_id: user.id,
           task_id: nextTask ? nextTask.id : null,
           started_at: new Date().toISOString(),
@@ -224,13 +260,15 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
             <StreakBadge />
             <select
               className="text-sm bg-background border border-border rounded px-3 py-2"
-              value={activeRoadmap?.id ?? ""}
+              value={activeRoadmap?.id ?? ''}
               onChange={(e) => switchActive(e.target.value)}
             >
-              <option value="" disabled>Select roadmap…</option>
+              <option value="" disabled>
+                Select roadmap…
+              </option>
               {roadmaps.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.title} {r.status === "active" ? "•" : ""}
+                  {r.title} {r.status === 'active' ? '•' : ''}
                 </option>
               ))}
             </select>
@@ -238,7 +276,12 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
               variant="secondary"
               onClick={() => {
                 if (onManageRoadmaps) onManageRoadmaps();
-                else toast({ title: "Roadmaps", description: "Manage your roadmaps and tasks in the Control panel for now." });
+                else
+                  toast({
+                    title: 'Roadmaps',
+                    description:
+                      'Manage your roadmaps and tasks in the Control panel for now.',
+                  });
               }}
             >
               Manage
@@ -258,12 +301,18 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
 
         <HeroCard taskTitle={task?.title ?? null} />
 
-        <div key={task?.id ?? 'none'} className="animate-in fade-in-50 duration-300">
+        <div
+          key={task?.id ?? 'none'}
+          className="animate-in fade-in-50 duration-300"
+        >
           <CurrentFocusCard
             activeRoadmap={activeRoadmap}
             task={task}
             progressPercent={percent}
-            onAdvance={(next) => { setTask(next); refreshProgress(); }}
+            onAdvance={(next) => {
+              setTask(next);
+              refreshProgress();
+            }}
           />
         </div>
 
@@ -272,11 +321,17 @@ export default function LiveFocusView({ onManageRoadmaps }: { onManageRoadmaps?:
         <MoodCarousel />
         <PreviewCards progressPercent={percent} />
       </main>
-      <ActionDock 
-        onStart={() => toast({ title: "Focus Session", description: "Starting focus mode soon." })}
-        onAnalyze={() => toast({ title: "Analyze", description: "Analyze tools coming soon." })}
+      <ActionDock
+        onStart={() =>
+          toast({
+            title: 'Focus Session',
+            description: 'Starting focus mode soon.',
+          })
+        }
+        onAnalyze={() =>
+          toast({ title: 'Analyze', description: 'Analyze tools coming soon.' })
+        }
       />
-      <QuickAddTaskFAB roadmapId={activeRoadmap?.id ?? null} />
     </section>
   );
 }
