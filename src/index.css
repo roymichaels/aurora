@@ -66,6 +66,18 @@ All colors MUST be HSL.
 
     /* Motion */
     --transition-smooth: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Layering */
+    --z-bg: 0;
+    --z-content: 10;
+    --z-hud: 40;
+    --z-modal: 60;
+    --z-toast: 100;
+
+    /* HUD */
+    --hud-h: 128px;            /* desktop HUD height */
+    --hud-h-mobile: 164px;     /* mobile/two-line HUD height */
+    --hud-gap: 12px;           /* gap above HUD (the “white line” gutter) */
   }
 
   .light {
@@ -165,6 +177,14 @@ All colors MUST be HSL.
   .story-link:hover::after {
     transform: scaleX(1);
     transform-origin: bottom left;
+  }
+
+  .min-h-svh {
+    min-height: 100svh;
+  }
+
+  .os-bg {
+    background-color: hsl(var(--background));
   }
 }
 
@@ -366,9 +386,6 @@ All colors MUST be HSL.
 
 /* HUD tokens and utilities */
 :root{
-  --hud-h: 128px;          /* desktop HUD height */
-  --hud-h-sm: 164px;       /* mobile/two-line HUD height */
-  --hud-gap: 12px;         /* gap above HUD (the “white line” gutter) */
   --hud-radius: 22px;
   --hud-glow: 0 0% 100% / 0.35;
   --hud-border: 0 0% 100% / 0.14;
@@ -416,7 +433,7 @@ All colors MUST be HSL.
 
 /* responsive tokens */
 @media (max-width: 768px){
-  :root { --hud-h: var(--hud-h-sm); }
+  :root { --hud-h: var(--hud-h-mobile); }
 }
 
 /* Quick slot glyphs */

@@ -88,7 +88,7 @@ export function FloatingAssistant({ task, onUpdated }: { task: Task | null; onUp
       <button
         aria-label="Open assistant chat"
         onClick={() => setOpen(true)}
-        className="fixed z-[100] w-14 h-14 rounded-full glass-panel elev grid place-items-center hover-scale smooth"
+        className="fixed z-[var(--z-toast)] w-14 h-14 rounded-full glass-panel elev grid place-items-center hover-scale smooth"
         style={{
           right: 'calc(env(safe-area-inset-right) + 12px)',
           bottom: 'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px) + 12px)'
@@ -98,7 +98,7 @@ export function FloatingAssistant({ task, onUpdated }: { task: Task | null; onUp
       </button>
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
-        <DrawerContent className="p-0 z-[100]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px))' }}>
+        <DrawerContent className="p-0 z-[var(--z-modal)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px))' }}>
           <DrawerHeader className="p-3 border-b">
             <div className="flex items-center justify-between">
               <DrawerTitle>Assistant</DrawerTitle>
