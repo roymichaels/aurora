@@ -1,5 +1,9 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  systemPrompt,
+  behaviorPrompt,
+} from "../../../src/brain/prompts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,13 +30,18 @@ serve(async (req) => {
 
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
+    const systemMessages = [
+      { role: "system", content: systemPrompt },
+      { role: "system", content: behaviorPrompt },
+    ];
+
     const payload = messages && Array.isArray(messages)
-      ? { model: usedModel, messages }
+      ? { model: usedModel, messages: [...systemMessages, ...messages] }
       : {
           model: usedModel,
           messages: [
-            { role: "system", content: "You are Aurora, a concise, friendly focus coach. Reply in short, actionable steps." },
-            { role: "user", content: typeof prompt === "string" ? prompt : String(prompt) }
+            ...systemMessages,
+            { role: "user", content: typeof prompt === "string" ? prompt : String(prompt) },
           ],
         };
 
