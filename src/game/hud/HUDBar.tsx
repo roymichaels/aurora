@@ -21,9 +21,9 @@ export default function HUDBar() {
   }, [run])
 
   return (
-    <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-40">
+    <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-[var(--z-hud)]">
       {/* HUD shelf with divider line */}
-      <div className="w-full" style={{ height: 'var(--hud-height)' }}>
+      <div className="w-full" style={{ height: 'var(--hud-h)' }}>
         <div className="absolute top-0 left-0 right-0 h-px bg-border/80" role="separator" aria-hidden />
         <div className="absolute inset-x-0 bottom-2 flex justify-center pb-safe">
           <div className="hud-shell max-w-[1200px] w-[96%]">
