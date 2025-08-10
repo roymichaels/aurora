@@ -68,25 +68,18 @@ export function FloatingAssistant({
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
         body: {
           model: 'o4-mini-2025-04-16',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are Aurora, a concise, friendly focus coach. Reply briefly with clear steps.',
-            },
-            ...history,
-          ],
+          messages: history,
         },
       });
       if (error) throw error;
-      const replyText = (data as any)?.content ?? 'Okay.';
+      const replyText = (data as { content?: string } | null)?.content ?? 'Okay.';
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
         content: replyText,
       };
       setMessages((m) => [...m, reply]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
