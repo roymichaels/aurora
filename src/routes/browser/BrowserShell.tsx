@@ -74,39 +74,48 @@ export default function BrowserShell() {
   ], []);
 
   return (
-    <div className="w-full h-full flex flex-col" style={{ paddingBottom: "calc(var(--hud-h, 160px) + var(--hud-gap, 16px) + env(safe-area-inset-bottom))" }}>
-      {/* Header */}
-      <header className="glass-panel elev rounded-b-xl px-3 md:px-4 py-2 sticky top-0 z-30">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="text-sm md:text-base font-semibold">Aurora OS</div>
-          <form
-            className="flex-1 flex items-center gap-2"
-            onSubmit={(e) => { e.preventDefault(); navigate(url); }}
-          >
-            <Input
-              ref={inputRef}
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="Enter a site (e.g., notion.so)"
-              className="h-9"
-              aria-label="Site URL"
-            />
-            <Button type="submit" size="sm">Go</Button>
-          </form>
-          <Button variant="secondary" size="sm" onClick={() => (window.location.href = "/extension")}>Extension</Button>
-        </div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {presets.map((p) => (
-            <Button key={p.href} size="sm" variant="secondary" onClick={() => { setUrl(p.href); navigate(p.href); }}>
-              {p.label}
-            </Button>
-          ))}
-        </div>
-      </header>
+    <div
+      className="relative min-h-svh md:pb-[calc(var(--hud-gap)+var(--hud-h)+env(safe-area-inset-bottom))]"
+      style={{
+        zIndex: "var(--z-content)",
+        paddingBottom: "calc(var(--hud-gap) + var(--hud-h-mobile) + env(safe-area-inset-bottom))",
+      }}
+    >
+      <div className="os-bg" />
+      <main className="relative z-[var(--z-content)] flex flex-col min-h-full">
+        {/* Header */}
+        <header className="glass-panel elev rounded-b-xl px-3 md:px-4 py-2 sticky top-0 z-30">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="text-sm md:text-base font-semibold">Aurora OS</div>
+            <form
+              className="flex-1 flex items-center gap-2"
+              onSubmit={(e) => { e.preventDefault(); navigate(url); }}
+            >
+              <Input
+                ref={inputRef}
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Enter a site (e.g., notion.so)"
+                className="h-9"
+                aria-label="Site URL"
+              />
+              <Button type="submit" size="sm">Go</Button>
+            </form>
+            <Button variant="secondary" size="sm" onClick={() => (window.location.href = "/extension")}>Extension</Button>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {presets.map((p) => (
+              <Button key={p.href} size="sm" variant="secondary" onClick={() => { setUrl(p.href); navigate(p.href); }}>
+                {p.label}
+              </Button>
+            ))}
+          </div>
+        </header>
 
-      {/* Content */}
-      <main className="flex-1 min-h-0">
-        <EmbedPane url={current} />
+        {/* Content */}
+        <div className="flex-1 min-h-0">
+          <EmbedPane url={current} />
+        </div>
       </main>
 
       {/* HUD */}
