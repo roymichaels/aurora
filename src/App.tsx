@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import MindWorldDashboard from "@/components/mindworld/MindWorldDashboard";
 import BrowserShell from "@/routes/browser/BrowserShell";
+import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/home" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/browser" element={<BrowserShell />} />
+          <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
           <Route path="/stack" element={<StackPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

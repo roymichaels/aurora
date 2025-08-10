@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
-import { awardXPRemote } from "@/integrations/supabase/gameSync";
+import { supabase } from "@/integrations/supabase/client";
 
 type Props = { node: { id: string; label: string; script?: string; duration?: number }; onExit: () => void };
 
@@ -22,6 +22,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
 
     // Fallback TTS via Web Speech
     if ("speechSynthesis" in window) {
+      try { window.speechSynthesis.cancel(); } catch {}
       const u = new SpeechSynthesisUtterance(text);
       u.rate = 0.95;
       u.pitch = 1.0;
@@ -43,7 +44,9 @@ export default function HypnosisRunner({ node, onExit }: Props) {
 
     // Award XP + streak
     awardXP(25, { activity: "hypnosis", nodeId: node.id });
-    await awardXPRemote("hypnosis", 25, { nodeId: node.id }).catch(() => {});
+    try {
+      await supabase.rpc("award_xp", { activity: "hypnosis_session", amount: 25, metadata: { node_id: node.id } });
+    } catch {}
     complete(node.id);
   };
 
