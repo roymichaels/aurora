@@ -130,7 +130,7 @@ export function FloatingAssistant({
         <MessageSquare className="w-6 h-6" />
       </button>
 
-      <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
+      <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
         <DrawerContent
           className="p-0"
           style={{
