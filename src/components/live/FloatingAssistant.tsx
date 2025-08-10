@@ -98,7 +98,14 @@ export function FloatingAssistant({ task, onUpdated }: { task: Task | null; onUp
       </button>
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground>
-        <DrawerContent className="p-0 z-[var(--z-modal)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px))' }}>
+        <DrawerContent
+          className="p-0"
+          style={{
+            zIndex: 'var(--z-modal)',
+            bottom: 'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom))',
+            paddingBottom: 'env(safe-area-inset-bottom)'
+          }}
+        >
           <DrawerHeader className="p-3 border-b">
             <div className="flex items-center justify-between">
               <DrawerTitle>Assistant</DrawerTitle>
