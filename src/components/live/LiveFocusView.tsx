@@ -5,7 +5,6 @@ import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { CurrentFocusCard } from './CurrentFocusCard';
 import { QuickActionsBar } from './QuickActionsBar';
-import { ProgressBar } from './ProgressBar';
 import HeroCard from './HeroCard';
 import { MoodCarousel } from './MoodCarousel';
 import ActionDock from './ActionDock';
@@ -15,8 +14,7 @@ import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
 import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
 import QuickAddTaskFAB from '@/components/tasks/QuickAddTaskFAB';
 import { StreakBadge } from '@/components/live/StreakBadge';
-import { XPBar } from '@/components/live/XPBar';
-import ShareCard from '@/components/share/ShareCard';
+import { setActiveRoadmap, fetchNextTask } from '@/modules/roadmaps';
 
 type Roadmap = {
   id: string;
@@ -51,7 +49,6 @@ export default function LiveFocusView({
     activeRoadmap?.id ?? null
   );
   const [reloadKey, setReloadKey] = useState(0);
-  const [shareOpen, setShareOpen] = useState(false);
 
   // Load roadmaps, active roadmap, and focused task
   useEffect(() => {
@@ -200,24 +197,10 @@ export default function LiveFocusView({
       });
       return;
     }
-    // Pause existing active first to respect unique index
-    const currentActive = roadmaps.find((r) => r.status === 'active');
-    if (currentActive && currentActive.id !== roadmapId) {
-      const { error: pauseErr } = await supabase
-        .from('roadmaps')
-        .update({ status: 'paused' })
-        .eq('id', currentActive.id)
-        .eq('user_id', user.id);
-      if (pauseErr) console.error(pauseErr);
-    }
-    // Activate the selected roadmap
-    const { error: actErr } = await supabase
-      .from('roadmaps')
-      .update({ status: 'active' })
-      .eq('id', roadmapId)
-      .eq('user_id', user.id);
-    if (actErr) {
-      console.error(actErr);
+    try {
+      await setActiveRoadmap(user.id, roadmapId);
+    } catch (e) {
+      console.error(e);
       toast({ title: 'Error', description: 'Could not activate roadmap.' });
       return;
     }
@@ -228,26 +211,30 @@ export default function LiveFocusView({
     setActiveRoadmap(newActive);
     // Force pick next task for new roadmap
     if (newActive) {
-      const { data: next, error: nextErr } = await supabase
-        .from('tasks')
-        .select('id, title, description, due_at, roadmap_id, status, position')
-        .eq('user_id', user.id)
-        .eq('roadmap_id', newActive.id)
-        .eq('status', 'todo')
-        .order('position', { ascending: true, nullsFirst: true })
-        .order('due_at', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: true })
-        .limit(1);
-      if (!nextErr) {
-        const nextTask = (next?.[0] as Task) ?? null;
-        setTask(nextTask);
-        await supabase.from('current_focus').upsert({
-          user_id: user.id,
-          task_id: nextTask ? nextTask.id : null,
-          started_at: new Date().toISOString(),
-        });
-      }
+      const nextTask = await fetchNextTask(user.id, newActive.id);
+      setTask(nextTask);
+      await supabase.from('current_focus').upsert({
+        user_id: user.id,
+        task_id: nextTask ? nextTask.id : null,
+        started_at: new Date().toISOString(),
+      });
     }
+  };
+
+  const handleAdvance = async () => {
+    if (!user || !activeRoadmap) { setTask(null); return; }
+    const nextTask = await fetchNextTask(user.id, activeRoadmap.id);
+    setTask(nextTask);
+    await supabase.from('current_focus').upsert({
+      user_id: user.id,
+      task_id: nextTask ? nextTask.id : null,
+      started_at: new Date().toISOString(),
+    });
+    toast({
+      title: nextTask ? 'Great job!' : 'Well done',
+      description: nextTask ? `Next up: ${nextTask.title}` : 'No more tasks in this roadmap.',
+    });
+    refreshProgress();
   };
 
   return (
@@ -309,10 +296,7 @@ export default function LiveFocusView({
             activeRoadmap={activeRoadmap}
             task={task}
             progressPercent={percent}
-            onAdvance={(next) => {
-              setTask(next);
-              refreshProgress();
-            }}
+            onAdvance={handleAdvance}
           />
         </div>
 

@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ProgressBar } from "@/components/live/ProgressBar";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import QuickAddTaskFAB from "@/components/tasks/QuickAddTaskFAB";
+import { setActiveRoadmap, fetchNextTask } from "@/modules/roadmaps";
  
 export default function RoadmapsManager() {
   const { user } = useSupabaseAuth();
@@ -54,25 +55,17 @@ export default function RoadmapsManager() {
 
   const setActive = async (roadmapId: string) => {
     if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to manage roadmaps." }); return; }
-    const current = items.find(r=> r.status==='active');
-    if (current && current.id !== roadmapId) {
-      const { error: pauseErr } = await supabase.from("roadmaps").update({ status: 'paused' }).eq("id", current.id).eq("user_id", user.id);
-      if (pauseErr) console.error(pauseErr);
+    try {
+      await setActiveRoadmap(user.id, roadmapId);
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Error", description: "Could not activate roadmap." });
+      return;
     }
-    const { error: actErr } = await supabase.from("roadmaps").update({ status: 'active' }).eq("id", roadmapId).eq("user_id", user.id);
-    if (actErr) { console.error(actErr); toast({ title: "Error", description: "Could not activate roadmap." }); return; }
     toast({ title: "Activated", description: "Roadmap set as live." });
 
     // Set the next TODO as current_focus
-    const { data: next, error: nextErr } = await supabase
-      .from("tasks").select("id").eq("user_id", user.id).eq("roadmap_id", roadmapId)
-      .eq("status", "todo")
-      .order("position", { ascending: true, nullsFirst: true })
-      .order("due_at", { ascending: true, nullsFirst: false })
-      .order("created_at", { ascending: true })
-      .limit(1);
-    if (nextErr) console.error(nextErr);
-    const nextTask = next?.[0] as any | undefined;
+    const nextTask = await fetchNextTask(user.id, roadmapId);
     await supabase.from("current_focus").upsert({ user_id: user.id, task_id: nextTask ? nextTask.id : null, started_at: new Date().toISOString() });
 
     setSelectedId(roadmapId);

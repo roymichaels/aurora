@@ -7,6 +7,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
+import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 
 export type Task = {
   id: string;
@@ -32,6 +33,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState<string>("");
   const [editDue, setEditDue] = useState<string>("");
+  const { percent } = useRoadmapProgress(user?.id ?? null, roadmapId);
 
   const fetchTasks = async () => {
     if (!user) return;
@@ -156,7 +158,10 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">Tasks</div>
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-muted-foreground">Tasks</div>
+          <div className="text-xs text-muted-foreground">{Math.round(percent)}%</div>
+        </div>
         <Button variant="soft" onClick={()=> setShowComposer(v=> !v)}>
           {showComposer ? "Close" : "+ New Task"}
         </Button>
