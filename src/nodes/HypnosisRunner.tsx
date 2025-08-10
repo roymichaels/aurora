@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
 import { supabase } from "@/integrations/supabase/client";
+import HypnoSphere from "@/components/effects/HypnoSphere";
 
 type Props = { node: { id: string; label: string; script?: string; duration?: number }; onExit: () => void };
 
@@ -79,7 +80,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
         <h1 className="text-2xl font-semibold mb-2">{node.label}</h1>
         <p className="opacity-80 mb-6">Guided hypnosis • {duration}s</p>
 
-        <div className="w-64 h-64 mx-auto mb-6 rounded-full bg-[radial-gradient(circle_at_30%_30%,hsl(var(--primary)/.6),transparent_60%)] shadow-[0_0_40px_hsl(var(--primary)/.35)] animate-pulse" />
+        <HypnoSphere className="mx-auto mb-6" size={256} />
 
         <div className="mb-6">
           <div className="h-2 rounded-full bg-white/10 overflow-hidden">
