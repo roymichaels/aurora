@@ -8,11 +8,26 @@ import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
 import { useSwipeNav } from "@/hooks/useSwipeNav";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import ControlView from "@/views/ControlView";
 export default function AppShell() {
+  const { user, initializing } = useSupabaseAuth();
+
+  if (initializing) {
+    return (
+      <div className="relative min-h-svh w-screen grid place-items-center">
+        <div className="os-bg" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   const loc = useLocation();
   const open = useViewNav();
-
 
   const currentRoom = useMemo(() => {
     const match = views.find((v) => {
