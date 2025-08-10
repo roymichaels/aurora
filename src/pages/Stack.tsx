@@ -62,7 +62,8 @@ export default function StackPage() {
   }, []);
 
   return (
-    <div className="min-h-screen">
+    <div className="relative min-h-svh">
+      <div className="os-bg" />
       <AppHeader />
       <main className="pt-24 pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
         <article className="space-y-8">

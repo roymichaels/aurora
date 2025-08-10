@@ -26,7 +26,8 @@ export default function CoachRunner({ node, onExit }: Props) {
   const stop = () => (window as any).__coachAgent?.stopPTT();
 
   return (
-    <main className="min-h-screen px-4 pt-10 pb-28 max-w-[760px] mx-auto">
+    <main className="relative min-h-svh px-4 pt-10 pb-28 max-w-[760px] mx-auto">
+      <div className="os-bg" />
       <h1 className="text-2xl font-semibold mb-2">{node.label}</h1>
       <p className="opacity-80 mb-6">Tell me what you’re working on. I’ll tailor your next steps.</p>
 

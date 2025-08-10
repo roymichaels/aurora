@@ -18,9 +18,9 @@ export default function RoadmapHome() {
   }, []);
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
+    <main className="relative min-h-svh overflow-hidden">
       {/* vignette bg */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_400px_at_50%_-10%,hsl(var(--accent)/.12),transparent)]" />
+      <div className="os-bg pointer-events-none bg-[radial-gradient(900px_400px_at_50%_-10%,hsl(var(--accent)/.12),transparent)]" />
 
       <section className="mx-auto max-w-[720px] px-4 pt-8 pb-28">
         <header className="mb-4">

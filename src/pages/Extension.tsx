@@ -5,7 +5,8 @@ export default function ExtensionPage() {
     document.title = "Aurora Companion Extension – Setup";
   }, []);
   return (
-    <div className="p-4 md:p-6">
+    <div className="relative min-h-svh p-4 md:p-6">
+      <div className="os-bg" />
       <section className="glass-panel rounded-2xl p-6 max-w-3xl mx-auto">
         <h1 className="text-2xl font-semibold">Aurora Companion Extension</h1>
         <p className="text-sm text-muted-foreground mt-2">
