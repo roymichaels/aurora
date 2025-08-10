@@ -52,14 +52,16 @@ const AuthPage = () => {
 
   if (initializing || user) {
     return (
-      <div className="w-screen h-screen grid place-items-center">
+      <div className="relative min-h-svh w-screen grid place-items-center">
+        <div className="os-bg" />
         <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="w-screen h-screen grid place-items-center p-4">
+    <div className="relative min-h-svh w-screen grid place-items-center p-4">
+      <div className="os-bg" />
       <Card className="w-full max-w-sm p-6 space-y-4">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold">{mode === "login" ? "Sign in" : "Create account"}</h1>

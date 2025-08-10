@@ -45,7 +45,8 @@ export default function AppShell() {
     }
   }, [loc.pathname, loc.search]);
   return (
-    <div className={`min-h-screen room-${currentRoom}`} {...swipe}>
+    <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
+      <div className="os-bg" />
       <AnimatePresence mode="wait">
         <Routes location={loc} key={loc.pathname + loc.search}>
           {views.map((v) => (

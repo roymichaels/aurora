@@ -21,7 +21,8 @@ export default function AgentRunner() {
   }, []);
 
   return (
-    <main className="min-h-screen px-4 pt-10 pb-28 max-w-[760px] mx-auto">
+    <main className="relative min-h-svh px-4 pt-10 pb-28 max-w-[760px] mx-auto">
+      <div className="os-bg" />
       <h1 className="text-2xl font-semibold mb-2">Aurora Agent</h1>
       <p className="opacity-80 mb-6">Push-to-talk and simple tools</p>
 

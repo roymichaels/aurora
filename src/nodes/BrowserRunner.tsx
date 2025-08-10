@@ -20,7 +20,8 @@ export default function BrowserRunner({ node, onExit }: Props) {
   }, [url]);
 
   return (
-    <main className="min-h-screen px-4 pt-6 pb-28">
+    <main className="relative min-h-svh px-4 pt-6 pb-28">
+      <div className="os-bg" />
       <div className="flex items-center gap-2 mb-3">
         <input
           className="w-full rounded-md bg-white/5 border border-white/10 px-3 py-2 outline-none"

@@ -27,9 +27,13 @@ export default function MindWorldDashboard() {
 
   // Toggle joystick via global event and persist
   useEffect(() => {
-    const onToggle = () => setJoyEnabled((v) => !v);
-    document.addEventListener('mos:toggleJoystick' as any, onToggle as any);
-    return () => document.removeEventListener('mos:toggleJoystick' as any, onToggle as any);
+    const onMos = (e: any) => {
+      if (e.detail?.type === 'toggleJoystick') {
+        setJoyEnabled((v) => !v);
+      }
+    };
+    window.addEventListener('mos', onMos as any);
+    return () => window.removeEventListener('mos', onMos as any);
   }, [setJoyEnabled]);
 
   // Keyboard controls (desktop)
@@ -62,28 +66,17 @@ export default function MindWorldDashboard() {
   // Listen to global HUD quick actions and open overlays accordingly + quests/XP
   useEffect(() => {
     const set = (id: OverlayId | null) => setOverlay(id);
-    const onFocus = () => { set('focus'); completeQuest('pick-focus'); awardXP(REWARDS.completeQuest); };
-    const onHypno = () => { set('mentor'); completeQuest('start-hypno'); awardXP(REWARDS.completeQuest); };
-    const onVoice = () => { set('library'); completeQuest('record-voice'); awardXP(REWARDS.completeQuest); };
-    const onNote = () => { set('library'); completeQuest('add-note'); awardXP(REWARDS.completeQuest); };
-    const onAnalyze = () => { set('analyze'); completeQuest('open-analyze'); awardXP(REWARDS.completeQuest); };
-    const onMap = () => { document.dispatchEvent(new CustomEvent('open-fast-travel')); };
-
-    document.addEventListener('mos:startFocus' as any, onFocus as any);
-    document.addEventListener('mos:startHypnosis' as any, onHypno as any);
-    document.addEventListener('mos:voiceNote' as any, onVoice as any);
-    document.addEventListener('mos:addNote' as any, onNote as any);
-    document.addEventListener('mos:openAnalyze' as any, onAnalyze as any);
-    document.addEventListener('mos:openMap' as any, onMap as any);
-
-    return () => {
-      document.removeEventListener('mos:startFocus' as any, onFocus as any);
-      document.removeEventListener('mos:startHypnosis' as any, onHypno as any);
-      document.removeEventListener('mos:voiceNote' as any, onVoice as any);
-      document.removeEventListener('mos:addNote' as any, onNote as any);
-      document.removeEventListener('mos:openAnalyze' as any, onAnalyze as any);
-      document.removeEventListener('mos:openMap' as any, onMap as any);
+    const onMos = (e: any) => {
+      const t = e.detail?.type;
+      if (t === 'startFocus') { set('focus'); completeQuest('pick-focus'); awardXP(REWARDS.completeQuest); }
+      if (t === 'startHypnosis') { set('mentor'); completeQuest('start-hypno'); awardXP(REWARDS.completeQuest); }
+      if (t === 'voiceNote') { set('library'); completeQuest('record-voice'); awardXP(REWARDS.completeQuest); }
+      if (t === 'addNote') { set('library'); completeQuest('add-note'); awardXP(REWARDS.completeQuest); }
+      if (t === 'openAnalyze') { set('analyze'); completeQuest('open-analyze'); awardXP(REWARDS.completeQuest); }
+      if (t === 'openMap') { document.dispatchEvent(new CustomEvent('open-fast-travel')); }
     };
+    window.addEventListener('mos', onMos as any);
+    return () => window.removeEventListener('mos', onMos as any);
   }, [awardXP, completeQuest]);
 
   // Close overlay with Escape key
