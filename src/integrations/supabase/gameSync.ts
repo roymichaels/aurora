@@ -18,7 +18,9 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
     logger.debug("[gameSync] awardXPRemote skipped (no user)", { activity, amount });
     return null;
   }
-  const { data, error } = await supabase.rpc("award_xp", { activity, amount, metadata });
+  const { data, error } = await supabase.functions.invoke("award_xp", {
+    body: { activity, amount, metadata },
+  });
   if (error) {
     console.error("[gameSync] award_xp error", error);
     return null;
@@ -26,7 +28,7 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
   logger.info("[gameSync] award_xp ok", data);
   // Notify UI so components like XPBar can reflect server totals instantly
   try {
-    const first = Array.isArray(data) ? data[0] : data as any;
+    const first = Array.isArray(data) ? data[0] : (data as any);
     const total = first?.total_xp ?? null;
     const streak = first?.streak_count;
     if (typeof total === "number") {

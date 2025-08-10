@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 
 import { supabase } from "@/integrations/supabase/client";
+import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import { useEffect, useRef, useState } from "react";
 
 type Task = {
@@ -151,7 +152,9 @@ type Track = {
           setLibraryOpen(true);
           // Award XP for starting a hypnosis session
           (async () => {
-            try { await supabase.rpc('award_xp', { activity: 'hypnosis_session', amount: 20, metadata: { mode } as any }); } catch {}
+            try {
+              await awardXPRemote("hypnosis_session", 20, { mode });
+            } catch {}
           })();
           return 0;
         }
