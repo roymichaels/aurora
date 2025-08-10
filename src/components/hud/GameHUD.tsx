@@ -4,22 +4,13 @@ import { useGameStore } from "@/game/store";
 import { quickSlots } from "@/game/hud/hud.data";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { Mic, ChevronDown, ChevronUp } from "lucide-react";
-import { useViewNav } from "@/state/view";
-import { Link, useNavigate } from "react-router-dom";
-import { views } from "@/views/registry";
+
+function fire(type: string, payload?: any) {
+  window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
+}
 
 export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
-  const open = useViewNav();
-  const navigate = useNavigate();
-  const actionToView: Record<string, any> = {
-    startFocus: 'focus',
-    startHypnosis: 'hypno',
-    voiceNote: 'voice',
-    addNote: 'notes',
-    openAnalyze: 'analyze',
-    openMap: 'portal',
-  };
 
   // Mobile collapse state
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
@@ -50,12 +41,12 @@ export function GameHUD() {
       const n = Number(e.key);
       if (n >= 1 && n <= 6) {
         const slot = quickSlots[n - 1];
-        if (slot) open(actionToView[slot.action]);
+        if (slot) fire(slot.action);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, []);
 
   return (
     <div
@@ -84,42 +75,35 @@ export function GameHUD() {
 
           {/* Actions (scroll on small, wrap/justify on desktop) */}
           <ul className="hud-actions flex gap-2 ml-auto overflow-x-auto flex-nowrap scroll-smooth snap-x snap-mandatory md:overflow-visible md:flex-wrap md:justify-end md:ml-auto">
-            {quickSlots.map((a) => {
-              const viewId = actionToView[a.action];
-              return (
-                <li key={a.id} className="snap-start">
-                  <Link
-                    to={(viewId && views.find((v) => v.id === viewId)?.path) || '/app'}
-                    className="action-chip"
-                    aria-label={a.label}
-                    title={a.label}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (!viewId) return;
-                      const path = views.find((v) => v.id === viewId)?.path;
-                      if (path) navigate(path);
-                    }}
-                  >
-                    {a.icon ? (
-                      <i className={cn("hud-glyph", a.icon)} />
-                    ) : (
-                      <span className="text-sm font-medium">{a.key}</span>
-                    )}
-                    <span className="hidden sm:inline text-sm">{a.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
+            {quickSlots.map((a) => (
+              <li key={a.id} className="snap-start">
+                <button
+                  type="button"
+                  className="action-chip"
+                  aria-label={a.label}
+                  title={a.label}
+                  onClick={() => fire(a.action)}
+                >
+                  {a.icon ? (
+                    <i className={cn('hud-glyph', a.icon)} />
+                  ) : (
+                    <span className="text-sm font-medium">{a.key}</span>
+                  )}
+                  <span className="hidden sm:inline text-sm">{a.label}</span>
+                </button>
+              </li>
+            ))}
             <li className="snap-start">
-              <Link
-                to={views.find((v) => v.id === 'agent')?.path || '/app/agent'}
+              <button
+                type="button"
                 className="action-chip mic"
                 aria-label="Open Aurora Agent"
                 title="Aurora Agent"
+                onClick={() => fire('openAgent')}
               >
                 <Mic className="w-4 h-4" />
                 <span className="hidden sm:inline text-sm">Agent</span>
-              </Link>
+              </button>
             </li>
           </ul>
         </div>

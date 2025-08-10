@@ -448,20 +448,18 @@ useEffect(() => {
   };
   const onMap = () => { window.dispatchEvent(new CustomEvent('open-fast-travel')); };
 
-  document.addEventListener('mos:startFocus' as any, onFocus as any);
-  document.addEventListener('mos:startHypnosis' as any, onHypno as any);
-  document.addEventListener('mos:voiceNote' as any, onVoice as any);
-  document.addEventListener('mos:addNote' as any, onNote as any);
-  document.addEventListener('mos:openAnalyze' as any, onAnalyze as any);
-  document.addEventListener('mos:openMap' as any, onMap as any);
-
+  const onMos = (e: any) => {
+    const t = e.detail?.type;
+    if (t === 'startFocus') onFocus();
+    if (t === 'startHypnosis') onHypno();
+    if (t === 'voiceNote') onVoice();
+    if (t === 'addNote') onNote();
+    if (t === 'openAnalyze') onAnalyze();
+    if (t === 'openMap') onMap();
+  };
+  window.addEventListener('mos', onMos as any);
   return () => {
-    document.removeEventListener('mos:startFocus' as any, onFocus as any);
-    document.removeEventListener('mos:startHypnosis' as any, onHypno as any);
-    document.removeEventListener('mos:voiceNote' as any, onVoice as any);
-    document.removeEventListener('mos:addNote' as any, onNote as any);
-    document.removeEventListener('mos:openAnalyze' as any, onAnalyze as any);
-    document.removeEventListener('mos:openMap' as any, onMap as any);
+    window.removeEventListener('mos', onMos as any);
   };
 }, [gotoPanel, completeQuest, awardXP, incStreak]);
 
