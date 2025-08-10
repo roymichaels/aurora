@@ -12,20 +12,6 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import ControlView from "@/views/ControlView";
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
-
-  if (initializing) {
-    return (
-      <div className="relative min-h-svh w-screen grid place-items-center">
-        <div className="os-bg" />
-        <p className="text-sm text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
   const loc = useLocation();
   const open = useViewNav();
 
@@ -95,6 +81,20 @@ export default function AppShell() {
       link.href = window.location.origin + loc.pathname + loc.search;
     }
   }, [loc.pathname, loc.search]);
+
+  if (initializing) {
+    return (
+      <div className="relative min-h-svh w-screen grid place-items-center">
+        <div className="os-bg" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
   return (
     <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
       <div className="os-bg" />
