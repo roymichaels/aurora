@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "@/hooks/use-toast";
+import logger from "@/lib/logger";
 
 /**
  * Simple background audio controller that:
@@ -113,7 +114,7 @@ export function useBackgroundAudio() {
             try {
               await el.play();
             } catch (e) {
-              console.warn("Autoplay blocked. User gesture required to start audio.", e);
+              logger.warn("Autoplay blocked. User gesture required to start audio.", e);
             }
           }
         }
@@ -153,7 +154,7 @@ export function useBackgroundAudio() {
       setIsPlaying(true);
       await persist({ is_playing: true });
     } catch (e) {
-      console.warn("Play failed:", e);
+      logger.warn("Play failed:", e);
     }
   };
 

@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import logger from "@/lib/logger";
 
 /**
  * Lightweight helpers to sync game actions with Supabase.
@@ -14,7 +15,7 @@ export async function getUid(): Promise<string | null> {
 export async function awardXPRemote(activity: string, amount: number, metadata: Record<string, any> = {}) {
   const uid = await getUid();
   if (!uid) {
-    console.log("[gameSync] awardXPRemote skipped (no user)", { activity, amount });
+    logger.debug("[gameSync] awardXPRemote skipped (no user)", { activity, amount });
     return null;
   }
   const { data, error } = await supabase.rpc("award_xp", { activity, amount, metadata });
@@ -22,7 +23,7 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
     console.error("[gameSync] award_xp error", error);
     return null;
   }
-  console.log("[gameSync] award_xp ok", data);
+  logger.info("[gameSync] award_xp ok", data);
   // Notify UI so components like XPBar can reflect server totals instantly
   try {
     const total = (Array.isArray(data) ? data[0]?.total_xp : (data as any)?.total_xp) ?? null;
@@ -30,7 +31,7 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
       window.dispatchEvent(new CustomEvent("xp-total-update", { detail: { total_xp: total } }));
     }
   } catch (e) {
-    console.warn("[gameSync] xp-total-update event failed", e);
+    logger.warn("[gameSync] xp-total-update event failed", e);
   }
   return data;
 }
@@ -38,7 +39,7 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
 export async function upsertQuest(questId: string, completed = true) {
   const uid = await getUid();
   if (!uid) {
-    console.log("[gameSync] upsertQuest skipped (no user)", { questId });
+    logger.debug("[gameSync] upsertQuest skipped (no user)", { questId });
     return null;
   }
   const payload = {
@@ -56,7 +57,7 @@ export async function upsertQuest(questId: string, completed = true) {
     console.error("[gameSync] upsertQuest error", error);
     return null;
   }
-  console.log("[gameSync] upsertQuest ok", data);
+  logger.info("[gameSync] upsertQuest ok", data);
   return data;
 }
 
@@ -70,6 +71,6 @@ export async function logEvent(type: string, payload: Record<string, any> = {}) 
   if (error) {
     console.error("[gameSync] logEvent error", error);
   } else {
-    console.log("[gameSync] event logged", type, payload);
+    logger.debug("[gameSync] event logged", type, payload);
   }
 }

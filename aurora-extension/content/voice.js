@@ -1,11 +1,12 @@
 // content/voice.js
 // Simplified Push-To-Talk helper using Web Speech API
+import logger from "../lib/logger.js";
 
 (function(){
   let rec = null;
   function startPTT(onFinal){
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { console.warn('SpeechRecognition unsupported'); return () => {}; }
+    if (!SR) { logger.warn('SpeechRecognition unsupported'); return () => {}; }
     rec = new SR();
     rec.continuous = false; rec.interimResults = true; rec.lang='en-US';
     rec.onresult = (e)=>{

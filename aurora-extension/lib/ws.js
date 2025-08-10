@@ -1,5 +1,7 @@
 // lib/ws.js
-// WebSocket bridge to backend service
+// Placeholder WS bridge to app (device token TBD)
+import logger from "./logger.js";
+
 
 const WS_URL = globalThis.AURORA_WS_URL || 'wss://api.auroraapp.dev/ws';
 
@@ -19,7 +21,7 @@ export function connect(token){
   try {
     return new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
   } catch (e) {
-    console.warn('WS connect failed', e);
+    logger.warn('WS connect failed', e);
     return null;
   }
 }

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/supabase/gameSync";
+import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };
 export type GameState = {
@@ -74,14 +75,14 @@ export const useGameStore = create<GameState>((set, get) => {
         })
         .catch((e) => console.error("[store] awardXPRemote failed", e));
       // Analytics
-      logEvent("xp_awarded", { amount }).catch((e) => console.warn("[store] logEvent xp_awarded failed", e));
+      logEvent("xp_awarded", { amount }).catch((e) => logger.warn("[store] logEvent xp_awarded failed", e));
     },
     completeQuest: (id) => {
       persist({ quests: { ...get().quests, [id]: true } });
       // Server quest upsert (if signed-in)
       upsertQuest(id, true).catch((e) => console.error("[store] upsertQuest failed", e));
       // Analytics
-      logEvent("quest_complete", { id }).catch((e) => console.warn("[store] logEvent quest_complete failed", e));
+      logEvent("quest_complete", { id }).catch((e) => logger.warn("[store] logEvent quest_complete failed", e));
     },
     incStreak: () => {
       const s = get().stats;
