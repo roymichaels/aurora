@@ -1,9 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import {
-  systemPrompt,
-  behaviorPrompt,
-} from "../../../src/brain/prompts.ts";
+import brain from "../../../src/brain/brain/Brain.ts";
+import { getFilterName } from "../../../src/brain/brain/filters.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,9 +29,28 @@ serve(async (req) => {
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
     const systemMessages = [
-      { role: "system", content: systemPrompt },
-      { role: "system", content: behaviorPrompt },
+      { role: "system", content: brain.cognition.systemPrompt },
     ];
+
+    if (brain.cognition.contextPrompt) {
+      systemMessages.push({ role: "system", content: brain.cognition.contextPrompt });
+    }
+
+    systemMessages.push({ role: "system", content: `Behavior style: ${brain.behavior.style}` });
+
+    const skillPrompt = brain.skills
+      .map((s) => `${s.name}: ${s.description}`)
+      .join("; ");
+    if (skillPrompt) {
+      systemMessages.push({ role: "system", content: `Available skills: ${skillPrompt}` });
+    }
+
+    const filterNames = brain.filters
+      .map((f) => getFilterName(f))
+      .filter((n): n is string => Boolean(n));
+    if (filterNames.length > 0) {
+      systemMessages.push({ role: "system", content: `Applied filters: ${filterNames.join(", ")}` });
+    }
 
     const payload = messages && Array.isArray(messages)
       ? { model: usedModel, messages: [...systemMessages, ...messages] }
@@ -64,7 +81,11 @@ serve(async (req) => {
     }
 
     const data = await resp.json();
-    const content = data?.choices?.[0]?.message?.content ?? "Okay.";
+    let content = data?.choices?.[0]?.message?.content ?? "Okay.";
+
+    for (const filter of brain.filters) {
+      content = filter(content);
+    }
 
     return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
