@@ -51,7 +51,7 @@ export default function DailyKickoff({ visible, onComplete }: Props) {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: 'var(--z-modal)' }} role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
       <div className="relative z-10 glass-panel rounded-xl p-6 w-full max-w-lg space-y-4 elev animate-fade-in">
         <header>

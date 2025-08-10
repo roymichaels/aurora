@@ -40,7 +40,7 @@ export default function HypnoPanel() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50">
+    <div className="fixed inset-x-0 bottom-0" style={{ zIndex: 'var(--z-modal)' }}>
       <div className="glass-panel rounded-t-2xl p-4 elev">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Hypno Temple</h3>

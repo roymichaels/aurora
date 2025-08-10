@@ -11,7 +11,7 @@ export type OverlayId = "mentor" | "library" | "garden" | "focus" | "analyze" | 
 
 function OverlayShell({ title, children, onClose }: PropsWithChildren<{ title: string; onClose: () => void }>) {
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
+    <div className="fixed inset-0" style={{ zIndex: 'var(--z-modal)' }} role="dialog">
       <div
         className="absolute inset-0 bg-background/60 backdrop-blur-sm"
         onClick={onClose}
