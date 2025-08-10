@@ -14,6 +14,7 @@ export type GameState = {
   completeQuest: (id: string) => void;
   incStreak: () => void;
   resetDaily: () => void;
+  setStats: (s: Partial<Stats>) => void;
 };
 
 const defaults: GameState = {
@@ -27,6 +28,7 @@ const defaults: GameState = {
   completeQuest() {},
   incStreak() {},
   resetDaily() {},
+  setStats() {},
 };
 
 export const useGameStore = create<GameState>((set, get) => {
@@ -89,5 +91,22 @@ export const useGameStore = create<GameState>((set, get) => {
       persist({ stats: { ...s, streak: s.streak + 1 } });
     },
     resetDaily: () => persist({ quests: {} }),
+    setStats: (s) => {
+      const cur = get().stats;
+      persist({ stats: { ...cur, ...s } });
+    },
   };
 });
+
+if (typeof window !== "undefined") {
+  window.addEventListener("xp-total-update", (e: any) => {
+    const total = e.detail?.total_xp;
+    if (typeof total !== "number") return;
+    const streak = e.detail?.streak;
+    const xp = total % 100;
+    const level = Math.floor(total / 100) + 1;
+    const patch: Partial<Stats> = { xp, level };
+    if (typeof streak === "number") patch.streak = streak;
+    useGameStore.getState().setStats(patch);
+  });
+}
