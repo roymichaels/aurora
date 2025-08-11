@@ -24,7 +24,7 @@ export function useTextToSpeech() {
         const blob = await response.blob()
         const url = URL.createObjectURL(blob)
         const audio = new Audio(url)
-        setIsSpeaking(true)
+        audio.onplay = () => setIsSpeaking(true)
         audio.onended = () => {
           setIsSpeaking(false)
           URL.revokeObjectURL(url)
@@ -32,15 +32,15 @@ export function useTextToSpeech() {
         await audio.play()
       } else {
         const utterance = new SpeechSynthesisUtterance(text)
+        utterance.onstart = () => setIsSpeaking(true)
         utterance.onend = () => setIsSpeaking(false)
-        setIsSpeaking(true)
         speechSynthesis.speak(utterance)
       }
     } catch (err) {
       console.error('TTS error', err)
       const utter = new SpeechSynthesisUtterance(text)
+      utter.onstart = () => setIsSpeaking(true)
       utter.onend = () => setIsSpeaking(false)
-      setIsSpeaking(true)
       speechSynthesis.speak(utter)
     }
   }, [])
