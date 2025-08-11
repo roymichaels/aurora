@@ -14,15 +14,38 @@ export type RoadmapNode = {
 
 export type Track = { id: string; label: string; nodes: RoadmapNode[] };
 
+import { defaultHypnosisScripts } from "./hypno/scripts";
+
 export const tracks: Track[] = [
   {
     id: "mind",
     label: "Mind Power",
     nodes: [
-      { id: "hypno-calm-60", label: "Calm Induction", type: "hypnosis", duration: 60 },
+      {
+        id: "hypno-calm-60",
+        label: "Calm Induction",
+        type: "hypnosis",
+        duration: 60,
+        script: defaultHypnosisScripts.calm,
+      },
       { id: "coach-intro", label: "Coach: Setup", type: "coach" },
       { id: "reward-1", label: "Reward: Orb Glow", type: "reward" },
-      { id: "hypno-focus-120", label: "Focus Induction", type: "hypnosis", duration: 120, locked: true },
+      {
+        id: "hypno-focus-120",
+        label: "Focus Induction",
+        type: "hypnosis",
+        duration: 120,
+        locked: true,
+        script: defaultHypnosisScripts.focus,
+      },
+      {
+        id: "hypno-confidence-90",
+        label: "Confidence Boost",
+        type: "hypnosis",
+        duration: 90,
+        locked: true,
+        script: defaultHypnosisScripts.confidence,
+      },
     ],
   },
   {
