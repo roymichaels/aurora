@@ -1,66 +1,69 @@
-import { useState, useCallback, useRef } from 'react'
-
-const ELEVENLABS_API_KEY = import.meta.env.VITE_ELEVENLABS_API_KEY as string | undefined
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useTextToSpeech() {
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("aurora_voice_enabled") === "1";
+  });
+  const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  const cancel = useCallback(() => {
-    audioRef.current?.pause()
-    audioRef.current = null
-    speechSynthesis.cancel()
-    setIsSpeaking(false)
-  }, [])
+  // Allow enabling via first user gesture (click/keydown) OR explicit call
+  useEffect(() => {
+    if (enabled) return;
+    const prime = () => {
+      setEnabled(true);
+      localStorage.setItem("aurora_voice_enabled", "1");
+      try {
+        window.speechSynthesis.resume();
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener("pointerdown", prime, { once: true });
+    window.addEventListener("keydown", prime, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", prime);
+      window.removeEventListener("keydown", prime);
+    };
+  }, [enabled]);
 
   const speak = useCallback(
-    async (text: string) => {
-      if (!text) return
-      cancel()
+    (text: string) => {
+      if (!enabled || !text?.trim()) return; // <- gate prevents NotAllowedError
       try {
-        const apiKey = ELEVENLABS_API_KEY
-
-        if (apiKey) {
-          const voiceId = '21m00Tcm4TlvDq8ikWAM'
-          const response = await fetch(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'xi-api-key': apiKey,
-              },
-              body: JSON.stringify({ text }),
-            },
-          )
-
-          const blob = await response.blob()
-          const url = URL.createObjectURL(blob)
-          const audio = new Audio(url)
-          audioRef.current = audio
-          audio.onplay = () => setIsSpeaking(true)
-          audio.onended = () => {
-            setIsSpeaking(false)
-            URL.revokeObjectURL(url)
-            audioRef.current = null
-          }
-          await audio.play()
-        } else {
-          const utterance = new SpeechSynthesisUtterance(text)
-          utterance.onstart = () => setIsSpeaking(true)
-          utterance.onend = () => setIsSpeaking(false)
-          speechSynthesis.speak(utterance)
-        }
-      } catch (err) {
-        console.error('TTS error', err)
-        const utter = new SpeechSynthesisUtterance(text)
-        utter.onstart = () => setIsSpeaking(true)
-        utter.onend = () => setIsSpeaking(false)
-        speechSynthesis.speak(utter)
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        utterRef.current = u;
+        u.onstart = () => setIsSpeaking(true);
+        u.onend = () => setIsSpeaking(false);
+        u.onerror = () => setIsSpeaking(false);
+        window.speechSynthesis.speak(u);
+      } catch {
+        setIsSpeaking(false);
       }
     },
-    [cancel],
-  )
+    [enabled],
+  );
 
-  return { speak, isSpeaking, cancel }
+  const cancel = useCallback(() => {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* ignore */
+    }
+    setIsSpeaking(false);
+  }, []);
+
+  const enable = useCallback(() => {
+    setEnabled(true);
+    localStorage.setItem("aurora_voice_enabled", "1");
+    try {
+      window.speechSynthesis.resume();
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  return { speak, cancel, isSpeaking, enabled, enable };
 }
+
