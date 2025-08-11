@@ -44,6 +44,7 @@ interface DBHabit {
   id: string;
   title: string;
   frequency: string | null;
+  trigger: string | null;
   status: string | null;
 }
 
@@ -72,7 +73,7 @@ export default function MasterPlanView() {
         .order("created_at", { ascending: true }),
       supabase
         .from("habits")
-        .select("id, title, frequency, status")
+        .select("id, title, frequency, trigger, status")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true }),
     ]);
@@ -92,7 +93,7 @@ export default function MasterPlanView() {
     return map;
   }, [roadmaps]);
 
-  const updateHabit = async (id: string, fields: { title?: string; frequency?: string }) => {
+  const updateHabit = async (id: string, fields: { title?: string; frequency?: string; trigger?: string }) => {
     if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to edit habits." }); return; }
     const { error } = await supabase
       .from("habits")
@@ -179,6 +180,12 @@ export default function MasterPlanView() {
                   onChange={(e) => setHabits(prev => prev.map(x => x.id === h.id ? { ...x, frequency: e.target.value } : x))}
                   onBlur={(e) => updateHabit(h.id, { frequency: e.target.value })}
                   placeholder="Frequency"
+                />
+                <Input
+                  value={h.trigger ?? ""}
+                  onChange={(e) => setHabits(prev => prev.map(x => x.id === h.id ? { ...x, trigger: e.target.value } : x))}
+                  onBlur={(e) => updateHabit(h.id, { trigger: e.target.value })}
+                  placeholder="Trigger"
                 />
               </div>
             ))}
