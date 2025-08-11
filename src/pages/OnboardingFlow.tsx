@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -122,6 +122,7 @@ const getNextState = (
 };
 
 type Phase = "start" | "question" | "summary" | "vision";
+type Step = { phase: Phase; module: number; question: number };
 
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
@@ -132,11 +133,8 @@ export default function OnboardingFlow() {
     try {
       return JSON.parse(localStorage.getItem("aurora_chat_v1") ?? "{}") as {
         messages?: Msg[];
-        phase?: Phase;
-        currentModule?: number;
-        questionIndex?: number;
-        progressPercent?: number;
-        answers?: string[][];
+        step?: Step;
+        goals?: string[];
       };
     } catch {
       return {};
@@ -144,17 +142,32 @@ export default function OnboardingFlow() {
   };
 
   const initial = getInitialState();
+  const initialStep: Step = initial.step || { phase: "start", module: 0, question: 0 };
+
+  const buildInitialAnswers = (goals: string[] | undefined) => {
+    const ans = MODULES.map((mod) => Array(mod.questions.length).fill(""));
+    if (!goals) return ans;
+    let idx = 0;
+    for (let m = 0; m < MODULES.length; m++) {
+      for (let q = 0; q < MODULES[m].questions.length; q++) {
+        if (idx < goals.length) {
+          ans[m][q] = goals[idx++];
+        }
+      }
+    }
+    return ans;
+  };
 
   const [messages, setMessages] = useState<Msg[]>(initial.messages || []);
-  const [phase, setPhase] = useState<Phase>(initial.phase || "start");
-  const [currentModule, setCurrentModule] = useState<number>(initial.currentModule || 0);
-  const [questionIndex, setQuestionIndex] = useState<number>(initial.questionIndex || 0);
-  const [progressPercent, setProgressPercent] = useState<number>(initial.progressPercent || 0);
+  const [phase, setPhase] = useState<Phase>(initialStep.phase);
+  const [currentModule, setCurrentModule] = useState<number>(initialStep.module);
+  const [questionIndex, setQuestionIndex] = useState<number>(initialStep.question);
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<string[][]>(initial.answers || MODULES.map(() => []));
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const [answers, setAnswers] = useState<string[][]>(() => buildInitialAnswers(initial.goals));
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
+  const goals = useMemo(() => answers.flat().filter(Boolean), [answers]);
+  const [progressPercent, setProgressPercent] = useState<number>((goals.length / total) * 100);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const sendPrompt = (prompt: string) => {
     setMessages((msgs) => {
@@ -194,29 +207,26 @@ export default function OnboardingFlow() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Persist whole onboarding state
+  // Persist minimal onboarding state
   useEffect(() => {
     if (typeof window !== "undefined") {
+      const step: Step = { phase, module: currentModule, question: questionIndex };
       localStorage.setItem(
         "aurora_chat_v1",
         JSON.stringify({
+          step,
           messages,
-          phase,
-          currentModule,
-          questionIndex,
-          progressPercent,
-          answers,
+          goals,
         }),
       );
     }
-  }, [messages, phase, currentModule, questionIndex, progressPercent, answers]);
+  }, [phase, currentModule, questionIndex, messages, goals]);
 
   // Compute progress %
   useEffect(() => {
-    const answered = answers.reduce((sum, arr) => sum + arr.filter(Boolean).length, 0);
-    const pct = (answered / total) * 100;
+    const pct = (goals.length / total) * 100;
     setProgressPercent(pct);
-  }, [answers, total]);
+  }, [goals, total]);
 
   // Also persist a simple integer percent for other UIs if needed
   useEffect(() => {
@@ -225,14 +235,25 @@ export default function OnboardingFlow() {
     }
   }, [progressPercent]);
 
-  // Kick off first question
+  // Kick off conversation
   useEffect(() => {
-    if (phase === "start") {
+    if (phase === "start" && messages.length === 0) {
       sendPrompt("Hi, I'm Aurora. Let's get to know you a bit better.");
       setPhase("question");
-      setTimeout(() => askQuestion(currentModule, questionIndex), 0);
     }
-  }, [phase, currentModule, questionIndex]);
+  }, [phase, messages]);
+
+  // Ask current question if not already asked
+  useEffect(() => {
+    if (phase !== "question") return;
+    const prompt = MODULES[currentModule].questions[questionIndex].prompt;
+    const alreadyAsked = messages.some(
+      (m) => m.role === "assistant" && m.content === prompt,
+    );
+    if (!alreadyAsked) {
+      askQuestion(currentModule, questionIndex);
+    }
+  }, [phase, currentModule, questionIndex, messages, askQuestion]);
 
   const handleSubmit = async (e?: React.FormEvent, choice?: string) => {
     e?.preventDefault();
@@ -314,7 +335,7 @@ export default function OnboardingFlow() {
   const handleFinish = async () => {
     if (user) {
       await supabase.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("id", user.id);
-      await supabase.functions.invoke("generate-plan", { body: { answers: answers.flat() } });
+      await supabase.functions.invoke("generate-plan", { body: { answers: goals } });
     }
     navigate("/app/plan", { replace: true });
   };
@@ -384,7 +405,7 @@ export default function OnboardingFlow() {
 
         {phase === "vision" && (
           <div className="border-t bg-background p-4">
-            <VisionCard answers={answers.flat()} onClose={handleFinish} />
+            <VisionCard answers={goals} onClose={handleFinish} />
           </div>
         )}
       </div>
