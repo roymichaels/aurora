@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
+import { scheduleTaskTriggers } from "@/lib/triggers";
 
 export type Task = {
   id: string;
@@ -58,6 +59,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
       return t;
     });
     setTasks(normalized);
+    scheduleTaskTriggers(normalized, { email: user?.email ?? undefined });
     if (needsUpdate) {
       // Persist positions
       await Promise.all(normalized.map((t) => supabase.from("tasks").update({ position: t.position }).eq("id", t.id)));
