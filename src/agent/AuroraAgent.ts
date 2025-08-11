@@ -129,12 +129,12 @@ export class AuroraAgent {
     }
   }
 
-  say(text: string) {
-    this.history.push({ role: 'assistant', content: text });
-    if (this.history.length > 20) this.history = this.history.slice(-20);
-    // store assistant response asynchronously
-    memoryStore.add('assistant', text).catch(() => {});
-    this.events.onResponse?.(text);
-    this.voice.speak(text);
+    say(text: string) {
+      this.history.push({ role: 'assistant', content: text });
+      if (this.history.length > 20) this.history = this.history.slice(-20);
+      // store assistant response asynchronously
+      memoryStore.add('assistant', text).catch(() => {});
+      this.events.onResponse?.(text);
+      void this.voice.speak(text);
+    }
   }
-}

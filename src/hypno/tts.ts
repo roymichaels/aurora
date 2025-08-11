@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useVoiceStore } from "@/state/voice";
 
 export type PlaybackHandle = {
   stop: () => void;
@@ -16,8 +17,9 @@ export async function playHypno(
 ): Promise<PlaybackHandle | null> {
   // Try ElevenLabs via Supabase function
   try {
+    const voiceId = useVoiceStore.getState().voiceId;
     const { data, error } = await supabase.functions.invoke("tts-generate", {
-      body: { text },
+      body: { text, voiceId },
     });
     if (!error && data?.audioBase64) {
       const src = `data:${data.contentType};base64,${data.audioBase64}`;

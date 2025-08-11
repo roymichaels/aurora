@@ -23,13 +23,16 @@ serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const {
-      text,
-      voiceId = "9BWtsMINqrJLrRacOk9x", // Aria (default voice)
-      modelId = "eleven_turbo_v2_5",
-      outputFormat = "mp3_44100_128",
-    } = body ?? {};
+      const body = await req.json();
+      const {
+        text,
+        voiceId: reqVoiceId,
+        modelId = "eleven_turbo_v2_5",
+        outputFormat = "mp3_44100_128",
+      } = body ?? {};
+      const voiceId = typeof reqVoiceId === "string" && reqVoiceId.length
+        ? reqVoiceId
+        : "9BWtsMINqrJLrRacOk9x"; // Aria (default voice)
 
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "Missing text" }), {
