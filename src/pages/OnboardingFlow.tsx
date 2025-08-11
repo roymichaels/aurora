@@ -112,6 +112,7 @@ export default function OnboardingFlow() {
         phase?: Phase;
         currentModule?: number;
         questionIndex?: number;
+        progressPercent?: number;
         answers?: string[][];
       };
     } catch {
@@ -126,6 +127,9 @@ export default function OnboardingFlow() {
   );
   const [questionIndex, setQuestionIndex] = useState<number>(
     initial.questionIndex || 0,
+  );
+  const [progressPercent, setProgressPercent] = useState<number>(
+    initial.progressPercent || 0,
   );
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<string[][]>(
@@ -176,11 +180,20 @@ export default function OnboardingFlow() {
           phase,
           currentModule,
           questionIndex,
+          progressPercent,
           answers,
         }),
       );
     }
-  }, [messages, phase, currentModule, questionIndex, answers]);
+  }, [messages, phase, currentModule, questionIndex, progressPercent, answers]);
+
+  useEffect(() => {
+    const answered = answers.reduce(
+      (sum, arr) => sum + arr.filter(Boolean).length,
+      0,
+    );
+    setProgressPercent((answered / total) * 100);
+  }, [answers, total]);
 
   useEffect(() => {
     if (phase === "start") {
@@ -268,11 +281,6 @@ export default function OnboardingFlow() {
     navigate("/app/plan", { replace: true });
   };
 
-  const answeredCount = answers.reduce(
-    (sum, arr) => sum + arr.filter(Boolean).length,
-    0,
-  );
-  const progress = (answeredCount / total) * 100;
   const shouldShowForm = phase !== "vision" && phase !== "start";
 
   return (
@@ -280,7 +288,7 @@ export default function OnboardingFlow() {
       <div className="os-bg" />
       <div className="relative z-10 flex h-full flex-col">
         <div className="p-4">
-          <Progress value={progress} />
+          <Progress value={progressPercent} />
         </div>
         <ScrollArea className="flex-1 px-4">
           <div className="space-y-3 text-sm">
