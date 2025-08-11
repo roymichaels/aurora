@@ -9,10 +9,10 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { MessageSquare, Send, X, Bot, Minimize2, Mic, Volume2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { useLocation } from 'react-router-dom';
 import type { Task } from '@/state/task';
 import { validateAnswer } from '@/utils/validation';
+import { auroraChat } from '@/utils/auroraChat';
 
 type ChatMessage = {
   id: string;
@@ -113,14 +113,10 @@ export function FloatingAssistant({
             "The user's last message was incomplete or uninformative. Ask a follow-up question to clarify.",
         });
       }
-      const { data, error } = await supabase.functions.invoke('aurora-chat', {
-        body: {
-          model: 'o4-mini-2025-04-16',
-          messages: [...systemMessages, ...history],
-        },
-      });
-      if (error) throw error;
-      const replyText = (data as { content?: string } | null)?.content ?? 'Okay.';
+      const { content: replyText } = await auroraChat(
+        [...systemMessages, ...history],
+        { model: 'o4-mini-2025-04-16' }
+      );
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',

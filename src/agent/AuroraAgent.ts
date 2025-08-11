@@ -1,7 +1,7 @@
 import { VoiceIO } from "@/voice/voiceio";
 import { ToolImpl } from "@/agent/tool-impl";
-import { supabase } from "@/integrations/supabase/client";
 import { validateAnswer } from "@/utils/validation";
+import { auroraChat } from "@/utils/auroraChat";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -50,24 +50,19 @@ export class AuroraAgent {
 
     if (!validateAnswer(text)) {
       try {
-        const { data } = await supabase.functions.invoke('aurora-chat', {
-          body: {
-            messages: [
-              {
-                role: 'system',
-                content: `Recent user statements: ${userSummary}`,
-              },
-              {
-                role: 'system',
-                content:
-                  "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
-              },
-              ...this.history,
-            ],
+        const { content } = await auroraChat([
+          {
+            role: 'system',
+            content: `Recent user statements: ${userSummary}`,
           },
-        });
-        const reply = (data as any)?.content ?? 'Could you elaborate?';
-        this.say(reply);
+          {
+            role: 'system',
+            content:
+              "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
+          },
+          ...this.history,
+        ]);
+        this.say(content);
       } catch (e) {
         console.error('aurora-chat failed', e);
         this.say('Could you elaborate?');
@@ -100,20 +95,17 @@ export class AuroraAgent {
     }
 
     try {
-      const { data, error } = await supabase.functions.invoke('aurora-chat', {
-        body: {
-          messages: [
-            { role: 'system', content: `Recent user statements: ${userSummary}. Use this context and reference earlier user comments when appropriate.` },
-            ...this.history,
-          ],
+      const { content } = await auroraChat([
+        {
+          role: 'system',
+          content: `Recent user statements: ${userSummary}. Use this context and reference earlier user comments when appropriate.`,
         },
-      });
-      if (error) throw error;
-      const reply = (data as any)?.content ?? 'Okay.';
-      this.say(reply);
+        ...this.history,
+      ]);
+      this.say(content);
     } catch (e) {
       console.error('aurora-chat failed', e);
-      this.say("Okay.");
+      this.say('Okay.');
     }
   }
 
