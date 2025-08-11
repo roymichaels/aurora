@@ -62,6 +62,17 @@ export default function MemoryPanel() {
     setMemories(memoryStore.list(bucket));
   };
 
+  const handleExport = () => {
+    const data = memoryStore.exportAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'memories.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Memories</h2>
@@ -84,6 +95,9 @@ export default function MemoryPanel() {
         />
         <Button variant="outline" onClick={handleSearch}>
           Search
+        </Button>
+        <Button variant="outline" onClick={handleExport}>
+          Export
         </Button>
       </div>
       <Table>
