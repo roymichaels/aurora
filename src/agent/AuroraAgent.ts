@@ -2,6 +2,10 @@ import { VoiceIO } from "@/voice/voiceio";
 import { ToolImpl } from "@/agent/tool-impl";
 import { validateAnswer } from "@/utils/validation";
 import { auroraChat } from "@/utils/auroraChat";
+import {
+  memoryStore,
+  retrieveRelevantMemories,
+} from "@/memory/indexedDbMemory";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -43,6 +47,14 @@ export class AuroraAgent {
     this.history.push({ role: 'user', content: text });
     if (this.history.length > 20) this.history = this.history.slice(-20);
 
+    // persist user turn into long-term memory
+    await memoryStore.add('user', text);
+
+    const memories = await retrieveRelevantMemories(text);
+    const memoryContext = memories
+      .map((m) => `${m.role}: ${m.content}`)
+      .join('\n');
+
     const userSummary = this.history
       .filter((m) => m.role === 'user')
       .map((m) => m.content)
@@ -50,18 +62,22 @@ export class AuroraAgent {
 
     if (!validateAnswer(text)) {
       try {
-        const { content } = await auroraChat([
+        const messages = [
           {
             role: 'system',
             content: `Recent user statements: ${userSummary}`,
           },
+          ...(memoryContext
+            ? [{ role: 'system', content: `Relevant memories:\n${memoryContext}` }]
+            : []),
           {
             role: 'system',
             content:
               "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
           },
           ...this.history,
-        ]);
+        ];
+        const { content } = await auroraChat(messages);
         this.say(content);
       } catch (e) {
         console.error('aurora-chat failed', e);
@@ -95,13 +111,17 @@ export class AuroraAgent {
     }
 
     try {
-      const { content } = await auroraChat([
+      const messages = [
         {
           role: 'system',
           content: `Recent user statements: ${userSummary}. Use this context and reference earlier user comments when appropriate.`,
         },
+        ...(memoryContext
+          ? [{ role: 'system', content: `Relevant memories:\n${memoryContext}` }]
+          : []),
         ...this.history,
-      ]);
+      ];
+      const { content } = await auroraChat(messages);
       this.say(content);
     } catch (e) {
       console.error('aurora-chat failed', e);
@@ -112,6 +132,8 @@ export class AuroraAgent {
   say(text: string) {
     this.history.push({ role: 'assistant', content: text });
     if (this.history.length > 20) this.history = this.history.slice(-20);
+    // store assistant response asynchronously
+    memoryStore.add('assistant', text).catch(() => {});
     this.events.onResponse?.(text);
     this.voice.speak(text);
   }
