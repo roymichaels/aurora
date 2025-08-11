@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 // Chat-based onboarding flow that gathers key info about the user
 // including their goals, values, skills, habits, and challenges.
@@ -41,7 +42,12 @@ export default function OnboardingFlow() {
   const [step, setStep] = useState(0);
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const total = QUESTIONS.length;
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // ask next question
   useEffect(() => {
@@ -98,33 +104,55 @@ export default function OnboardingFlow() {
   const progress = (step / total) * 100;
 
   return (
-    <div className="relative min-h-svh w-screen grid place-items-center p-4">
+    <div className="relative h-svh w-screen">
       <div className="os-bg" />
-      <Card className="w-full max-w-md p-6 space-y-4">
-        <Progress value={progress} />
-        <div className="space-y-3 text-sm">
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={m.role === "assistant" ? "text-muted-foreground" : "text-right"}
-            >
-              {m.content}
-            </div>
-          ))}
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="p-4">
+          <Progress value={progress} />
         </div>
+        <ScrollArea className="flex-1 px-4">
+          <div className="space-y-3 text-sm">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {m.role === "assistant" && (
+                  <Avatar className="mr-2 h-8 w-8">
+                    <AvatarFallback>A</AvatarFallback>
+                  </Avatar>
+                )}
+                <div
+                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                    m.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {m.content}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
         {step < total && (
-          <form onSubmit={handleSubmit} className="space-y-2">
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-2 border-t bg-background p-4"
+          >
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Your answer..."
+              className="resize-none"
             />
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="self-end">
               Continue
             </Button>
           </form>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
