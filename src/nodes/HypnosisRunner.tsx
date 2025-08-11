@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
-import { supabase } from "@/integrations/supabase/client";
+import { useGameStore } from "@/game/store";
+import { playHypno, type PlaybackHandle } from "@/hypno/tts";
 import HypnoSphere from "@/components/effects/HypnoSphere";
 
 type Props = { node: { id: string; label: string; script?: string; duration?: number }; onExit: () => void };
@@ -10,7 +11,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
   const [elapsed, setElapsed] = useState(0);
   const [ended, setEnded] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const playbackRef = useRef<PlaybackHandle | null>(null);
   const { awardXP, complete } = useProgressStore();
 
   const duration = Math.min(180, Math.max(60, node.duration ?? 90));
@@ -21,16 +22,7 @@ export default function HypnosisRunner({ node, onExit }: Props) {
     setPlaying(true);
     setEnded(false);
 
-    // Fallback TTS via Web Speech
-    if ("speechSynthesis" in window) {
-      try { window.speechSynthesis.cancel(); } catch {}
-      const u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.95;
-      u.pitch = 1.0;
-      u.onend = handleEnd;
-      utterRef.current = u;
-      window.speechSynthesis.speak(u);
-    }
+    playbackRef.current = await playHypno(text, handleEnd);
 
     const startedAt = performance.now();
     timerRef.current = window.setInterval(() => {
@@ -44,20 +36,16 @@ export default function HypnosisRunner({ node, onExit }: Props) {
     timerRef.current && clearInterval(timerRef.current);
 
     // Award XP + streak
-    awardXP(25, { activity: "hypnosis", nodeId: node.id });
-    try {
-      await supabase.rpc("award_xp", { activity: "hypnosis_session", amount: 25, metadata: { node_id: node.id } });
-    } catch {}
+    const amount = 25;
+    awardXP(amount, { activity: "hypnosis", nodeId: node.id });
+    useGameStore.getState().awardXP(amount);
+    useGameStore.getState().incStreak();
     complete(node.id);
   };
 
   const stopAll = () => {
-    if (utterRef.current) {
-      try {
-        window.speechSynthesis.cancel();
-      } catch {}
-      utterRef.current = null;
-    }
+    playbackRef.current?.stop();
+    playbackRef.current = null;
     timerRef.current && clearInterval(timerRef.current);
   };
 
