@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.onboardingContainer {
+  font-family: 'Inter', sans-serif;
+  line-height: 1.4;
+}
+
+.messageBubble {
+  @apply max-w-[80%] rounded-[18px] px-3 py-2 backdrop-blur-md text-white shadow-md animate-enter;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.userBubble {
+  @apply bg-primary/60 text-primary-foreground;
+}
