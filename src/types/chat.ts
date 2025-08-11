@@ -5,4 +5,5 @@ export type ChatMessage = {
 
 export interface ChatOptions {
   model?: string;
+  depth?: number;
 }
