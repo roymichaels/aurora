@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 
+// Chat-based onboarding flow that gathers key info about the user
+// including their goals, values, skills, habits, and challenges.
+
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
 
