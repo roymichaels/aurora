@@ -60,11 +60,12 @@ export class VoiceIO {
   }
 
   async speak(text: string) {
-    const voiceId = useVoiceStore.getState().voiceId;
+    const { voiceId, speed, pitch, expression, emotion } =
+      useVoiceStore.getState();
     if (voiceId) {
       try {
         const { data, error } = await supabase.functions.invoke("tts-generate", {
-          body: { text, voiceId },
+          body: { text, voiceId, emotion, speed, pitch, expression },
         });
         if (!error && data?.audioBase64) {
           const src = `data:${data.contentType};base64,${data.audioBase64}`;
@@ -93,6 +94,8 @@ export class VoiceIO {
 
     if (!('speechSynthesis' in window)) return;
     const u = new SpeechSynthesisUtterance(text);
+    u.rate = speed;
+    u.pitch = pitch;
     u.onstart = () => {
       useVoiceStore.getState().setSpeaking(true);
       this.callbacks.onSpeakingChange?.(true);

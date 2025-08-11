@@ -2,10 +2,20 @@ import { useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
 
 export default function VoiceSetup() {
-  const { voiceId, setVoiceId } = useVoiceStore();
+  const {
+    voiceId,
+    setVoiceId,
+    speed,
+    setSpeed,
+    pitch,
+    setPitch,
+    expression,
+    setExpression,
+  } = useVoiceStore();
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
@@ -107,6 +117,48 @@ export default function VoiceSetup() {
       {voiceId && (
         <div className="text-xs text-muted-foreground break-all">Voice ID: {voiceId}</div>
       )}
+
+      <div className="mt-4 space-y-4">
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span>Speed</span>
+            <span>{speed.toFixed(2)}</span>
+          </div>
+          <Slider
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={[speed]}
+            onValueChange={(v) => setSpeed(v[0])}
+          />
+        </div>
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span>Pitch</span>
+            <span>{pitch.toFixed(2)}</span>
+          </div>
+          <Slider
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={[pitch]}
+            onValueChange={(v) => setPitch(v[0])}
+          />
+        </div>
+        <div>
+          <div className="flex justify-between text-xs mb-1">
+            <span>Expression</span>
+            <span>{expression.toFixed(2)}</span>
+          </div>
+          <Slider
+            min={0}
+            max={2}
+            step={0.1}
+            value={[expression]}
+            onValueChange={(v) => setExpression(v[0])}
+          />
+        </div>
+      </div>
     </div>
   );
 }

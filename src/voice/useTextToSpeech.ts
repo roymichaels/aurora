@@ -9,7 +9,13 @@ export function useTextToSpeech() {
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const voiceId = useVoiceStore((s) => s.voiceId);
+  const { voiceId, speed, pitch, expression, emotion } = useVoiceStore((s) => ({
+    voiceId: s.voiceId,
+    speed: s.speed,
+    pitch: s.pitch,
+    expression: s.expression,
+    emotion: s.emotion,
+  }));
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
   useEffect(() => {
@@ -37,6 +43,10 @@ export function useTextToSpeech() {
       // Try cloned voice via Supabase when a voiceId is configured
       if (voiceId) {
         const audio = await playClonedVoice(text, voiceId, {
+          emotion,
+          speed,
+          pitch,
+          expression,
           onStart: () => setIsSpeaking(true),
           onEnd: () => setIsSpeaking(false),
         });
@@ -51,6 +61,8 @@ export function useTextToSpeech() {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
         utterRef.current = u;
+        u.rate = speed;
+        u.pitch = pitch;
         u.onstart = () => setIsSpeaking(true);
         u.onend = () => setIsSpeaking(false);
         u.onerror = () => setIsSpeaking(false);
@@ -59,7 +71,7 @@ export function useTextToSpeech() {
         setIsSpeaking(false);
       }
     },
-    [enabled, voiceId],
+    [enabled, voiceId, speed, pitch, expression, emotion],
   );
 
   const cancel = useCallback(() => {

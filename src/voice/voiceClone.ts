@@ -1,25 +1,91 @@
 import { supabase } from "@/integrations/supabase/client";
 
+async function cacheVoiceModel(voiceId: string) {
+  if (typeof window === "undefined") return;
+  const key = `aurora_voice_model_${voiceId}`;
+  if (localStorage.getItem(key)) return;
+  try {
+    const { data } = await supabase.storage
+      .from("voice-models")
+      .download(`${voiceId}.bin`);
+    if (data) {
+      const base64 = await blobToBase64(data);
+      localStorage.setItem(key, base64);
+    }
+  } catch {
+    /* ignore caching errors */
+  }
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const res = reader.result?.toString() || "";
+      resolve(res.split(",")[1] || "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 /**
  * Try to synthesize speech using the user's cloned voice via Supabase edge function.
+ * Supports emotion, speed, pitch and expression parameters. Audio is cached for
+ * offline reuse and the voice model is cached locally the first time it is used.
  * Returns the HTMLAudioElement if playback was started, otherwise null.
  */
 export async function playClonedVoice(
   text: string,
   voiceId: string,
-  callbacks: { onStart?: () => void; onEnd?: () => void } = {},
+  options: {
+    emotion?: string;
+    speed?: number;
+    pitch?: number;
+    expression?: number;
+    onStart?: () => void;
+    onEnd?: () => void;
+  } = {},
 ): Promise<HTMLAudioElement | null> {
+  const { emotion, speed, pitch, expression, onStart, onEnd } = options;
+
+  const cacheKey = `aurora_voice_cache:${voiceId}:${emotion || "neutral"}:${
+    speed ?? 1
+  }:${pitch ?? 1}:${expression ?? 1}:${text}`;
+
   try {
+    await cacheVoiceModel(voiceId);
+
+    const cachedSrc =
+      typeof window !== "undefined" ? localStorage.getItem(cacheKey) : null;
+    if (cachedSrc) {
+      const audio = new Audio(cachedSrc);
+      if (onStart) audio.onplay = onStart;
+      if (onEnd) {
+        audio.onended = onEnd;
+        audio.onerror = onEnd;
+      }
+      await audio.play();
+      return audio;
+    }
+
     const { data, error } = await supabase.functions.invoke("tts-generate", {
-      body: { text, voiceId },
+      body: { text, voiceId, emotion, speed, pitch, expression },
     });
     if (!error && data?.audioBase64) {
       const src = `data:${data.contentType};base64,${data.audioBase64}`;
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(cacheKey, src);
+        } catch {
+          /* ignore */
+        }
+      }
       const audio = new Audio(src);
-      if (callbacks.onStart) audio.onplay = callbacks.onStart;
-      if (callbacks.onEnd) {
-        audio.onended = callbacks.onEnd;
-        audio.onerror = callbacks.onEnd;
+      if (onStart) audio.onplay = onStart;
+      if (onEnd) {
+        audio.onended = onEnd;
+        audio.onerror = onEnd;
       }
       await audio.play();
       return audio;
