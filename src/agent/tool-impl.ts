@@ -27,6 +27,10 @@ export const ToolImpl = {
 
   async clip_note({ text, tags }: { text: string; tags?: string[] }) {
     try {
+      if (!navigator?.clipboard) {
+        toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+        return { ok: false } as any;
+      }
       // Minimal local clipboard as placeholder for Notes feature
       await navigator.clipboard.writeText(text);
       toast({ title: "Clipped to clipboard", description: (tags && tags.length) ? `Tags: ${tags.join(', ')}` : undefined });
@@ -38,6 +42,11 @@ export const ToolImpl = {
   },
 
   async start_focus({ minutes = 25, hypnosis }: { minutes?: number; hypnosis?: 'focus' | 'calm' | 'confidence' | null }) {
+    minutes = Math.round(minutes);
+    if (!Number.isFinite(minutes) || minutes < 1 || minutes > 180) {
+      toast({ title: "Invalid duration", description: "Minutes must be between 1 and 180." });
+      return { ok: false } as any;
+    }
     if (hypnosis) {
       window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
     }
@@ -46,9 +55,14 @@ export const ToolImpl = {
     return { ok: true };
   },
 
-  async start_hypnosis({ mode, duration }: { mode: 'focus' | 'calm' | 'confidence' | 'reset'; duration?: number }) {
+  async start_hypnosis({ mode, duration = 60 }: { mode: 'focus' | 'calm' | 'confidence' | 'reset'; duration?: number }) {
+    duration = Math.round(duration);
+    if (!Number.isFinite(duration) || duration < 1 || duration > 600) {
+      toast({ title: "Invalid duration", description: "Duration must be between 1 and 600 seconds." });
+      return { ok: false } as any;
+    }
     window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
-    toast({ title: `Hypnosis: ${mode}`, description: duration ? `${duration}s` : undefined });
+    toast({ title: `Hypnosis: ${mode}`, description: `${duration}s` });
     return { ok: true };
   },
 
@@ -59,6 +73,10 @@ export const ToolImpl = {
   },
 
   async fill_form({ text }: { text: string }) {
+    if (!navigator?.clipboard) {
+      toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+      return { ok: false } as any;
+    }
     // Basic fallback: copy to clipboard for paste
     await navigator.clipboard.writeText(text);
     toast({ title: "Ready to paste", description: "Text copied to clipboard" });
@@ -66,6 +84,10 @@ export const ToolImpl = {
   },
 
   async copy_to_clipboard({ text }: { text: string }) {
+    if (!navigator?.clipboard) {
+      toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+      return { ok: false } as any;
+    }
     await navigator.clipboard.writeText(text);
     toast({ title: "Copied", description: text.length > 60 ? `${text.slice(0, 60)}…` : text });
     return { ok: true };

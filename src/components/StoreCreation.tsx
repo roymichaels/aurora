@@ -40,6 +40,7 @@ export default function StoreCreation() {
         {creating ? "Creating..." : "Create Store"}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}
+
       {store && (
         <p className="text-sm text-muted-foreground">
           Minted store NFT {store.nftId}
