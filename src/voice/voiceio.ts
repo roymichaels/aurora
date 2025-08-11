@@ -1,3 +1,5 @@
+import { useVoiceStore } from "@/state/voice";
+
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
   onFinal?: (text: string) => void;
@@ -59,9 +61,16 @@ export class VoiceIO {
   speak(text: string) {
     if (!('speechSynthesis' in window)) return;
     const u = new SpeechSynthesisUtterance(text);
-    u.onstart = () => this.callbacks.onSpeakingChange?.(true);
-    u.onend = () => this.callbacks.onSpeakingChange?.(false);
-    u.onerror = () => this.callbacks.onSpeakingChange?.(false);
+    u.onstart = () => {
+      useVoiceStore.getState().setSpeaking(true);
+      this.callbacks.onSpeakingChange?.(true);
+    };
+    const end = () => {
+      useVoiceStore.getState().setSpeaking(false);
+      this.callbacks.onSpeakingChange?.(false);
+    };
+    u.onend = end;
+    u.onerror = end;
     // voice selection can be tuned later
     speechSynthesis.speak(u);
     this.utter = u;
@@ -69,6 +78,7 @@ export class VoiceIO {
 
   stopSpeaking() {
     try { window.speechSynthesis.cancel(); } catch {}
+    useVoiceStore.getState().setSpeaking(false);
     this.callbacks.onSpeakingChange?.(false);
     this.utter = null;
   }

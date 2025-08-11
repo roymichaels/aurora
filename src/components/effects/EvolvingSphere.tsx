@@ -6,6 +6,7 @@ type Props = {
   xpPct?: number;       // 0-100: affects hue
   mood?: "calm" | "focused" | "confident" | "stressed";
   className?: string;
+  speaking?: boolean;   // voice activity
 };
 
 export function EvolvingSphere({
@@ -14,6 +15,7 @@ export function EvolvingSphere({
   xpPct = 0,
   mood = "calm",
   className = "",
+  speaking = false,
 }: Props) {
   // Map XP => hue; mood tints saturation/lightness
   const { hue, sat, light } = useMemo(() => {
@@ -32,6 +34,8 @@ export function EvolvingSphere({
   const satellites = Math.min(6, Math.max(1, Math.floor(level / 3) + 1));
   const speed = Math.max(6, 12 - Math.floor(level / 5)); // faster as you level
 
+  const intensity = speaking ? 1 : 0.3;
+
   const vars: React.CSSProperties = {
     // expose to CSS
     ["--es-size" as any]: `${size}px`,
@@ -39,6 +43,7 @@ export function EvolvingSphere({
     ["--es-sat" as any]: `${sat}%`,
     ["--es-light" as any]: `${light}%`,
     ["--es-speed" as any]: `${speed}s`,
+    ["--es-intensity" as any]: intensity,
   };
 
   return (
