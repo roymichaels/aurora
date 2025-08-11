@@ -171,6 +171,7 @@ serve(async (req) => {
           user_id: auth.user.id,
           title: habit.title,
           frequency: habit.frequency ?? null,
+          trigger: habit.trigger ?? null,
         });
         if (hError) throw hError;
       }
