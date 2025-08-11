@@ -1,3 +1,5 @@
+import brainPolicy from '../../BRAIN_POLICY.md?raw';
+
 export interface CognitionConfig {
   /**
    * System prompt used for all chat interactions.
@@ -10,7 +12,7 @@ export interface CognitionConfig {
 }
 
 export const cognition: CognitionConfig = {
-  systemPrompt: 'You are Aura, a friendly life coach AI who gives concise and actionable advice.',
+  systemPrompt: brainPolicy,
   contextPrompt: 'Respond in a warm and supportive tone.'
 };
 
