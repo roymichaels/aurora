@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TriggersPanel from "@/components/settings/TriggersPanel";
 import ModelPanel from "@/components/settings/ModelPanel";
+import DataSourcesPanel from "@/components/settings/DataSourcesPanel";
 import MemoryPanel from "@/components/settings/MemoryPanel";
 
 
@@ -86,6 +87,7 @@ export default function SettingsView() {
               <Button variant="softPrimary" onClick={signOut}>Log out</Button>
             </div>
             </div>
+            <DataSourcesPanel />
             <TriggersPanel />
             <ModelPanel />
             <MemoryPanel />
