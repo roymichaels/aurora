@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import styles from "./OnboardingFlow.module.css";
 
 type Msg = { role: "assistant" | "user"; content: string };
 
@@ -198,8 +199,8 @@ export default function OnboardingFlow() {
 
   // ----- UI -----
   return (
-    <div className="relative h-svh w-screen">
-      <div className="os-bg" />
+    <div className={`relative h-svh w-screen ${styles.onboardingContainer}`}>
+      <div className="os-bg bg-gradient-to-b from-black via-[#191970] to-[#8a2be2]" />
       <div className="relative z-10 flex h-full flex-col">
         <div className="p-4">
           <div className="relative">
@@ -225,10 +226,8 @@ export default function OnboardingFlow() {
                   </Avatar>
                 )}
                 <div
-                  className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                    m.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                  className={`${styles.messageBubble} ${
+                    m.role === "user" ? styles.userBubble : ""
                   }`}
                 >
                   {m.content}
@@ -247,7 +246,12 @@ export default function OnboardingFlow() {
               placeholder="Your answer..."
               className="resize-none"
             />
-            <Button type="submit" className="self-end">Continue</Button>
+            <Button
+              type="submit"
+              className="self-end transition-all duration-150 hover:shadow-[0_0_8px_#8a2be2] active:scale-95"
+            >
+              Continue
+            </Button>
           </form>
         )}
 
