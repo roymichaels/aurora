@@ -11,18 +11,13 @@ import { Input } from '@/components/ui/input';
 import { MessageSquare, Send, X, Bot, Minimize2, Mic, Volume2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation } from 'react-router-dom';
+import type { Task } from '@/state/task';
 
 // Minimal typings for browsers without built-in Web Speech definitions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognition = any;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SpeechRecognitionEvent = any;
-
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-};
 
 type ChatMessage = {
   id: string;
@@ -96,11 +91,19 @@ export function FloatingAssistant({
         .concat(userMsg)
         .slice(-12)
         .map((m) => ({ role: m.role, content: m.content }));
-      const context = `Route: ${loc.pathname}${task ? ` | Task: ${task.title}` : ''}`;
+      const systemMessages: { role: 'system'; content: string }[] = [
+        { role: 'system', content: `Route: ${loc.pathname}` },
+      ];
+      if (task) {
+        systemMessages.push({
+          role: 'system',
+          content: `Task: ${JSON.stringify({ id: task.id, title: task.title, description: task.description })}`,
+        });
+      }
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
         body: {
           model: 'o4-mini-2025-04-16',
-          messages: [{ role: 'system', content: context }, ...history],
+          messages: [...systemMessages, ...history],
         },
       });
       if (error) throw error;

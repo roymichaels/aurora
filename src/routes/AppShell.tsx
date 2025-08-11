@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
 import { GameHUD } from "@/components/game/GameHUD";
 import { FloatingAssistant } from "@/components/live/FloatingAssistant";
+import { useCurrentTask } from "@/state/task";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
@@ -16,6 +17,7 @@ export default function AppShell() {
   const loc = useLocation();
   const open = useViewNav();
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const currentTask = useCurrentTask((s) => s.currentTask);
 
   useEffect(() => {
     if (user) {
@@ -147,7 +149,7 @@ export default function AppShell() {
       </AnimatePresence>
 
 
-      <FloatingAssistant task={null} onUpdated={() => {}} />
+      <FloatingAssistant task={currentTask} onUpdated={() => {}} />
       <GameHUD />
     </div>
   );

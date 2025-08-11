@@ -15,6 +15,7 @@ import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
 import QuickAddTaskFAB from '@/components/tasks/QuickAddTaskFAB';
 import { StreakBadge } from '@/components/live/StreakBadge';
 import { setActiveRoadmap, fetchNextTask } from '@/modules/roadmaps';
+import { useCurrentTask, type Task } from '@/state/task';
 
 type Roadmap = {
   id: string;
@@ -24,15 +25,6 @@ type Roadmap = {
   status: string;
 };
 
-type Task = {
-  id: string;
-  title: string;
-  description: string | null;
-  due_at: string | null;
-  roadmap_id: string;
-  status: string;
-  position: number | null;
-};
 
 export default function LiveFocusView({
   onManageRoadmaps,
@@ -49,6 +41,11 @@ export default function LiveFocusView({
     activeRoadmap?.id ?? null
   );
   const [reloadKey, setReloadKey] = useState(0);
+  const setCurrentTaskStore = useCurrentTask((s) => s.setCurrentTask);
+
+  useEffect(() => {
+    setCurrentTaskStore(task);
+  }, [task, setCurrentTaskStore]);
 
   // Load roadmaps, active roadmap, and focused task
   useEffect(() => {
