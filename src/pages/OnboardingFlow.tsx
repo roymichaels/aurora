@@ -62,7 +62,9 @@ type Phase = "start" | "question" | "summary" | "vision";
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
   const navigate = useNavigate();
-  const { speak, isSpeaking } = useTextToSpeech();
+
+  // SINGLE instance
+  const { speak, cancel, isSpeaking, enabled, enable } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -91,31 +93,31 @@ export default function OnboardingFlow() {
   const [answers, setAnswers] = useState<string[][]>(initial.answers || MODULES.map(() => []));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { speak, cancel } = useTextToSpeech();
-
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
 
-  const sendPrompt = (prompt: string) => {
+  const sendPrompt = useCallback((prompt: string) => {
     setMessages((msgs) => {
       if (msgs.some((m) => m.role === "assistant" && m.content === prompt)) return msgs;
       return [...msgs, { role: "assistant", content: prompt }];
     });
-    speak(prompt);
-  };
+  }, []);
 
-  const askQuestion = (mIndex: number, qIndex: number) => {
-    const prompt = MODULES[mIndex].questions[qIndex].prompt;
-    const prev: string[] = [];
-    answers.forEach((ans, mi) => {
-      if (mi < mIndex) {
-        ans.forEach((a, qi) => {
-          if (a) prev.push(`${MODULES[mi].questions[qi].keyword}: ${a}`);
-        });
-      }
-    });
-    const prefix = prev.length ? `Earlier you mentioned ${prev.join("; ")}. ` : "";
-    sendPrompt(prefix + prompt);
-  };
+  const askQuestion = useCallback(
+    (mIndex: number, qIndex: number) => {
+      const prompt = MODULES[mIndex].questions[qIndex].prompt;
+      const prev: string[] = [];
+      answers.forEach((ans, mi) => {
+        if (mi < mIndex) {
+          ans.forEach((a, qi) => {
+            if (a) prev.push(`${MODULES[mi].questions[qi].keyword}: ${a}`);
+          });
+        }
+      });
+      const prefix = prev.length ? `Earlier you mentioned ${prev.join("; ")}. ` : "";
+      sendPrompt(prefix + prompt);
+    },
+    [answers, sendPrompt],
+  );
 
   const showSummary = (currentAnswers: string[][]) => {
     const lines: string[] = [];
@@ -132,11 +134,9 @@ export default function OnboardingFlow() {
   // Speak assistant messages as they appear
   useEffect(() => {
     const last = messages[messages.length - 1];
-    if (last?.role === "assistant") {
-      speak(last.content);
-    }
+    if (enabled && last?.role === "assistant") speak(last.content);
     return cancel;
-  }, [messages, speak, cancel]);
+  }, [messages, enabled, speak, cancel]);
 
   // Scroll to latest message
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function OnboardingFlow() {
       setPhase("question");
       setTimeout(() => askQuestion(currentModule, questionIndex), 0);
     }
-  }, [phase, currentModule, questionIndex]);
+  }, [phase, currentModule, questionIndex, askQuestion, sendPrompt]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -228,7 +228,6 @@ export default function OnboardingFlow() {
     const { data } = await supabase.functions.invoke("aurora-chat", { body: { messages: baseMessages } });
     if (data?.content) {
       setMessages((m) => [...m, { role: "assistant", content: data.content }]);
-      speak(data.content);
     }
     if (error) return;
 
@@ -277,6 +276,18 @@ export default function OnboardingFlow() {
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex-shrink-0 flex flex-col items-center gap-4 p-4">
           <EvolvingSphere size={220} speaking={isSpeaking} />
+          <div className="flex items-center gap-2">
+            {!enabled && (
+              <button
+                type="button"
+                onClick={enable}
+                className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20"
+                title="Enable voice"
+              >
+                Enable Voice
+              </button>
+            )}
+          </div>
           <div className="relative w-full">
             <Progress value={progressPercent} />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -313,8 +324,17 @@ export default function OnboardingFlow() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Your answer..."
               className="resize-none"
+              onFocus={() => {
+                if (!enabled) enable();
+              }}
             />
-            <Button type="submit" className="self-end">
+            <Button
+              type="submit"
+              className="self-end"
+              onClick={() => {
+                if (!enabled) enable();
+              }}
+            >
               Continue
             </Button>
           </form>
