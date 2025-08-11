@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
+import { useTextToSpeech } from "@/voice/useTextToSpeech";
 
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
@@ -25,6 +27,7 @@ enum Step {
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
   const navigate = useNavigate();
+  const { speak, isSpeaking } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -57,6 +60,7 @@ export default function OnboardingFlow() {
       if (msgs.some((m) => m.role === "assistant" && m.content === prompt)) return msgs;
       return [...msgs, { role: "assistant", content: prompt }];
     });
+    speak(prompt);
   };
 
   const start = () => {
@@ -156,6 +160,7 @@ export default function OnboardingFlow() {
     });
     if (data?.content) {
       setMessages((m) => [...m, { role: "assistant", content: data.content }]);
+      speak(data.content);
     }
 
     if (step === Step.ASK_MAIN_GOAL) {
@@ -191,8 +196,9 @@ export default function OnboardingFlow() {
     <div className="relative h-svh w-screen">
       <div className="os-bg" />
       <div className="relative z-10 flex h-full flex-col">
-        <div className="p-4">
-          <div className="relative">
+        <div className="flex flex-col items-center gap-4 p-4">
+          <EvolvingSphere size={220} speaking={isSpeaking} />
+          <div className="relative w-full">
             <Progress value={progressPercent} />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <span className="text-xs text-secondary-foreground">
