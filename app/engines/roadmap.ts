@@ -1,4 +1,6 @@
-import { randomBytes } from 'crypto';
+// Utility types and helpers to construct a simple roadmap.
+// Avoid Node-specific APIs so this file can be imported in
+// both Node and Deno environments (e.g. Supabase Edge Functions).
 
 export interface Milestone {
   label: string;
@@ -18,7 +20,9 @@ export interface Task {
 }
 
 export function cryptoId(): string {
-  return randomBytes(8).toString('hex');
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function planQuarters(start: Date, end: Date): { label: string; start: Date; end: Date }[] {

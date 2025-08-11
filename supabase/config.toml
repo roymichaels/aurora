@@ -2,3 +2,6 @@ project_id = "aybygkwfqpsphhopatso"
 
 [functions.aurora-chat]
 verify_jwt = false
+
+[functions.synthesize-mission]
+verify_jwt = false
