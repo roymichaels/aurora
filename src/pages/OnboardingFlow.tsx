@@ -10,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type Msg = { role: "assistant" | "user"; content: string };
-type ChatMsg = Msg | { role: "system"; content: string };
 
 enum Step {
   START,
@@ -26,10 +25,13 @@ export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
   const navigate = useNavigate();
 
-  const getInitialState = () => {
+  // ----- restore minimal persisted state -----
+  const getInitial = () => {
     if (typeof window === "undefined") return {};
     try {
-      return JSON.parse(localStorage.getItem("aurora_simple_onboarding") ?? "{}") as {
+      return JSON.parse(
+        localStorage.getItem("aurora_chat_v1") ?? "{}"
+      ) as {
         messages?: Msg[];
         step?: Step;
         mainGoal?: string;
@@ -40,20 +42,23 @@ export default function OnboardingFlow() {
     }
   };
 
-  const initial = getInitialState();
+  const initial = getInitial();
 
-  const [messages, setMessages] = useState<Msg[]>(initial.messages || []);
+  const [messages, setMessages] = useState<Msg[]>(initial.messages ?? []);
   const [step, setStep] = useState<Step>(initial.step ?? Step.START);
-  const [mainGoal, setMainGoal] = useState(initial.mainGoal || "");
-  const [goalDetail, setGoalDetail] = useState(initial.goalDetail || "");
+  const [mainGoal, setMainGoal] = useState<string>(initial.mainGoal ?? "");
+  const [goalDetail, setGoalDetail] = useState<string>(initial.goalDetail ?? "");
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const TOTAL_STEPS = Step.VISION_CARD;
+  // progress by linear steps (exclusive of END)
+  const TOTAL_STEPS = Step.VISION_CARD; // 0..5 -> 5 is last "content" step
   const progressPercent = Math.min((step / TOTAL_STEPS) * 100, 100);
 
+  // ----- helpers -----
   const sendPrompt = (prompt: string) => {
     setMessages((msgs) => {
+      // guard against accidental duplicates
       if (msgs.some((m) => m.role === "assistant" && m.content === prompt)) return msgs;
       return [...msgs, { role: "assistant", content: prompt }];
     });
@@ -98,66 +103,70 @@ export default function OnboardingFlow() {
   };
 
   const handleSummaryConfirmation = (answer: string) => {
-    if (answer.toLowerCase().startsWith("yes")) {
+    const yes = answer.trim().toLowerCase().startsWith("yes");
+    if (yes) {
       setStep(Step.VISION_CARD);
     } else {
-      sendPrompt('Please reply "yes" if the summary is correct.');
+      // allow correction path
+      sendPrompt("No problem. Tell me your main goal again and we'll adjust it.");
+      setStep(Step.ASK_MAIN_GOAL);
     }
   };
 
+  // ----- effects -----
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // persist minimal onboarding state
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "aurora_simple_onboarding",
-        JSON.stringify({ messages, step, mainGoal, goalDetail })
-      );
-    }
+    if (typeof window === "undefined") return;
+    localStorage.setItem(
+      "aurora_chat_v1",
+      JSON.stringify({ messages, step, mainGoal, goalDetail })
+    );
   }, [messages, step, mainGoal, goalDetail]);
 
+  // persist numeric percent (used elsewhere)
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(
-        "onboarding_progress_percent",
-        String(Math.floor(progressPercent))
-      );
-    }
+    if (typeof window === "undefined") return;
+    localStorage.setItem("onboarding_progress_percent", String(Math.floor(progressPercent)));
   }, [progressPercent]);
 
+  // kick the machine
   useEffect(() => {
-    if (step === Step.START) start();
+    if (step === Step.START && messages.length === 0) start();
     else if (step === Step.GREET) askMainGoal();
-  }, [step]);
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ----- submit -----
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const answer = input.trim();
     if (!answer) return;
 
-    const userMsg: Msg = { role: "user", content: answer };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    // user message
+    setMessages((m) => [...m, { role: "user", content: answer }]);
     setInput("");
 
-    const baseMessages: ChatMsg[] = [
-      {
-        role: "system",
-        content:
-          "You are a friendly onboarding assistant. Keep replies short and encouraging.",
-      },
-      ...newMessages,
-    ];
-
-    const { data } = await supabase.functions.invoke("aurora-chat", {
-      body: { messages: baseMessages },
-    });
-    if (data?.content) {
-      setMessages((m) => [...m, { role: "assistant", content: data.content }]);
+    // short, encouraging assistant nudge (no duplicates)
+    try {
+      const baseMessages = [
+        { role: "system", content: "You are a friendly onboarding assistant. Keep replies short and encouraging." },
+        ...messages,
+        { role: "user", content: answer },
+      ];
+      const { data } = await supabase.functions.invoke("aurora-chat", {
+        body: { messages: baseMessages },
+      });
+      if (data?.content) {
+        setMessages((m) => [...m, { role: "assistant", content: data.content }]);
+      }
+    } catch {
+      // fail silently; not critical for flow
     }
 
+    // advance state
     if (step === Step.ASK_MAIN_GOAL) {
       await handleMainGoal(answer);
     } else if (step === Step.CLARIFY_GOAL) {
@@ -187,6 +196,7 @@ export default function OnboardingFlow() {
     step !== Step.VISION_CARD &&
     step !== Step.END;
 
+  // ----- UI -----
   return (
     <div className="relative h-svh w-screen">
       <div className="os-bg" />
@@ -201,6 +211,7 @@ export default function OnboardingFlow() {
             </div>
           </div>
         </div>
+
         <ScrollArea className="flex-1 px-4">
           <div className="space-y-3 text-sm">
             {messages.map((m, i) => (
@@ -236,9 +247,7 @@ export default function OnboardingFlow() {
               placeholder="Your answer..."
               className="resize-none"
             />
-            <Button type="submit" className="self-end">
-              Continue
-            </Button>
+            <Button type="submit" className="self-end">Continue</Button>
           </form>
         )}
 
@@ -251,4 +260,3 @@ export default function OnboardingFlow() {
     </div>
   );
 }
-
