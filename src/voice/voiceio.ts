@@ -7,10 +7,8 @@ export type VoiceCallbacks = {
   onError?: (err: any) => void;
 };
 
-type SpeechRec = any;
-
 export class VoiceIO {
-  private recognition: SpeechRec | null = null;
+  private recognition: SpeechRecognition | null = null;
   private utter: SpeechSynthesisUtterance | null = null;
   private callbacks: VoiceCallbacks;
 
@@ -43,7 +41,8 @@ export class VoiceIO {
 
     this.recognition.onerror = (e: any) => this.callbacks.onError?.(e);
     this.recognition.onend = () => {
-      // auto-stop on end (push-to-talk style)
+      this.callbacks.onSpeakingChange?.(false);
+      this.recognition = null;
     };
 
     try {

@@ -14,12 +14,6 @@ import { useLocation } from 'react-router-dom';
 import type { Task } from '@/state/task';
 import { validateAnswer } from '@/utils/validation';
 
-// Minimal typings for browsers without built-in Web Speech definitions
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SpeechRecognition = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SpeechRecognitionEvent = any;
-
 type ChatMessage = {
   id: string;
   role: 'assistant' | 'user';
