@@ -3,6 +3,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 import brain from "../../../src/brain/Brain.ts";
 import { getFilterName } from "../../../src/brain/filters.ts";
+import { summarizeProfile, UserProfile } from "../../../src/data/profile.ts";
 
 
 const corsHeaders = {
@@ -26,7 +27,7 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { messages, prompt, model } = body ?? {};
+    const { messages, prompt, model, profile } = body ?? {};
 
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
@@ -45,6 +46,11 @@ serve(async (req) => {
       .join("; ");
     if (skillPrompt) {
       systemMessages.push({ role: "system", content: `Available skills: ${skillPrompt}` });
+    }
+
+    const profileSummary = summarizeProfile(profile as UserProfile | null);
+    if (profileSummary) {
+      systemMessages.unshift({ role: "system", content: `User profile: ${profileSummary}` });
     }
 
     const filterNames = brain.filters
