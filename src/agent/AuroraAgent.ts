@@ -1,6 +1,7 @@
 import { VoiceIO } from "@/voice/voiceio";
 import { ToolImpl } from "@/agent/tool-impl";
 import { supabase } from "@/integrations/supabase/client";
+import { validateAnswer } from "@/utils/validation";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -38,6 +39,29 @@ export class AuroraAgent {
 
   private async onFinalText(text: string) {
     this.events.onFinal?.(text);
+
+    if (!validateAnswer(text)) {
+      try {
+        const { data } = await supabase.functions.invoke('aurora-chat', {
+          body: {
+            messages: [
+              {
+                role: 'system',
+                content:
+                  "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
+              },
+              { role: 'user', content: text },
+            ],
+          },
+        });
+        const reply = (data as any)?.content ?? 'Could you elaborate?';
+        this.say(reply);
+      } catch (e) {
+        console.error('aurora-chat failed', e);
+        this.say('Could you elaborate?');
+      }
+      return;
+    }
 
     // quick intent guess (optimistic)
     const lower = text.toLowerCase();

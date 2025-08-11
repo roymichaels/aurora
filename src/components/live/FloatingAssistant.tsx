@@ -12,6 +12,7 @@ import { MessageSquare, Send, X, Bot, Minimize2, Mic, Volume2 } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { useLocation } from 'react-router-dom';
 import type { Task } from '@/state/task';
+import { validateAnswer } from '@/utils/validation';
 
 // Minimal typings for browsers without built-in Web Speech definitions
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,6 +83,7 @@ export function FloatingAssistant({
       role: 'user',
       content: text,
     };
+    const isValid = validateAnswer(text);
     setMessages((m) => [...m, userMsg]);
     setInput('');
     setSending(true);
@@ -98,6 +100,13 @@ export function FloatingAssistant({
         systemMessages.push({
           role: 'system',
           content: `Task: ${JSON.stringify({ id: task.id, title: task.title, description: task.description })}`,
+        });
+      }
+      if (!isValid) {
+        systemMessages.push({
+          role: 'system',
+          content:
+            "The user's last message was incomplete or uninformative. Ask a follow-up question to clarify.",
         });
       }
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
