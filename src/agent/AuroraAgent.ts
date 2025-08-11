@@ -15,6 +15,7 @@ export type AgentEvents = {
 export class AuroraAgent {
   private voice: VoiceIO;
   private listening = false;
+  private history: { role: 'user' | 'assistant'; content: string }[] = [];
 
   constructor(private events: AgentEvents = {}) {
     this.voice = new VoiceIO({
@@ -39,6 +40,13 @@ export class AuroraAgent {
 
   private async onFinalText(text: string) {
     this.events.onFinal?.(text);
+    this.history.push({ role: 'user', content: text });
+    if (this.history.length > 20) this.history = this.history.slice(-20);
+
+    const userSummary = this.history
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content)
+      .join(' ');
 
     if (!validateAnswer(text)) {
       try {
@@ -47,10 +55,14 @@ export class AuroraAgent {
             messages: [
               {
                 role: 'system',
+                content: `Recent user statements: ${userSummary}`,
+              },
+              {
+                role: 'system',
                 content:
                   "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
               },
-              { role: 'user', content: text },
+              ...this.history,
             ],
           },
         });
@@ -90,8 +102,11 @@ export class AuroraAgent {
     try {
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
         body: {
-          prompt: text,
-        }
+          messages: [
+            { role: 'system', content: `Recent user statements: ${userSummary}. Use this context and reference earlier user comments when appropriate.` },
+            ...this.history,
+          ],
+        },
       });
       if (error) throw error;
       const reply = (data as any)?.content ?? 'Okay.';
@@ -103,6 +118,8 @@ export class AuroraAgent {
   }
 
   say(text: string) {
+    this.history.push({ role: 'assistant', content: text });
+    if (this.history.length > 20) this.history = this.history.slice(-20);
     this.events.onResponse?.(text);
     this.voice.speak(text);
   }
