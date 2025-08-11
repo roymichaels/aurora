@@ -8,10 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 
-// Chat-based onboarding flow that gathers key info about the user
-// including their goals, values, skills, habits, and challenges.
 
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
@@ -63,6 +62,7 @@ type Phase = "start" | "question" | "summary" | "vision";
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
   const navigate = useNavigate();
+  const { speak, isSpeaking } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -100,6 +100,7 @@ export default function OnboardingFlow() {
       if (msgs.some((m) => m.role === "assistant" && m.content === prompt)) return msgs;
       return [...msgs, { role: "assistant", content: prompt }];
     });
+    speak(prompt);
   };
 
   const askQuestion = (mIndex: number, qIndex: number) => {
@@ -227,6 +228,7 @@ export default function OnboardingFlow() {
     const { data } = await supabase.functions.invoke("aurora-chat", { body: { messages: baseMessages } });
     if (data?.content) {
       setMessages((m) => [...m, { role: "assistant", content: data.content }]);
+      speak(data.content);
     }
     if (error) return;
 
@@ -273,8 +275,9 @@ export default function OnboardingFlow() {
     <div className="relative h-svh w-screen">
       <div className="os-bg" />
       <div className="relative z-10 flex h-full flex-col">
-        <div className="p-4">
-          <div className="relative">
+        <div className="flex-shrink-0 flex flex-col items-center gap-4 p-4">
+          <EvolvingSphere size={220} speaking={isSpeaking} />
+          <div className="relative w-full">
             <Progress value={progressPercent} />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <span className="text-xs text-secondary-foreground">{percentDisplay}%</span>
