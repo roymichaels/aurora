@@ -1,5 +1,6 @@
 import { useVoiceStore } from "@/state/voice";
 import { supabase } from "@/integrations/supabase/client";
+import { useAvatarStore } from "@/state/avatar";
 
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
@@ -71,6 +72,7 @@ export class VoiceIO {
           const src = `data:${data.contentType};base64,${data.audioBase64}`;
           const audio = new Audio(src);
           this.audio = audio;
+          useAvatarStore.getState().setAudio(audio);
           audio.onplay = () => {
             useVoiceStore.getState().setSpeaking(true);
             this.callbacks.onSpeakingChange?.(true);
@@ -78,6 +80,7 @@ export class VoiceIO {
           const end = () => {
             useVoiceStore.getState().setSpeaking(false);
             this.callbacks.onSpeakingChange?.(false);
+            useAvatarStore.getState().setAudio(null);
           };
           audio.onended = end;
           audio.onerror = (e) => {
@@ -113,6 +116,7 @@ export class VoiceIO {
   stopSpeaking() {
     try { this.audio?.pause(); } catch {}
     this.audio = null;
+    useAvatarStore.getState().setAudio(null);
     try { window.speechSynthesis.cancel(); } catch {}
     useVoiceStore.getState().setSpeaking(false);
     this.callbacks.onSpeakingChange?.(false);

@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import AppHeader from "@/components/layout/AppHeader";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
+import { useAvatarStore } from "@/state/avatar";
 
 const setMeta = (name: string, content: string) => {
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -46,6 +47,7 @@ export default function StackPage() {
     !!window.chrome?.runtime?.id;
   const online = typeof navigator !== "undefined" && navigator.onLine;
   const supabaseReady = !!supabase;
+  const { enabled, color, setEnabled, setColor } = useAvatarStore();
 
   useEffect(() => {
     const title = "Aurora OS Tech Stack & Runtime"; // <60 chars
@@ -107,6 +109,30 @@ export default function StackPage() {
                 <dd className="font-medium">{online ? "online" : "offline"}</dd>
               </div>
             </dl>
+          </section>
+
+          <section aria-labelledby="avatar" className="glass-panel rounded-xl p-4 elev">
+            <h2 id="avatar" className="text-lg font-medium mb-3">Avatar</h2>
+            <div className="flex items-center gap-4 text-sm">
+              <label className="flex items-center gap-2">
+                <span>Enable</span>
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                />
+              </label>
+              {enabled && (
+                <label className="flex items-center gap-2">
+                  <span>Color</span>
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                  />
+                </label>
+              )}
+            </div>
           </section>
 
           <section aria-labelledby="core" className="glass-panel rounded-xl p-4 elev">
