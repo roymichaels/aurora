@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
@@ -9,11 +9,28 @@ import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
 import { useSwipeNav } from "@/hooks/useSwipeNav";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { supabase } from "@/integrations/supabase/client";
 import ControlView from "@/views/ControlView";
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
   const loc = useLocation();
   const open = useViewNav();
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("onboarded_at")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setOnboarded(!!data?.onboarded_at);
+        });
+    } else {
+      setOnboarded(null);
+    }
+  }, [user]);
 
   const currentRoom = useMemo(() => {
     const match = views.find((v) => {
@@ -82,7 +99,7 @@ export default function AppShell() {
     }
   }, [loc.pathname, loc.search]);
 
-  if (initializing) {
+  if (initializing || (user && onboarded === null)) {
     return (
       <div className="relative min-h-svh w-screen grid place-items-center">
         <div className="os-bg" />
@@ -93,6 +110,10 @@ export default function AppShell() {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (onboarded === false) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (

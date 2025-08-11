@@ -19,7 +19,6 @@ import LandingPage from './LandingPage';
 import { type PathNode } from '@/game/path/path.data';
 import HUDBar from '@/game/hud/HUDBar';
 import FastTravel from '@/components/overlays/FastTravel';
-import Onboarding from '@/components/overlays/Onboarding';
 import HypnoPanel from '@/components/hypno/HypnoPanel';
 import { useGameStore } from '@/game/store';
 import { REWARDS, DAILY_QUESTS } from '@/game/QuestEngine';
@@ -682,7 +681,6 @@ const Index = () => {
       {/* Overlays */}
       <FastTravel />
       <HypnoPanel />
-      <Onboarding />
     </div>
   );
 };
