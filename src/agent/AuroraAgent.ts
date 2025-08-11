@@ -48,7 +48,7 @@ export class AuroraAgent {
     if (this.history.length > 20) this.history = this.history.slice(-20);
 
     // persist user turn into long-term memory
-    await memoryStore.add('user', text);
+    await memoryStore.add('episodic', 'user', text);
 
     const memories = await retrieveRelevantMemories(text);
     const memoryContext = memories
@@ -133,7 +133,7 @@ export class AuroraAgent {
       this.history.push({ role: 'assistant', content: text });
       if (this.history.length > 20) this.history = this.history.slice(-20);
       // store assistant response asynchronously
-      memoryStore.add('assistant', text).catch(() => {});
+      memoryStore.add('episodic', 'assistant', text).catch(() => {});
       this.events.onResponse?.(text);
       void this.voice.speak(text);
     }
