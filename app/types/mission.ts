@@ -33,6 +33,17 @@ export interface KPI {
   updatedAt: Date;
 }
 
+export interface KPIRecord {
+  id: string;
+  userId: string;
+  missionId: string;
+  kpiId: string;
+  value: number;
+  recordedAt: Date;
+  source?: string;
+  createdAt: Date;
+}
+
 export interface Milestone {
   id: string;
   userId: string;
