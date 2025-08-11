@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TriggersPanel from "@/components/settings/TriggersPanel";
 
+
 export default function SettingsView() {
   const { user } = useSupabaseAuth();
 
@@ -84,6 +85,35 @@ export default function SettingsView() {
             </div>
           </div>
           <TriggersPanel />
+        <div className="space-y-2">
+          <div className="text-sm text-muted-foreground">{user.email}</div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleExport}>
+              Export Profile
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">Delete Profile</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete profile?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove your profile data from this device. This action
+                    cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete}>
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+          <Button variant="softPrimary" onClick={signOut}>Log out</Button>
+
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">You are not signed in.</p>

@@ -94,3 +94,11 @@ export function deleteProfile(userId: string): void {
   storage.removeItem?.(STORAGE_PREFIX + userId);
 }
 
+export function exportProfile(userId: string): string | null {
+  return storage.getItem(STORAGE_PREFIX + userId);
+}
+
+export function deleteProfile(userId: string): void {
+  storage.removeItem?.(STORAGE_PREFIX + userId);
+}
+
