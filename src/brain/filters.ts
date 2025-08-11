@@ -1,9 +1,12 @@
+import { safetyFilter } from '@/agent/safety'
+
 export type Filter = (text: string) => string
 
 export const filterRegistry: Record<string, Filter> = {
   trim: text => text.trim(),
   lowercase: text => text.toLowerCase(),
-  uppercase: text => text.toUpperCase()
+  uppercase: text => text.toUpperCase(),
+  safety: safetyFilter,
 }
 
 export type FilterName = keyof typeof filterRegistry
@@ -11,7 +14,7 @@ export type FilterName = keyof typeof filterRegistry
 /**
  * List of filters applied to every outgoing message.
  */
-export const filters: Filter[] = [filterRegistry.trim]
+export const filters: Filter[] = [filterRegistry.trim, filterRegistry.safety]
 
 export function getFilterByName(name: string): Filter | undefined {
   return filterRegistry[name as FilterName]

@@ -6,6 +6,9 @@ import {
   memoryStore,
   retrieveRelevantMemories,
 } from "@/memory/indexedDbMemory";
+import brain from "@/brain/Brain";
+import { filterRegistry } from "@/brain/filters";
+import { scanResponse, explainIssues } from "@/agent/safety";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -14,6 +17,7 @@ export type AgentEvents = {
   onListeningChange?: (v: boolean) => void;
   onSpeakingChange?: (v: boolean) => void;
   onError?: (e: any) => void;
+  onSafetyViolation?: (text: string, issues: string[]) => boolean;
 };
 
 export class AuroraAgent {
@@ -130,11 +134,28 @@ export class AuroraAgent {
   }
 
     say(text: string) {
-      this.history.push({ role: 'assistant', content: text });
+      const { ok, issues } = scanResponse(text);
+      let output = text;
+      let skipSafety = false;
+      if (!ok) {
+        const allow = this.events.onSafetyViolation?.(text, issues) ?? false;
+        if (allow) {
+          skipSafety = true;
+        } else {
+          output = explainIssues(issues);
+        }
+      }
+
+      for (const filter of brain.filters) {
+        if (skipSafety && filter === filterRegistry.safety) continue;
+        output = filter(output);
+      }
+
+      this.history.push({ role: 'assistant', content: output });
       if (this.history.length > 20) this.history = this.history.slice(-20);
       // store assistant response asynchronously
-      memoryStore.add('episodic', 'assistant', text).catch(() => {});
-      this.events.onResponse?.(text);
-      void this.voice.speak(text);
+      memoryStore.add('episodic', 'assistant', output).catch(() => {});
+      this.events.onResponse?.(output);
+      void this.voice.speak(output);
     }
   }
