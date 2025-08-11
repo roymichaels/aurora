@@ -473,6 +473,7 @@ All colors MUST be HSL.
   box-shadow:
     0 0 24px hsla(var(--es-hue), var(--es-sat), calc(var(--es-light) + 10%), .35),
     inset 0 0 18px hsla(var(--es-hue), var(--es-sat), calc(var(--es-light) + 20%), .45);
+  opacity: var(--es-intensity, 1);
 }
 
 /* core blob (breathes) */
@@ -482,7 +483,7 @@ All colors MUST be HSL.
   background:
     radial-gradient(60% 60% at 35% 35%, hsla(var(--es-hue), var(--es-sat), 92%, .9), transparent 55%),
     radial-gradient(90% 90% at 50% 50%, hsla(var(--es-hue), var(--es-sat), var(--es-light), 1), hsla(var(--es-hue), var(--es-sat), calc(var(--es-light) - 10%), 1));
-  animation: es-breathe calc(var(--es-speed)) ease-in-out infinite;
+  animation: es-breathe calc(var(--es-speed) / var(--es-intensity, 1)) ease-in-out infinite;
 }
 @keyframes es-breathe {
   0%   { transform: scale(1); }
@@ -514,8 +515,8 @@ All colors MUST be HSL.
     radial-gradient(60% 60% at 35% 35%, hsla(var(--es-hue), var(--es-sat), 96%, .75), transparent 60%),
     radial-gradient(90% 90% at 50% 50%, hsla(var(--es-hue), var(--es-sat), calc(var(--es-light) + 6%), 1), hsla(var(--es-hue), var(--es-sat), calc(var(--es-light) - 6%), 1));
   animation:
-    es-orbit var(--es-speed) linear infinite,
-    es-jelly calc(var(--es-speed) * .6) ease-in-out infinite;
+    es-orbit calc(var(--es-speed) / var(--es-intensity, 1)) linear infinite,
+    es-jelly calc((var(--es-speed) * .6) / var(--es-intensity, 1)) ease-in-out infinite;
   transform-origin: calc(var(--r)) 0;
 }
 @keyframes es-orbit {
