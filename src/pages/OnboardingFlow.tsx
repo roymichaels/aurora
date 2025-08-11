@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import VisionCard from "@/components/onboarding/VisionCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -19,11 +18,15 @@ type Question = { prompt: string; keyword: string };
 type Module = { topic: string; questions: Question[] };
 
 const MODULES: Module[] = [
-  { topic: "Goals", questions: [{ prompt: "What are your main goals right now?", keyword: "goal" }] },
-  { topic: "Values", questions: [{ prompt: "What personal values matter most to you?", keyword: "value" }] },
-  { topic: "Skills", questions: [{ prompt: "What key skills do you want to develop?", keyword: "skill" }] },
-  { topic: "Habits", questions: [{ prompt: "What habits would help you grow?", keyword: "habit" }] },
-  { topic: "Challenges", questions: [{ prompt: "What challenges are you facing?", keyword: "challenge" }] },
+  {
+    topic: "Mission",
+    questions: [
+      { prompt: "What's your mission headline?", keyword: "headline" },
+      { prompt: "What's the deadline?", keyword: "deadline" },
+      { prompt: "Any priors I should consider?", keyword: "priors" },
+      { prompt: "Which scopes apply? (personal, team, organization)", keyword: "scopes" },
+    ],
+  },
 ];
 
 const MIN_LENGTH = 10;
@@ -57,7 +60,7 @@ const getNextState = (
   return { module: null, question: qIdx };
 };
 
-type Phase = "start" | "question" | "summary" | "vision";
+type Phase = "start" | "question" | "summary";
 
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
@@ -91,6 +94,11 @@ export default function OnboardingFlow() {
   const [progressPercent, setProgressPercent] = useState<number>(initial.progressPercent || 0);
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<string[][]>(initial.answers || MODULES.map(() => []));
+  const [headline, setHeadline] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [priors, setPriors] = useState("");
+  const [scopes, setScopes] = useState<string[]>([]);
+  const [missionPreview, setMissionPreview] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
@@ -119,15 +127,14 @@ export default function OnboardingFlow() {
     [answers, sendPrompt],
   );
 
-  const showSummary = (currentAnswers: string[][]) => {
-    const lines: string[] = [];
-    MODULES.forEach((mod, mi) => {
-      mod.questions.forEach((q, qi) => {
-        const ans = currentAnswers[mi]?.[qi];
-        if (ans) lines.push(`- ${q.keyword}: ${ans}`);
+  const showSummary = async () => {
+    const brief = { headline, deadline, priors };
+    if (user) {
+      const { data } = await supabase.functions.invoke("synthesize-mission", {
+        body: { user_id: user.id, brief, scopes },
       });
-    });
-    sendPrompt(`Here's what I heard:\n${lines.join("\n")}\nDoes this look right?`);
+      if (data) setMissionPreview(data);
+    }
     setPhase("summary");
   };
 
@@ -246,28 +253,62 @@ export default function OnboardingFlow() {
       updatedAnswers[currentModule][questionIndex] = userMsg.content;
       setAnswers(updatedAnswers);
 
+      if (currentModule === 0) {
+        if (questionIndex === 0) setHeadline(userMsg.content);
+        if (questionIndex === 1) setDeadline(userMsg.content);
+        if (questionIndex === 2) setPriors(userMsg.content);
+        if (questionIndex === 3)
+          setScopes(
+            userMsg.content
+              .split(/[,\s]+/)
+              .map((s) => s.trim())
+              .filter(Boolean),
+          );
+      }
+
       const next = getNextState(currentModule, questionIndex);
       if (next.module === null) {
-        showSummary(updatedAnswers);
+        await showSummary();
       } else {
         setCurrentModule(next.module);
         setQuestionIndex(next.question);
         askQuestion(next.module, next.question);
       }
-    } else if (phase === "summary") {
-      setPhase("vision");
     }
   };
 
   const handleFinish = async () => {
     if (user) {
       await supabase.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("id", user.id);
-      await supabase.functions.invoke("generate-plan", { body: { answers: answers.flat() } });
     }
     navigate("/app/plan", { replace: true });
   };
 
-  const shouldShowForm = phase !== "vision" && phase !== "start";
+  const handleRegenerate = async () => {
+    if (!user) return;
+    const brief = { headline, deadline, priors };
+    const { data } = await supabase.functions.invoke("synthesize-mission", {
+      body: { user_id: user.id, brief, scopes },
+    });
+    if (data) setMissionPreview(data);
+  };
+
+  const handleAdjust = () => {
+    setPhase("question");
+    setMessages([]);
+    setCurrentModule(0);
+    setQuestionIndex(0);
+    setProgressPercent(0);
+    setAnswers(MODULES.map(() => []));
+    setMissionPreview(null);
+    setHeadline("");
+    setDeadline("");
+    setPriors("");
+    setScopes([]);
+    setTimeout(() => askQuestion(0, 0), 0);
+  };
+
+  const shouldShowForm = phase === "question";
   const percentDisplay = Math.floor(progressPercent);
 
   return (
@@ -340,9 +381,46 @@ export default function OnboardingFlow() {
           </form>
         )}
 
-        {phase === "vision" && (
-          <div className="border-t bg-background p-4">
-            <VisionCard answers={answers.flat()} onClose={handleFinish} />
+        {phase === "summary" && missionPreview && (
+          <div className="border-t bg-background p-4 space-y-4 text-sm">
+            <div className="space-y-1">
+              <div className="font-semibold">Mission Brief</div>
+              <div>
+                <strong>Headline:</strong> {headline}
+              </div>
+              <div>
+                <strong>Deadline:</strong> {deadline}
+              </div>
+              <div>
+                <strong>Priors:</strong> {priors}
+              </div>
+              <div>
+                <strong>Scopes:</strong> {scopes.join(", ")}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="font-semibold">Targets</div>
+              <div>
+                {missionPreview.months} months, monthly target {missionPreview.monthlyTarget}
+              </div>
+              <div className="font-semibold pt-2">Funnel</div>
+              <pre className="bg-muted p-2 rounded text-xs overflow-auto">
+                {JSON.stringify(missionPreview.funnel, null, 2)}
+              </pre>
+            </div>
+            <div className="space-y-1">
+              <div className="font-semibold">Roadmap Preview</div>
+              <div>{missionPreview.months} months until your deadline.</div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button onClick={handleFinish}>Accept</Button>
+              <Button variant="secondary" onClick={handleAdjust}>
+                Adjust numbers
+              </Button>
+              <Button variant="outline" onClick={handleRegenerate}>
+                Regenerate
+              </Button>
+            </div>
           </div>
         )}
       </div>
