@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useTextToSpeech } from "@/voice/useTextToSpeech";
 
 // Chat-based onboarding flow that gathers key info about the user
 // including their goals, values, skills, habits, and challenges.
@@ -154,6 +155,8 @@ export default function OnboardingFlow() {
   const [answers, setAnswers] = useState<string[][]>(initial.answers || MODULES.map(() => []));
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const { speak, cancel } = useTextToSpeech();
+
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
 
   const sendPrompt = (prompt: string) => {
@@ -188,6 +191,15 @@ export default function OnboardingFlow() {
     sendPrompt(`Here's what I heard:\n${lines.join("\n")}\nDoes this look right?`);
     setPhase("summary");
   };
+
+  // Speak assistant messages as they appear
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (last?.role === "assistant") {
+      speak(last.content);
+    }
+    return cancel;
+  }, [messages, speak, cancel]);
 
   // Scroll to latest message
   useEffect(() => {
