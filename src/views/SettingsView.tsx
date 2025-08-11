@@ -15,6 +15,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 
+
 export default function SettingsView() {
   const { user } = useSupabaseAuth();
 
@@ -82,6 +83,7 @@ export default function SettingsView() {
             </AlertDialog>
           </div>
           <Button variant="softPrimary" onClick={signOut}>Log out</Button>
+
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">You are not signed in.</p>
