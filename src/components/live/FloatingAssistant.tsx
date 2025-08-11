@@ -93,9 +93,19 @@ export function FloatingAssistant({
         .concat(userMsg)
         .slice(-12)
         .map((m) => ({ role: m.role, content: m.content }));
+      const userSummary = history
+        .filter((m) => m.role === 'user')
+        .map((m) => m.content)
+        .join(' ');
       const systemMessages: { role: 'system'; content: string }[] = [
         { role: 'system', content: `Route: ${loc.pathname}` },
       ];
+      if (userSummary) {
+        systemMessages.push({
+          role: 'system',
+          content: `Summary of user statements: ${userSummary}. Refer back to these when replying, e.g., "Earlier you mentioned..."`,
+        });
+      }
       if (task) {
         systemMessages.push({
           role: 'system',
