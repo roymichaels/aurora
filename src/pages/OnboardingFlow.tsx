@@ -15,70 +15,91 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
 
-enum Step {
-  START = "START",
-  GREET = "GREET",
-  ASK_MAIN_GOAL = "ASK_MAIN_GOAL",
-  ASK_VALUES = "ASK_VALUES",
-  ASK_SKILLS = "ASK_SKILLS",
-  ASK_HABITS = "ASK_HABITS",
-  ASK_CHALLENGES = "ASK_CHALLENGES",
-  CONFIRM_SUMMARY = "CONFIRM_SUMMARY",
-  SHOW_VISION = "SHOW_VISION",
-}
+type Question = { prompt: string; keyword: string };
+type Module = { topic: string; questions: Question[] };
 
-const PROMPTS: Record<Step, string> = {
-  [Step.GREET]: "Hi, I'm Aurora. Let's get to know you a bit better.",
-  [Step.ASK_MAIN_GOAL]: "What are your main goals right now?",
-  [Step.ASK_VALUES]: "What personal values matter most to you?",
-  [Step.ASK_SKILLS]: "What key skills do you want to develop?",
-  [Step.ASK_HABITS]: "What habits would help you grow?",
-  [Step.ASK_CHALLENGES]: "What challenges are you facing?",
-};
-
-const QUESTION_STEPS = [
-  Step.ASK_MAIN_GOAL,
-  Step.ASK_VALUES,
-  Step.ASK_SKILLS,
-  Step.ASK_HABITS,
-  Step.ASK_CHALLENGES,
+const MODULES: Module[] = [
+  {
+    topic: "Goals",
+    questions: [
+      { prompt: "What are your main goals right now?", keyword: "goal" },
+    ],
+  },
+  {
+    topic: "Values",
+    questions: [
+      {
+        prompt: "What personal values matter most to you?",
+        keyword: "value",
+      },
+    ],
+  },
+  {
+    topic: "Skills",
+    questions: [
+      {
+        prompt: "What key skills do you want to develop?",
+        keyword: "skill",
+      },
+    ],
+  },
+  {
+    topic: "Habits",
+    questions: [
+      { prompt: "What habits would help you grow?", keyword: "habit" },
+    ],
+  },
+  {
+    topic: "Challenges",
+    questions: [
+      {
+        prompt: "What challenges are you facing?",
+        keyword: "challenge",
+      },
+    ],
+  },
 ];
 
 const MIN_LENGTH = 10;
-const REQUIRED_KEYWORDS = ["goal", "value", "skill", "habit", "challenge"];
 
-function validateAnswer(answer: string, index: number): string | null {
+function validateAnswer(
+  answer: string,
+  moduleIndex: number,
+  questionIndex: number,
+): string | null {
   if (answer.length < MIN_LENGTH)
     return `Please provide at least ${MIN_LENGTH} characters.`;
-  const keyword = REQUIRED_KEYWORDS[index];
+  const keyword = MODULES[moduleIndex].questions[questionIndex].keyword;
   if (keyword && !answer.toLowerCase().includes(keyword)) {
     return `Please mention the word "${keyword}" in your response.`;
   }
   return null;
 }
 
-const nextStep = (s: Step): Step | null => {
-  switch (s) {
-    case Step.START:
-      return Step.GREET;
-    case Step.GREET:
-      return Step.ASK_MAIN_GOAL;
-    case Step.ASK_MAIN_GOAL:
-      return Step.ASK_VALUES;
-    case Step.ASK_VALUES:
-      return Step.ASK_SKILLS;
-    case Step.ASK_SKILLS:
-      return Step.ASK_HABITS;
-    case Step.ASK_HABITS:
-      return Step.ASK_CHALLENGES;
-    case Step.ASK_CHALLENGES:
-      return Step.CONFIRM_SUMMARY;
-    case Step.CONFIRM_SUMMARY:
-      return Step.SHOW_VISION;
-    default:
-      return null;
+const MAX_QUESTIONS = Math.max(
+  ...MODULES.map((m) => m.questions.length),
+);
+
+const getNextState = (
+  moduleIndex: number,
+  questionIndex: number,
+): { module: number | null; question: number } => {
+  let nextModule = moduleIndex + 1;
+  let qIdx = questionIndex;
+
+  for (; qIdx < MAX_QUESTIONS; qIdx++) {
+    for (let m = nextModule; m < MODULES.length; m++) {
+      if (MODULES[m].questions[qIdx]) {
+        return { module: m, question: qIdx };
+      }
+    }
+    nextModule = 0;
   }
+
+  return { module: null, question: qIdx };
 };
+
+type Phase = "start" | "question" | "summary" | "vision";
 
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
@@ -88,8 +109,10 @@ export default function OnboardingFlow() {
     try {
       return JSON.parse(localStorage.getItem("aurora_chat_v1") ?? "{}") as {
         messages?: Msg[];
-        step?: Step;
-        answers?: string[];
+        phase?: Phase;
+        currentModule?: number;
+        questionIndex?: number;
+        answers?: string[][];
       };
     } catch {
       return {};
@@ -97,35 +120,47 @@ export default function OnboardingFlow() {
   };
   const initial = getInitialState();
   const [messages, setMessages] = useState<Msg[]>(initial.messages || []);
-  const [step, setStep] = useState<Step>(initial.step || Step.START);
+  const [phase, setPhase] = useState<Phase>(initial.phase || "start");
+  const [currentModule, setCurrentModule] = useState<number>(
+    initial.currentModule || 0,
+  );
+  const [questionIndex, setQuestionIndex] = useState<number>(
+    initial.questionIndex || 0,
+  );
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<string[]>(initial.answers || []);
+  const [answers, setAnswers] = useState<string[][]>(
+    initial.answers || MODULES.map(() => []),
+  );
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const total = QUESTION_STEPS.length;
+  const total = MODULES.reduce(
+    (sum, module) => sum + module.questions.length,
+    0,
+  );
 
-  const transition = (next: Step, currentAnswers: string[] = answers) => {
-    setStep(next);
+  const sendPrompt = (prompt: string) => {
     setMessages((msgs) => {
-      let prompt: string | undefined;
-      if (next === Step.CONFIRM_SUMMARY) {
-        prompt = `Here's what I heard:\n${currentAnswers
-          .map((a, i) => `- ${REQUIRED_KEYWORDS[i]}: ${a}`)
-          .join("\n")}\nDoes this look right?`;
-      } else {
-        prompt = PROMPTS[next];
+      if (msgs.some((m) => m.role === "assistant" && m.content === prompt)) {
+        return msgs;
       }
-      if (
-        prompt &&
-        !msgs.some((m) => m.role === "assistant" && m.content === prompt)
-      ) {
-        return [...msgs, { role: "assistant", content: prompt }];
-      }
-      return msgs;
+      return [...msgs, { role: "assistant", content: prompt }];
     });
-    if (next === Step.GREET) {
-      const nextQ = nextStep(next);
-      if (nextQ) setTimeout(() => transition(nextQ, currentAnswers), 0);
-    }
+  };
+
+  const askQuestion = (mIndex: number, qIndex: number) => {
+    const prompt = MODULES[mIndex].questions[qIndex].prompt;
+    sendPrompt(prompt);
+  };
+
+  const showSummary = (currentAnswers: string[][]) => {
+    const lines: string[] = [];
+    MODULES.forEach((mod, mi) => {
+      mod.questions.forEach((q, qi) => {
+        const ans = currentAnswers[mi]?.[qi];
+        if (ans) lines.push(`- ${q.keyword}: ${ans}`);
+      });
+    });
+    sendPrompt(`Here's what I heard:\n${lines.join("\n")}\nDoes this look right?`);
+    setPhase("summary");
   };
 
   useEffect(() => {
@@ -136,17 +171,24 @@ export default function OnboardingFlow() {
     if (typeof window !== "undefined") {
       localStorage.setItem(
         "aurora_chat_v1",
-        JSON.stringify({ messages, step, answers })
+        JSON.stringify({
+          messages,
+          phase,
+          currentModule,
+          questionIndex,
+          answers,
+        }),
       );
     }
-  }, [messages, step, answers]);
+  }, [messages, phase, currentModule, questionIndex, answers]);
 
   useEffect(() => {
-    if (step === Step.START) {
-      const next = nextStep(Step.START);
-      if (next) transition(next);
+    if (phase === "start") {
+      sendPrompt("Hi, I'm Aurora. Let's get to know you a bit better.");
+      setPhase("question");
+      setTimeout(() => askQuestion(currentModule, questionIndex), 0);
     }
-  }, [step]);
+  }, [phase, currentModule, questionIndex]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,9 +198,10 @@ export default function OnboardingFlow() {
     setMessages(newMessages);
     setInput("");
 
-    const questionIndex = QUESTION_STEPS.indexOf(step);
-    const error =
-      questionIndex > -1 ? validateAnswer(userMsg.content, questionIndex) : null;
+    let error: string | null = null;
+    if (phase === "question") {
+      error = validateAnswer(userMsg.content, currentModule, questionIndex);
+    }
 
     const baseMessages: ChatMsg[] = [
       {
@@ -184,22 +227,32 @@ export default function OnboardingFlow() {
     }
     if (error) return;
 
-    let updatedAnswers = answers;
-    if (questionIndex > -1) {
+    if (phase === "question") {
+      const updatedAnswers = answers.map((a) => [...a]);
       if (user) {
         await supabase.from("onboarding_answers").insert({
           user_id: user.id,
-          question: PROMPTS[step],
+          question: MODULES[currentModule].questions[questionIndex].prompt,
           answer: userMsg.content,
         });
       }
-      updatedAnswers = [...answers];
-      updatedAnswers[questionIndex] = userMsg.content;
+      if (!updatedAnswers[currentModule]) {
+        updatedAnswers[currentModule] = [];
+      }
+      updatedAnswers[currentModule][questionIndex] = userMsg.content;
       setAnswers(updatedAnswers);
-    }
 
-    const next = nextStep(step);
-    if (next) transition(next, updatedAnswers);
+      const next = getNextState(currentModule, questionIndex);
+      if (next.module === null) {
+        showSummary(updatedAnswers);
+      } else {
+        setCurrentModule(next.module);
+        setQuestionIndex(next.question);
+        askQuestion(next.module, next.question);
+      }
+    } else if (phase === "summary") {
+      setPhase("vision");
+    }
   };
 
   const handleFinish = async () => {
@@ -208,14 +261,19 @@ export default function OnboardingFlow() {
         .from("profiles")
         .update({ onboarded_at: new Date().toISOString() })
         .eq("id", user.id);
-      await supabase.functions.invoke("generate-plan", { body: { answers } });
+      await supabase.functions.invoke("generate-plan", {
+        body: { answers: answers.flat() },
+      });
     }
     navigate("/app/plan", { replace: true });
   };
 
-  const progress = (answers.length / total) * 100;
-  const shouldShowForm =
-    step !== Step.SHOW_VISION && step !== Step.START && step !== Step.GREET;
+  const answeredCount = answers.reduce(
+    (sum, arr) => sum + arr.filter(Boolean).length,
+    0,
+  );
+  const progress = (answeredCount / total) * 100;
+  const shouldShowForm = phase !== "vision" && phase !== "start";
 
   return (
     <div className="relative h-svh w-screen">
@@ -266,9 +324,9 @@ export default function OnboardingFlow() {
             </Button>
           </form>
         )}
-        {step === Step.SHOW_VISION && (
+        {phase === "vision" && (
           <div className="border-t bg-background p-4">
-            <VisionCard answers={answers} onClose={handleFinish} />
+            <VisionCard answers={answers.flat()} onClose={handleFinish} />
           </div>
         )}
       </div>
