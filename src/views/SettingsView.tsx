@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import TriggersPanel from "@/components/settings/TriggersPanel";
 import ModelPanel from "@/components/settings/ModelPanel";
+import MemoryPanel from "@/components/settings/MemoryPanel";
 
 
 export default function SettingsView() {
@@ -87,6 +88,7 @@ export default function SettingsView() {
             </div>
             <TriggersPanel />
             <ModelPanel />
+            <MemoryPanel />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">You are not signed in.</p>

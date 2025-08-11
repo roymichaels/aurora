@@ -137,6 +137,39 @@ export class IndexedDbMemory {
     this.persist();
   }
 
+  list(bucket: MemoryBucket) {
+    return [...this.memories[bucket]];
+  }
+
+  async update(
+    bucket: MemoryBucket,
+    id: string,
+    updates: {
+      content?: string;
+      mood?: string;
+      context?: string;
+      confidence?: number;
+      tags?: string[];
+    },
+  ) {
+    const entry = this.memories[bucket].find((m) => m.id === id);
+    if (!entry) return;
+    if (updates.content && updates.content !== entry.content) {
+      entry.content = updates.content;
+      entry.embedding = await getEmbedding(entry.content);
+    }
+    if (updates.mood !== undefined) entry.mood = updates.mood;
+    if (updates.context !== undefined) entry.context = updates.context;
+    if (updates.confidence !== undefined) entry.confidence = updates.confidence;
+    if (updates.tags !== undefined) entry.tags = updates.tags;
+    this.persist();
+  }
+
+  delete(bucket: MemoryBucket, id: string) {
+    this.memories[bucket] = this.memories[bucket].filter((m) => m.id !== id);
+    this.persist();
+  }
+
   async search(
     text: string,
     topK = 5,
