@@ -147,12 +147,19 @@ export function addTrigger (task: Task, trigger: MotivationalTrigger): void {
   task.triggers.push(trigger)
 }
 
-export interface MasterPlan {
+export interface MasterPlanVersion {
   goals: Goal[]
+  habits?: Task[]
+}
+
+export interface MasterPlan extends MasterPlanVersion {
+  plan_versions?: MasterPlanVersion[]
 }
 
 export const masterPlan: MasterPlan = {
-  goals: []
+  goals: [],
+  habits: [],
+  plan_versions: []
 }
 
 export default masterPlan
