@@ -9,6 +9,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
+import {
+  buildProfile,
+  ConversationResponse,
+  saveProfile,
+} from "@/data/profile";
 
 
 type Msg = { role: "assistant" | "user"; content: string };
@@ -252,6 +257,15 @@ export default function OnboardingFlow() {
       if (!updatedAnswers[currentModule]) updatedAnswers[currentModule] = [];
       updatedAnswers[currentModule][questionIndex] = userMsg.content;
       setAnswers(updatedAnswers);
+
+      const responses: ConversationResponse[] = [];
+      MODULES.forEach((mod, mi) => {
+        mod.questions.forEach((q, qi) => {
+          const ans = updatedAnswers[mi]?.[qi];
+          if (ans) responses.push({ question: q.prompt, answer: ans });
+        });
+      });
+      saveProfile(buildProfile(responses));
 
       if (currentModule === 0) {
         if (questionIndex === 0) setHeadline(userMsg.content);
