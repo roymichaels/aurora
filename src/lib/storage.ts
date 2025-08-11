@@ -82,3 +82,11 @@ export function loadProfile(userId: string, password: string): any | null {
   return JSON.parse(decrypted.toString("utf8"));
 }
 
+export function exportProfile(userId: string): string | null {
+  return storage.getItem(STORAGE_PREFIX + userId);
+}
+
+export function deleteProfile(userId: string): void {
+  storage.removeItem?.(STORAGE_PREFIX + userId);
+}
+
