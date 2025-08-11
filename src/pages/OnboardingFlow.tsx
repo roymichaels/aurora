@@ -38,10 +38,23 @@ function validateAnswer(answer: string, step: number): string | null {
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [step, setStep] = useState(0);
+  const getInitialState = () => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem("aurora_chat_v1") ?? "{}") as {
+        messages?: Msg[];
+        step?: number;
+        answers?: string[];
+      };
+    } catch {
+      return {};
+    }
+  };
+  const initial = getInitialState();
+  const [messages, setMessages] = useState<Msg[]>(initial.messages || []);
+  const [step, setStep] = useState(initial.step || 0);
   const [input, setInput] = useState("");
-  const [answers, setAnswers] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>(initial.answers || []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const total = QUESTIONS.length;
 
@@ -49,10 +62,24 @@ export default function OnboardingFlow() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "aurora_chat_v1",
+        JSON.stringify({ messages, step, answers })
+      );
+    }
+  }, [messages, step, answers]);
+
   // ask next question
   useEffect(() => {
     if (step < total) {
-      setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[step] }]);
+      const hasPrompt = messages.some(
+        (m) => m.role === "assistant" && m.content === QUESTIONS[step]
+      );
+      if (!hasPrompt) {
+        setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[step] }]);
+      }
     } else if (step === total && user) {
       const finalize = async () => {
         await supabase
