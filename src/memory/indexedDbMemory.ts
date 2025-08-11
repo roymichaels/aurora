@@ -1,11 +1,17 @@
 import { auroraChat } from '@/utils/auroraChat';
 
+export type MemoryBucket = 'semantic' | 'episodic' | 'procedural';
+
 export interface MemoryEntry {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: number;
   embedding: number[];
+  mood?: string;
+  context?: string;
+  confidence?: number;
+  tags?: string[];
 }
 
 const STORAGE_KEY = 'aurora-memory-store';
@@ -71,18 +77,27 @@ export async function getEmbedding(text: string): Promise<number[]> {
 }
 
 export class IndexedDbMemory {
-  private memories: MemoryEntry[] = [];
+  private memories: Record<MemoryBucket, MemoryEntry[]> = {
+    semantic: [],
+    episodic: [],
+    procedural: [],
+  };
 
   constructor() {
     this.memories = this.load();
   }
 
-  private load(): MemoryEntry[] {
+  private load(): Record<MemoryBucket, MemoryEntry[]> {
     try {
       const raw = memoryStorage.getItem(STORAGE_KEY);
-      return raw ? (JSON.parse(raw) as MemoryEntry[]) : [];
+      const parsed = raw ? (JSON.parse(raw) as Record<string, MemoryEntry[]>) : {};
+      return {
+        semantic: parsed.semantic ?? [],
+        episodic: parsed.episodic ?? [],
+        procedural: parsed.procedural ?? [],
+      };
     } catch {
-      return [];
+      return { semantic: [], episodic: [], procedural: [] };
     }
   }
 
@@ -94,29 +109,51 @@ export class IndexedDbMemory {
     }
   }
 
-  private prune(limit = 200) {
-    if (this.memories.length > limit) {
-      this.memories = this.memories.slice(-limit);
+  private prune(bucket: MemoryBucket, limit = 200) {
+    if (this.memories[bucket].length > limit) {
+      this.memories[bucket] = this.memories[bucket].slice(-limit);
     }
   }
 
-  async add(role: 'user' | 'assistant', content: string) {
+  async add(
+    bucket: MemoryBucket,
+    role: 'user' | 'assistant',
+    content: string,
+    meta: { mood?: string; context?: string; confidence?: number; tags?: string[] } = {}
+  ) {
     const embedding = await getEmbedding(content);
-    this.memories.push({
+    this.memories[bucket].push({
       id: Math.random().toString(36).slice(2),
       role,
       content,
       timestamp: Date.now(),
       embedding,
+      mood: meta.mood,
+      context: meta.context,
+      confidence: meta.confidence,
+      tags: meta.tags,
     });
-    this.prune();
+    this.prune(bucket);
     this.persist();
   }
 
-  async search(text: string, topK = 5): Promise<MemoryEntry[]> {
-    if (!this.memories.length) return [];
+  async search(
+    text: string,
+    topK = 5,
+    bucket?: MemoryBucket,
+    tags: string[] = []
+  ): Promise<MemoryEntry[]> {
+    const pool = bucket
+      ? this.memories[bucket]
+      : [...this.memories.semantic, ...this.memories.episodic, ...this.memories.procedural];
+    let candidates = pool;
+    if (!candidates.length) return [];
+    if (tags.length) {
+      candidates = candidates.filter((m) => tags.every((t) => m.tags?.includes(t)));
+      if (!candidates.length) return [];
+    }
     const query = await getEmbedding(text);
-    const scored = this.memories.map((m) => ({
+    const scored = candidates.map((m) => ({
       m,
       score: cosineSimilarity(query, m.embedding),
     }));
@@ -129,7 +166,12 @@ export class IndexedDbMemory {
 
 export const memoryStore = new IndexedDbMemory();
 
-export async function retrieveRelevantMemories(text: string, k = 5) {
-  return memoryStore.search(text, k);
+export async function retrieveRelevantMemories(
+  text: string,
+  k = 5,
+  bucket?: MemoryBucket,
+  tags: string[] = []
+) {
+  return memoryStore.search(text, k, bucket, tags);
 }
 
