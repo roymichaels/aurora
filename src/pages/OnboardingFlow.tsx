@@ -148,7 +148,18 @@ export default function OnboardingFlow() {
 
   const askQuestion = (mIndex: number, qIndex: number) => {
     const prompt = MODULES[mIndex].questions[qIndex].prompt;
-    sendPrompt(prompt);
+    const prev: string[] = [];
+    answers.forEach((ans, mi) => {
+      if (mi < mIndex) {
+        ans.forEach((a, qi) => {
+          if (a) {
+            prev.push(`${MODULES[mi].questions[qi].keyword}: ${a}`);
+          }
+        });
+      }
+    });
+    const prefix = prev.length ? `Earlier you mentioned ${prev.join('; ')}. ` : '';
+    sendPrompt(prefix + prompt);
   };
 
   const showSummary = (currentAnswers: string[][]) => {
@@ -216,6 +227,22 @@ export default function OnboardingFlow() {
       baseMessages.push({
         role: "system",
         content: `The user's last answer failed validation: ${error} Ask them to clarify or provide more detail.`,
+      });
+    }
+
+    const summaryParts: string[] = [];
+    MODULES.forEach((mod, mi) => {
+      mod.questions.forEach((q, qi) => {
+        const ans = mi === currentModule && qi === questionIndex
+          ? userMsg.content
+          : answers[mi]?.[qi];
+        if (ans) summaryParts.push(`${q.keyword}: ${ans}`);
+      });
+    });
+    if (summaryParts.length > 0) {
+      baseMessages.push({
+        role: 'system',
+        content: `Relevant past answers: ${summaryParts.join('; ')}. Reference the user's earlier statements when replying, e.g., "Earlier you mentioned..."`,
       });
     }
 
