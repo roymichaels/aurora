@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import GoalForm from "@/components/goals/GoalForm";
 import TasksManager from "@/components/control/TasksManager";
+import HabitTracker from "@/components/habits/HabitTracker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { toast } from "@/hooks/use-toast";
+import { useHabitStore } from "@/state/habits";
 
 interface PlanTask {
   title: string;
@@ -52,7 +54,7 @@ export default function MasterPlanView() {
   const { user } = useSupabaseAuth();
   const [plan, setPlan] = useState<MasterPlan | null>(null);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
-  const [habits, setHabits] = useState<DBHabit[]>([]);
+  const [dbHabits, setDbHabits] = useState<DBHabit[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchData = async () => {
@@ -81,7 +83,15 @@ export default function MasterPlanView() {
     const planRecord = planData as { plan: MasterPlan } | null;
     setPlan(planRecord?.plan ?? null);
     setRoadmaps((roadmapData as Roadmap[]) ?? []);
-    setHabits((habitData as DBHabit[]) ?? []);
+    const dbH = (habitData as DBHabit[]) ?? [];
+    setDbHabits(dbH);
+    useHabitStore.getState().setHabits(
+      dbH.map((h) => ({
+        id: h.id,
+        title: h.title,
+        frequency: h.frequency === "weekly" ? "weekly" : "daily",
+      }))
+    );
     setLoading(false);
   };
 
@@ -185,24 +195,25 @@ export default function MasterPlanView() {
 
           <div className="grid gap-4">
             <h2 className="text-xl font-semibold">Habits</h2>
-            {habits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
-            {habits.map(h => (
+            <HabitTracker />
+            {dbHabits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
+            {dbHabits.map(h => (
               <div key={h.id} className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center gap-3">
                 <Input
                   value={h.title}
-                  onChange={(e) => setHabits(prev => prev.map(x => x.id === h.id ? { ...x, title: e.target.value } : x))}
+                  onChange={(e) => setDbHabits(prev => prev.map(x => x.id === h.id ? { ...x, title: e.target.value } : x))}
                   onBlur={(e) => updateHabit(h.id, { title: e.target.value })}
                   placeholder="Habit title"
                 />
                 <Input
                   value={h.frequency ?? ""}
-                  onChange={(e) => setHabits(prev => prev.map(x => x.id === h.id ? { ...x, frequency: e.target.value } : x))}
+                  onChange={(e) => setDbHabits(prev => prev.map(x => x.id === h.id ? { ...x, frequency: e.target.value } : x))}
                   onBlur={(e) => updateHabit(h.id, { frequency: e.target.value })}
                   placeholder="Frequency"
                 />
                 <Input
                   value={h.trigger ?? ""}
-                  onChange={(e) => setHabits(prev => prev.map(x => x.id === h.id ? { ...x, trigger: e.target.value } : x))}
+                  onChange={(e) => setDbHabits(prev => prev.map(x => x.id === h.id ? { ...x, trigger: e.target.value } : x))}
                   onBlur={(e) => updateHabit(h.id, { trigger: e.target.value })}
                   placeholder="Trigger"
                 />
