@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import VisionCard from "@/components/VisionCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -14,26 +15,70 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
 
-const QUESTIONS = [
-  "What are your main goals right now?",
-  "What personal values matter most to you?",
-  "What key skills do you want to develop?",
-  "What habits would help you grow?",
-  "What challenges are you facing?",
+enum Step {
+  START = "START",
+  GREET = "GREET",
+  ASK_MAIN_GOAL = "ASK_MAIN_GOAL",
+  ASK_VALUES = "ASK_VALUES",
+  ASK_SKILLS = "ASK_SKILLS",
+  ASK_HABITS = "ASK_HABITS",
+  ASK_CHALLENGES = "ASK_CHALLENGES",
+  CONFIRM_SUMMARY = "CONFIRM_SUMMARY",
+  SHOW_VISION = "SHOW_VISION",
+}
+
+const PROMPTS: Record<Step, string> = {
+  [Step.GREET]: "Hi, I'm Aurora. Let's get to know you a bit better.",
+  [Step.ASK_MAIN_GOAL]: "What are your main goals right now?",
+  [Step.ASK_VALUES]: "What personal values matter most to you?",
+  [Step.ASK_SKILLS]: "What key skills do you want to develop?",
+  [Step.ASK_HABITS]: "What habits would help you grow?",
+  [Step.ASK_CHALLENGES]: "What challenges are you facing?",
+};
+
+const QUESTION_STEPS = [
+  Step.ASK_MAIN_GOAL,
+  Step.ASK_VALUES,
+  Step.ASK_SKILLS,
+  Step.ASK_HABITS,
+  Step.ASK_CHALLENGES,
 ];
 
 const MIN_LENGTH = 10;
 const REQUIRED_KEYWORDS = ["goal", "value", "skill", "habit", "challenge"];
 
-function validateAnswer(answer: string, step: number): string | null {
+function validateAnswer(answer: string, index: number): string | null {
   if (answer.length < MIN_LENGTH)
     return `Please provide at least ${MIN_LENGTH} characters.`;
-  const keyword = REQUIRED_KEYWORDS[step];
+  const keyword = REQUIRED_KEYWORDS[index];
   if (keyword && !answer.toLowerCase().includes(keyword)) {
     return `Please mention the word "${keyword}" in your response.`;
   }
   return null;
 }
+
+const nextStep = (s: Step): Step | null => {
+  switch (s) {
+    case Step.START:
+      return Step.GREET;
+    case Step.GREET:
+      return Step.ASK_MAIN_GOAL;
+    case Step.ASK_MAIN_GOAL:
+      return Step.ASK_VALUES;
+    case Step.ASK_VALUES:
+      return Step.ASK_SKILLS;
+    case Step.ASK_SKILLS:
+      return Step.ASK_HABITS;
+    case Step.ASK_HABITS:
+      return Step.ASK_CHALLENGES;
+    case Step.ASK_CHALLENGES:
+      return Step.CONFIRM_SUMMARY;
+    case Step.CONFIRM_SUMMARY:
+      return Step.SHOW_VISION;
+    default:
+      return null;
+  }
+};
 
 export default function OnboardingFlow() {
   const { user } = useSupabaseAuth();
@@ -43,7 +88,7 @@ export default function OnboardingFlow() {
     try {
       return JSON.parse(localStorage.getItem("aurora_chat_v1") ?? "{}") as {
         messages?: Msg[];
-        step?: number;
+        step?: Step;
         answers?: string[];
       };
     } catch {
@@ -52,11 +97,36 @@ export default function OnboardingFlow() {
   };
   const initial = getInitialState();
   const [messages, setMessages] = useState<Msg[]>(initial.messages || []);
-  const [step, setStep] = useState(initial.step || 0);
+  const [step, setStep] = useState<Step>(initial.step || Step.START);
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<string[]>(initial.answers || []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const total = QUESTIONS.length;
+  const total = QUESTION_STEPS.length;
+
+  const transition = (next: Step, currentAnswers: string[] = answers) => {
+    setStep(next);
+    setMessages((msgs) => {
+      let prompt: string | undefined;
+      if (next === Step.CONFIRM_SUMMARY) {
+        prompt = `Here's what I heard:\n${currentAnswers
+          .map((a, i) => `- ${REQUIRED_KEYWORDS[i]}: ${a}`)
+          .join("\n")}\nDoes this look right?`;
+      } else {
+        prompt = PROMPTS[next];
+      }
+      if (
+        prompt &&
+        !msgs.some((m) => m.role === "assistant" && m.content === prompt)
+      ) {
+        return [...msgs, { role: "assistant", content: prompt }];
+      }
+      return msgs;
+    });
+    if (next === Step.GREET) {
+      const nextQ = nextStep(next);
+      if (nextQ) setTimeout(() => transition(nextQ, currentAnswers), 0);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -71,27 +141,12 @@ export default function OnboardingFlow() {
     }
   }, [messages, step, answers]);
 
-  // ask next question
   useEffect(() => {
-    if (step < total) {
-      const hasPrompt = messages.some(
-        (m) => m.role === "assistant" && m.content === QUESTIONS[step]
-      );
-      if (!hasPrompt) {
-        setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[step] }]);
-      }
-    } else if (step === total && user) {
-      const finalize = async () => {
-        await supabase
-          .from("profiles")
-          .update({ onboarded_at: new Date().toISOString() })
-          .eq("id", user.id);
-        await supabase.functions.invoke("generate-plan", { body: { answers } });
-        navigate("/app/plan", { replace: true });
-      };
-      finalize();
+    if (step === Step.START) {
+      const next = nextStep(Step.START);
+      if (next) transition(next);
     }
-  }, [step, total, user, navigate, answers]);
+  }, [step]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,7 +156,9 @@ export default function OnboardingFlow() {
     setMessages(newMessages);
     setInput("");
 
-    const error = validateAnswer(userMsg.content, step);
+    const questionIndex = QUESTION_STEPS.indexOf(step);
+    const error =
+      questionIndex > -1 ? validateAnswer(userMsg.content, questionIndex) : null;
 
     const baseMessages: ChatMsg[] = [
       {
@@ -127,19 +184,38 @@ export default function OnboardingFlow() {
     }
     if (error) return;
 
-    if (user) {
-      await supabase.from("onboarding_answers").insert({
-        user_id: user.id,
-        question: QUESTIONS[step],
-        answer: userMsg.content,
-      });
+    let updatedAnswers = answers;
+    if (questionIndex > -1) {
+      if (user) {
+        await supabase.from("onboarding_answers").insert({
+          user_id: user.id,
+          question: PROMPTS[step],
+          answer: userMsg.content,
+        });
+      }
+      updatedAnswers = [...answers];
+      updatedAnswers[questionIndex] = userMsg.content;
+      setAnswers(updatedAnswers);
     }
 
-    setAnswers((a) => [...a, userMsg.content]);
-    setStep((s) => s + 1);
+    const next = nextStep(step);
+    if (next) transition(next, updatedAnswers);
   };
 
-  const progress = (step / total) * 100;
+  const handleFinish = async () => {
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ onboarded_at: new Date().toISOString() })
+        .eq("id", user.id);
+      await supabase.functions.invoke("generate-plan", { body: { answers } });
+    }
+    navigate("/app/plan", { replace: true });
+  };
+
+  const progress = (answers.length / total) * 100;
+  const shouldShowForm =
+    step !== Step.SHOW_VISION && step !== Step.START && step !== Step.GREET;
 
   return (
     <div className="relative h-svh w-screen">
@@ -174,7 +250,7 @@ export default function OnboardingFlow() {
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
-        {step < total && (
+        {shouldShowForm && (
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-2 border-t bg-background p-4"
@@ -189,6 +265,14 @@ export default function OnboardingFlow() {
               Continue
             </Button>
           </form>
+        )}
+        {step === Step.SHOW_VISION && (
+          <div className="border-t bg-background p-4">
+            <VisionCard answers={answers} />
+            <Button className="mt-4 w-full" onClick={handleFinish}>
+              Continue
+            </Button>
+          </div>
         )}
       </div>
     </div>
