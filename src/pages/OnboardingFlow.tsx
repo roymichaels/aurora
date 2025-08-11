@@ -15,22 +15,86 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 type Msg = { role: "assistant" | "user"; content: string };
 type ChatMsg = Msg | { role: "system"; content: string };
 
-type Question = { prompt: string; keyword: string };
+type Question = {
+  type: "text" | "choice" | "hypothetical";
+  prompt: string;
+  keyword: string;
+  options?: string[];
+};
 type Module = { topic: string; questions: Question[] };
 
 const MODULES: Module[] = [
-  { topic: "Goals", questions: [{ prompt: "What are your main goals right now?", keyword: "goal" }] },
-  { topic: "Values", questions: [{ prompt: "What personal values matter most to you?", keyword: "value" }] },
-  { topic: "Skills", questions: [{ prompt: "What key skills do you want to develop?", keyword: "skill" }] },
-  { topic: "Habits", questions: [{ prompt: "What habits would help you grow?", keyword: "habit" }] },
-  { topic: "Challenges", questions: [{ prompt: "What challenges are you facing?", keyword: "challenge" }] },
+  {
+    topic: "Goals",
+    questions: [
+      { type: "text", prompt: "What are your main goals right now?", keyword: "goal" },
+      {
+        type: "hypothetical",
+        prompt: "If you achieved your main goal, how would your life change?",
+        keyword: "change",
+      },
+    ],
+  },
+  {
+    topic: "Values",
+    questions: [
+      {
+        type: "choice",
+        prompt: "Which value resonates most with you?",
+        options: ["Growth", "Integrity", "Compassion"],
+        keyword: "value",
+      },
+      { type: "text", prompt: "Why is this value important to you?", keyword: "value" },
+    ],
+  },
+  {
+    topic: "Skills",
+    questions: [
+      {
+        type: "choice",
+        prompt: "Which skill would you like to develop next?",
+        options: ["Communication", "Technical", "Leadership"],
+        keyword: "skill",
+      },
+      {
+        type: "text",
+        prompt: "What steps can you take to improve this skill?",
+        keyword: "step",
+      },
+    ],
+  },
+  {
+    topic: "Habits",
+    questions: [
+      {
+        type: "choice",
+        prompt: "What kind of habit do you want to build?",
+        options: ["Daily", "Weekly", "Monthly"],
+        keyword: "habit",
+      },
+      { type: "text", prompt: "Describe a habit that would help you grow.", keyword: "habit" },
+    ],
+  },
+  {
+    topic: "Challenges",
+    questions: [
+      { type: "text", prompt: "What challenges are you facing?", keyword: "challenge" },
+      {
+        type: "hypothetical",
+        prompt: "Imagine overcoming these challenges. How would you feel?",
+        keyword: "feel",
+      },
+    ],
+  },
 ];
 
 const MIN_LENGTH = 10;
 
 function validateAnswer(answer: string, moduleIndex: number, questionIndex: number): string | null {
+  const question = MODULES[moduleIndex].questions[questionIndex];
+  if (question.type === "choice") return null;
   if (answer.length < MIN_LENGTH) return `Please provide at least ${MIN_LENGTH} characters.`;
-  const keyword = MODULES[moduleIndex].questions[questionIndex].keyword;
+  const keyword = question.keyword;
   if (keyword && !answer.toLowerCase().includes(keyword)) {
     return `Please mention the word "${keyword}" in your response.`;
   }
@@ -170,11 +234,12 @@ export default function OnboardingFlow() {
     }
   }, [phase, currentModule, questionIndex]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSubmit = async (e?: React.FormEvent, choice?: string) => {
+    e?.preventDefault();
+    const answer = choice ?? input.trim();
+    if (!answer) return;
 
-    const userMsg: Msg = { role: "user", content: input.trim() };
+    const userMsg: Msg = { role: "user", content: answer };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput("");
@@ -255,6 +320,9 @@ export default function OnboardingFlow() {
   };
 
   const shouldShowForm = phase !== "vision" && phase !== "start";
+  const currentQuestion = MODULES[currentModule]?.questions[questionIndex];
+  const showChoice = shouldShowForm && currentQuestion?.type === "choice";
+  const showText = shouldShowForm && currentQuestion?.type !== "choice";
   const percentDisplay = Math.floor(progressPercent);
 
   return (
@@ -291,7 +359,7 @@ export default function OnboardingFlow() {
           </div>
         </ScrollArea>
 
-        {shouldShowForm && (
+        {showText && (
           <form onSubmit={handleSubmit} className="flex flex-col gap-2 border-t bg-background p-4">
             <Textarea
               value={input}
@@ -303,6 +371,15 @@ export default function OnboardingFlow() {
               Continue
             </Button>
           </form>
+        )}
+        {showChoice && currentQuestion?.options && (
+          <div className="flex flex-col gap-2 border-t bg-background p-4">
+            {currentQuestion.options.map((opt) => (
+              <Button key={opt} onClick={() => handleSubmit(undefined, opt)}>
+                {opt}
+              </Button>
+            ))}
+          </div>
         )}
 
         {phase === "vision" && (
