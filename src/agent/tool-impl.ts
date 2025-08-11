@@ -27,6 +27,10 @@ export const ToolImpl = {
 
   async clip_note({ text, tags }: { text: string; tags?: string[] }) {
     try {
+      if (!navigator?.clipboard) {
+        toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+        return { ok: false } as any;
+      }
       // Minimal local clipboard as placeholder for Notes feature
       await navigator.clipboard.writeText(text);
       toast({ title: "Clipped to clipboard", description: (tags && tags.length) ? `Tags: ${tags.join(', ')}` : undefined });
@@ -59,6 +63,10 @@ export const ToolImpl = {
   },
 
   async fill_form({ text }: { text: string }) {
+    if (!navigator?.clipboard) {
+      toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+      return { ok: false } as any;
+    }
     // Basic fallback: copy to clipboard for paste
     await navigator.clipboard.writeText(text);
     toast({ title: "Ready to paste", description: "Text copied to clipboard" });
@@ -66,6 +74,10 @@ export const ToolImpl = {
   },
 
   async copy_to_clipboard({ text }: { text: string }) {
+    if (!navigator?.clipboard) {
+      toast({ title: "Clipboard unsupported", description: "Clipboard isn’t supported" });
+      return { ok: false } as any;
+    }
     await navigator.clipboard.writeText(text);
     toast({ title: "Copied", description: text.length > 60 ? `${text.slice(0, 60)}…` : text });
     return { ok: true };
