@@ -8,8 +8,15 @@ import {
 } from '@/components/ui/drawer';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Send, X, Bot, Minimize2 } from 'lucide-react';
+import { MessageSquare, Send, X, Bot, Minimize2, Mic, Volume2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useLocation } from 'react-router-dom';
+
+// Minimal typings for browsers without built-in Web Speech definitions
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognition = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SpeechRecognitionEvent = any;
 
 type Task = {
   id: string;
@@ -41,15 +48,39 @@ export function FloatingAssistant({
       content: 'Hi! How can I help you with your current focus?',
     },
   ]);
+  const [listening, setListening] = useState(false);
+  const [speak, setSpeak] = useState(false);
 
   const endRef = useRef<HTMLDivElement | null>(null);
+  // Speech recognition may not be available in all browsers
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const loc = useLocation();
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, open]);
 
-  const handleSend = async () => {
-    const text = input.trim();
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) return;
+    const rec: SpeechRecognition = new SR();
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.onresult = (e: SpeechRecognitionEvent) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transcript = (e.results as any)?.[0]?.[0]?.transcript as string;
+      if (transcript) {
+        handleSend(transcript);
+      }
+    };
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSend = async (override?: string) => {
+    const text = (override ?? input).trim();
     if (!text || sending) return;
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -65,10 +96,11 @@ export function FloatingAssistant({
         .concat(userMsg)
         .slice(-12)
         .map((m) => ({ role: m.role, content: m.content }));
+      const context = `Route: ${loc.pathname}${task ? ` | Task: ${task.title}` : ''}`;
       const { data, error } = await supabase.functions.invoke('aurora-chat', {
         body: {
           model: 'o4-mini-2025-04-16',
-          messages: history,
+          messages: [{ role: 'system', content: context }, ...history],
         },
       });
       if (error) throw error;
@@ -79,6 +111,10 @@ export function FloatingAssistant({
         content: replyText,
       };
       setMessages((m) => [...m, reply]);
+      if (speak && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        const utter = new SpeechSynthesisUtterance(replyText);
+        window.speechSynthesis.speak(utter);
+      }
     } catch (e: unknown) {
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
@@ -89,6 +125,17 @@ export function FloatingAssistant({
       console.error(e);
     } finally {
       setSending(false);
+    }
+  };
+
+  const toggleListening = () => {
+    const rec = recognitionRef.current;
+    if (!rec) return;
+    if (listening) {
+      rec.stop();
+    } else {
+      rec.start();
+      setListening(true);
     }
   };
 
@@ -202,6 +249,14 @@ export function FloatingAssistant({
 
             {/* Input bar */}
             <div className="p-3 border-t flex items-center gap-2">
+              <Button
+                size="icon"
+                variant={listening ? 'secondary' : 'ghost'}
+                onClick={toggleListening}
+                aria-label={listening ? 'Stop voice input' : 'Start voice input'}
+              >
+                <Mic className="w-4 h-4" />
+              </Button>
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -216,11 +271,19 @@ export function FloatingAssistant({
               />
               <Button
                 size="icon"
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || sending}
                 aria-label="Send message"
               >
                 <Send className="w-4 h-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant={speak ? 'secondary' : 'ghost'}
+                onClick={() => setSpeak((v) => !v)}
+                aria-label={speak ? 'Disable voice output' : 'Enable voice output'}
+              >
+                <Volume2 className="w-4 h-4" />
               </Button>
             </div>
           </div>

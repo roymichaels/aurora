@@ -3,6 +3,7 @@ import { useProgressStore } from "@/state/progress";
 import { useGameStore } from "@/game/store";
 import { playHypno, type PlaybackHandle } from "@/hypno/tts";
 import HypnoSphere from "@/components/effects/HypnoSphere";
+import { awardXPRemote } from "@/integrations/supabase/gameSync";
 
 type Props = { node: { id: string; label: string; script?: string; duration?: number }; onExit: () => void };
 
