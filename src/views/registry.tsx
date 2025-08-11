@@ -25,6 +25,6 @@ export const views: ViewMeta[] = [
   { id: "archive", label: "Archive", path: "archive",    component: lazy(() => import("./ArchiveView")) },
   { id: "settings",label: "Settings",path: "settings",  component: lazy(() => import("./SettingsView")) },
   { id: "agent",   label: "Agent",   path: "agent",      component: lazy(() => import("./AgentFullView")) },
-  { id: "plan",    label: "Plan",    path: "plan",       component: lazy(() => import("./MasterPlanView")) },
+  { id: "plan",    label: "Plan",    path: "plan",       component: lazy(() => import("./PlanView")) },
   { id: "runner",  label: "Node",    path: "node/:id",   component: lazy(() => import("../pages/NodeRunner")) },
 ];
