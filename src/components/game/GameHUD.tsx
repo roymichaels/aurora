@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { quickSlots } from "@/game/hud/hud.data";
-import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
+import { LipSyncAvatar } from "@/components/avatar/LipSyncAvatar";
 import { Mic, ChevronDown, ChevronUp } from "lucide-react";
 import { useHUDActions } from "@/game/hud/useHUDActions";
-import { useVoiceStore } from "@/state/voice";
+import { useAvatarStore } from "@/state/avatar";
 
 function fire(type: string, payload?: any) {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -14,7 +14,7 @@ function fire(type: string, payload?: any) {
 export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
   const { run } = useHUDActions();
-  const isSpeaking = useVoiceStore((s) => s.isSpeaking);
+  const avatarEnabled = useAvatarStore((s) => s.enabled);
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -58,7 +58,9 @@ export function GameHUD() {
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
-            <EvolvingSphere size={44} level={stats.level} xpPct={stats.xp} mood="focused" speaking={isSpeaking} />
+            {avatarEnabled && (
+              <LipSyncAvatar size={44} />
+            )}
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">
                 Lv. {stats.level} • Streak {stats.streak}
