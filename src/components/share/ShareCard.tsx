@@ -88,9 +88,9 @@ export default function ShareCard({ open, onOpenChange, progressPercent }: Props
       const res = await fetch(imgUrl);
       const blob = await res.blob();
       const navAny = navigator as any;
-      if (navAny.clipboard && navAny.clipboard.write && (window as any).ClipboardItem) {
+      if (navAny.clipboard && navAny.clipboard.write && window.ClipboardItem) {
         await navAny.clipboard.write([
-          new (window as any).ClipboardItem({ [blob.type]: blob })
+          new window.ClipboardItem({ [blob.type]: blob })
         ]);
         toast({ title: 'Copied', description: 'Image copied to clipboard.' });
       } else if (navigator.clipboard && (navigator as any).clipboard.writeText) {

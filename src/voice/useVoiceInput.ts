@@ -11,8 +11,8 @@ export function useVoiceInput() {
 
   const start = useCallback(async () => {
     if (isRecording) return
-    if ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition) {
-      const Rec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+      const Rec = (window.SpeechRecognition || window.webkitSpeechRecognition)!
       const recognition = new Rec()
       recognition.lang = 'en-US'
       recognition.interimResults = false

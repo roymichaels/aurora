@@ -52,7 +52,7 @@ export function FloatingAssistant({
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const rec: SpeechRecognition = new SR();
     rec.continuous = false;

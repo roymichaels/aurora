@@ -6,7 +6,7 @@ export function useXPChime() {
 
     const play = () => {
       try {
-        ctx = ctx || new (window.AudioContext || (window as any).webkitAudioContext)();
+        ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
         const now = ctx.currentTime;
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();

@@ -16,14 +16,14 @@ export default function CoachRunner({ node, onExit }: Props) {
       onFinal: (t: string) => setFinal((arr) => [...arr, t]),
       onResponse: (t: string) => setResponses((arr) => [...arr, t]),
     });
-    (window as any).__coachAgent = agent;
+    window.__coachAgent = agent;
     return () => {
       try { agent.stopPTT(); } catch {}
     };
   }, []);
 
-  const start = () => (window as any).__coachAgent?.startPTT();
-  const stop = () => (window as any).__coachAgent?.stopPTT();
+  const start = () => window.__coachAgent?.startPTT();
+  const stop = () => window.__coachAgent?.stopPTT();
 
   return (
     <main className="relative min-h-svh px-4 pt-10 pb-28 max-w-[760px] mx-auto">

@@ -17,7 +17,7 @@ export class VoiceIO {
   }
 
   startPushToTalk() {
-    const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) {
       this.callbacks.onError?.(new Error('Web Speech API not available'));
       return;
