@@ -40,7 +40,10 @@ export default function StackPage() {
 
   const hasTTS = typeof window !== "undefined" && "speechSynthesis" in window;
   const hasSTT = typeof window !== "undefined" && ("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
-  const hasExtension = typeof window !== "undefined" && typeof (window as any).chrome !== "undefined" && !!(window as any).chrome?.runtime?.id;
+  const hasExtension =
+    typeof window !== "undefined" &&
+    typeof window.chrome !== "undefined" &&
+    !!window.chrome?.runtime?.id;
   const online = typeof navigator !== "undefined" && navigator.onLine;
   const supabaseReady = !!supabase;
 

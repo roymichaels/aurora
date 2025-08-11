@@ -14,7 +14,7 @@ export default function AgentRunner() {
       onFinal: (t: string) => setFinal((a) => [...a, t]),
       onResponse: (t: string) => setResponses((a) => [...a, t]),
     });
-    (window as any).__agent = agent;
+    window.__agent = agent;
     return () => {
       try { agent.stopPTT(); } catch {}
     };
@@ -28,8 +28,8 @@ export default function AgentRunner() {
 
       <div className="rounded-lg border border-white/10 p-4 bg-white/5">
         <div className="flex items-center gap-3 mb-3">
-          <button className="btn" onClick={() => (window as any).__agent?.startPTT()} aria-pressed={listening}>🎤 {listening ? 'Listening…' : 'Push-to-talk'}</button>
-          {listening && <button className="btn" onClick={() => (window as any).__agent?.stopPTT()}>Stop</button>}
+          <button className="btn" onClick={() => window.__agent?.startPTT()} aria-pressed={listening}>🎤 {listening ? 'Listening…' : 'Push-to-talk'}</button>
+          {listening && <button className="btn" onClick={() => window.__agent?.stopPTT()}>Stop</button>}
         </div>
         {partial && <p className="text-sm opacity-80">{partial}</p>}
         <div className="mt-3 space-y-2">
