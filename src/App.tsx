@@ -13,6 +13,7 @@ import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
 import OnboardingFlow from "./pages/OnboardingFlow";
+import PersonaSetup from "./pages/PersonaSetup";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
           <Route path="/stack" element={<StackPage />} />
+          <Route path="/persona-setup" element={<PersonaSetup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

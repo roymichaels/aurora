@@ -17,6 +17,7 @@ export interface UserProfile {
   habits?: string;
   challenges?: string;
   tones?: string;
+  quirks?: string;
   history: ProfileHistoryItem[];
 }
 
@@ -27,6 +28,7 @@ const FIELD_KEYWORDS: Record<keyof Omit<UserProfile, 'history'>, string> = {
   habits: 'habit',
   challenges: 'challenge',
   tones: 'tone',
+  quirks: 'quirk',
 };
 
 export function buildHistory(
@@ -90,6 +92,7 @@ export function summarizeProfile(profile: UserProfile | null): string {
   if (profile.goals) parts.push(`Goals: ${profile.goals}`);
   if (profile.values) parts.push(`Values: ${profile.values}`);
   if (profile.tones) parts.push(`Tone: ${profile.tones}`);
+  if (profile.quirks) parts.push(`Quirks: ${profile.quirks}`);
   return parts.join('; ');
 }
 
