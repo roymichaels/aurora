@@ -107,7 +107,26 @@ export default function MasterPlanView() {
   const requestRevision = async () => {
     if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to generate." }); return; }
     setLoading(true);
-    const { error } = await supabase.functions.invoke("generate-plan", { body: { plan } });
+    const { data: answersData, error: answersError } = await supabase
+      .from("onboarding_answers")
+      .select("question, answer")
+      .eq("user_id", user.id);
+
+    if (answersError) {
+      console.error(answersError);
+      toast({ title: "Error", description: "Could not fetch onboarding answers." });
+      setLoading(false);
+      return;
+    }
+
+    const body: { answers: { question: string; answer: string }[]; plan?: MasterPlan } = {
+      answers: (answersData as { question: string; answer: string }[]) ?? [],
+    };
+    if (plan) {
+      body.plan = plan;
+    }
+
+    const { error } = await supabase.functions.invoke("generate-plan", { body });
     if (error) { console.error(error); toast({ title: "Error", description: "Could not regenerate plan." }); }
     else toast({ title: "Regenerated", description: "Plan regenerated." });
     await fetchData();
