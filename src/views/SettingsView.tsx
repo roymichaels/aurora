@@ -17,6 +17,7 @@ import {
 import TriggersPanel from "@/components/settings/TriggersPanel";
 import ModelPanel from "@/components/settings/ModelPanel";
 import DataSourcesPanel from "@/components/settings/DataSourcesPanel";
+import MemoryPanel from "@/components/settings/MemoryPanel";
 
 
 export default function SettingsView() {
@@ -89,6 +90,7 @@ export default function SettingsView() {
             <DataSourcesPanel />
             <TriggersPanel />
             <ModelPanel />
+            <MemoryPanel />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">You are not signed in.</p>
