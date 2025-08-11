@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useVoiceStore } from "@/state/voice";
+import { playClonedVoice } from "./voiceClone";
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -6,6 +8,8 @@ export function useTextToSpeech() {
     return localStorage.getItem("aurora_voice_enabled") === "1";
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const voiceId = useVoiceStore((s) => s.voiceId);
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
   useEffect(() => {
@@ -28,8 +32,21 @@ export function useTextToSpeech() {
   }, [enabled]);
 
   const speak = useCallback(
-    (text: string) => {
+    async (text: string) => {
       if (!enabled || !text?.trim()) return; // <- gate prevents NotAllowedError
+      // Try cloned voice via Supabase when a voiceId is configured
+      if (voiceId) {
+        const audio = await playClonedVoice(text, voiceId, {
+          onStart: () => setIsSpeaking(true),
+          onEnd: () => setIsSpeaking(false),
+        });
+        if (audio) {
+          audioRef.current = audio;
+          return;
+        }
+      }
+
+      // Fallback to Web Speech API
       try {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(text);
@@ -42,10 +59,12 @@ export function useTextToSpeech() {
         setIsSpeaking(false);
       }
     },
-    [enabled],
+    [enabled, voiceId],
   );
 
   const cancel = useCallback(() => {
+    try { audioRef.current?.pause(); } catch { /* ignore */ }
+    audioRef.current = null;
     try {
       window.speechSynthesis.cancel();
     } catch {
