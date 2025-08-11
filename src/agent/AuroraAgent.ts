@@ -59,6 +59,8 @@ export class AuroraAgent {
       .map((m) => `${m.role}: ${m.content}`)
       .join('\n');
 
+    const confidence = memories.length > 2 ? 0.9 : 0.5;
+
     const userSummary = this.history
       .filter((m) => m.role === 'user')
       .map((m) => m.content)
@@ -81,7 +83,7 @@ export class AuroraAgent {
           },
           ...this.history,
         ];
-        const { content } = await auroraChat(messages);
+        const { content } = await auroraChat(messages, { confidence });
         this.say(content);
       } catch (e) {
         console.error('aurora-chat failed', e);
@@ -125,7 +127,7 @@ export class AuroraAgent {
           : []),
         ...this.history,
       ];
-      const { content } = await auroraChat(messages);
+      const { content } = await auroraChat(messages, { confidence });
       this.say(content);
     } catch (e) {
       console.error('aurora-chat failed', e);
