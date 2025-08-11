@@ -1,9 +1,12 @@
 import { useEffect } from "react";
 
 // Ensures focused inputs scroll into view (useful on mobile keyboards)
+// Browser-only: relies on window and document objects
 export function useAutoScrollOnFocus(container?: HTMLElement | null) {
   useEffect(() => {
-    const root = container ?? document.body;
+    if (typeof window === 'undefined') return;
+    const root = container ?? document?.body;
+    if (!root) return;
     const selector = 'input, textarea, [contenteditable="true"], select';
     const elements = Array.from(root.querySelectorAll<HTMLElement>(selector));
 
