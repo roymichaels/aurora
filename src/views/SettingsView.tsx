@@ -14,6 +14,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import TriggersPanel from "@/components/settings/TriggersPanel";
 
 
 export default function SettingsView() {
@@ -55,6 +56,35 @@ export default function SettingsView() {
     <div className="container mx-auto px-4 py-6 space-y-4">
       <h1 className="text-2xl font-semibold">Settings</h1>
       {user ? (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="text-sm text-muted-foreground">{user.email}</div>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={handleExport}>
+                Export Profile
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">Delete Profile</Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete profile?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove your profile data from this device. This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <Button variant="softPrimary" onClick={signOut}>Log out</Button>
+            </div>
+          </div>
+          <TriggersPanel />
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">{user.email}</div>
           <div className="flex gap-2">

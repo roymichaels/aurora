@@ -3,7 +3,7 @@ import { randomBytes, pbkdf2Sync, createCipheriv, createDecipheriv } from "crypt
 interface SaveProfileInput {
   userId: string;
   password: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface StoredPayload {
@@ -38,9 +38,10 @@ const createMemoryStorage = (): StorageLike => {
   };
 };
 
+const globalWithStorage = globalThis as { localStorage?: StorageLike };
 const storage: StorageLike =
-  typeof globalThis !== "undefined" && (globalThis as any).localStorage
-    ? (globalThis as any).localStorage
+  typeof globalThis !== "undefined" && globalWithStorage.localStorage
+    ? globalWithStorage.localStorage
     : createMemoryStorage();
 
 export function saveProfile(profile: SaveProfileInput): void {
@@ -65,7 +66,10 @@ export function saveProfile(profile: SaveProfileInput): void {
   storage.setItem(STORAGE_PREFIX + userId, JSON.stringify(payload));
 }
 
-export function loadProfile(userId: string, password: string): any | null {
+export function loadProfile(
+  userId: string,
+  password: string,
+): Record<string, unknown> | null {
   const raw = storage.getItem(STORAGE_PREFIX + userId);
   if (!raw) return null;
 
@@ -79,7 +83,15 @@ export function loadProfile(userId: string, password: string): any | null {
   const decipher = createDecipheriv("aes-256-gcm", key, iv);
   decipher.setAuthTag(tag);
   const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
-  return JSON.parse(decrypted.toString("utf8"));
+  return JSON.parse(decrypted.toString("utf8")) as Record<string, unknown>;
+}
+
+export function exportProfile(userId: string): string | null {
+  return storage.getItem(STORAGE_PREFIX + userId);
+}
+
+export function deleteProfile(userId: string): void {
+  storage.removeItem?.(STORAGE_PREFIX + userId);
 }
 
 export function exportProfile(userId: string): string | null {
