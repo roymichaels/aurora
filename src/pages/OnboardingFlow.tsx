@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import VisionCard from "@/components/VisionCard";
+import VisionCard from "@/components/onboarding/VisionCard";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -268,10 +268,7 @@ export default function OnboardingFlow() {
         )}
         {step === Step.SHOW_VISION && (
           <div className="border-t bg-background p-4">
-            <VisionCard answers={answers} />
-            <Button className="mt-4 w-full" onClick={handleFinish}>
-              Continue
-            </Button>
+            <VisionCard answers={answers} onClose={handleFinish} />
           </div>
         )}
       </div>
