@@ -12,8 +12,7 @@ const portals: { x: number; id: OverlayId; label: string }[] = [
   { x: 1400, id: "library", label: "Sound Studio" },
   { x: 1900, id: "library", label: "Idea Forest" },
   { x: 2450, id: "library", label: "Memory Vault" },
-  { x: 3000, id: "analyze", label: "Arena" },
-  { x: 3300, id: "analyze", label: "Portal Plaza" },
+  { x: 3000, id: "focus", label: "Portal Plaza" },
 ];
 
 export default function GameCanvas({ inputVec, actionTick, overlayId, onEnter }: { inputVec: Vec2; actionTick: number; overlayId: OverlayId | null; onEnter: (id: OverlayId) => void; }) {

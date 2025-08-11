@@ -16,7 +16,6 @@ export function useHUDActions() {
       startHypnosis: "startHypnosis",
       voiceNote: "voiceNote",
       addNote: "addNote",
-      openAnalyze: "openAnalyze",
       openMap: "openMap",
       openBrowser: "openBrowser",
     };

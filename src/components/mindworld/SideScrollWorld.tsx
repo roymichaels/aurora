@@ -20,7 +20,6 @@ export default function SideScrollWorld() {
       { id: "library", x: 650, label: "Library" },
       { id: "mentor", x: 1180, label: "Mentor" },
       { id: "focus", x: 1800, label: "Hall of Focus" },
-      { id: "analyze", x: 2060, label: "Analyze Lab" },
     ],
     []
   );
@@ -154,12 +153,6 @@ export default function SideScrollWorld() {
           <div className="building" style={{ left: 1710 }} aria-label="Hall of Focus">
             <div className="label">Hall of Focus</div>
             <div className={`door ${canEnter && nearestZone.z?.id === "focus" ? "glow" : ""}`} />
-          </div>
-
-          {/* Analyze Lab */}
-          <div className="building" style={{ left: 1990 }} aria-label="Analyze Lab">
-            <div className="label">Analyze Lab</div>
-            <div className={`door ${canEnter && nearestZone.z?.id === "analyze" ? "glow" : ""}`} />
           </div>
 
           {/* Enter hint */}

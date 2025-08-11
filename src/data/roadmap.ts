@@ -1,4 +1,4 @@
-export type RoadmapNodeType = "hypnosis" | "focus" | "browser" | "analyze" | "coach" | "note" | "reward";
+export type RoadmapNodeType = "hypnosis" | "focus" | "browser" | "coach" | "note" | "reward";
 
 export type RoadmapNode = {
   id: string;
@@ -55,7 +55,6 @@ export const tracks: Track[] = [
       { id: "focus-25", label: "Focus 25m", type: "focus", minutes: 25 },
       { id: "focus-45", label: "Focus 45m", type: "focus", minutes: 45 },
       { id: "note-quick", label: "Quick Note", type: "note" },
-      { id: "analyze-recap", label: "Analyze Recent", type: "analyze" },
     ],
   },
   {

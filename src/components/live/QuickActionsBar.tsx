@@ -222,15 +222,6 @@ type Track = {
         </DialogContent>
       </Dialog>
 
-      {/* Analyze */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => toast({ title: "Analyze", description: "Use the Analyze panel below to capture a decision card." })}
-      >
-        Open Analyze Tool
-      </Button>
-
       {/* Voice Note */}
       <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
         <DialogTrigger asChild>

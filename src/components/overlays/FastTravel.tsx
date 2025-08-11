@@ -9,7 +9,6 @@ const ZONES = [
   { key: 'hypno', label: 'Hypno Temple', event: 'open-hypno-panel' },
   { key: 'voice', label: 'Sound Studio', type: 'voiceNote' },
   { key: 'notes', label: 'Idea Forest', type: 'addNote' },
-  { key: 'analyze', label: 'Arena', type: 'openAnalyze' },
 ];
 
 export default function FastTravel() {

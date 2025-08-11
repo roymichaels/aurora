@@ -14,7 +14,7 @@ export default function RoadmapHome() {
   useMemo(() => {
     document.title = "Aurora Mind OS – Roadmap";
     const meta = document.querySelector('meta[name="description"]');
-    if (meta) meta.setAttribute("content", "Roadmap-first home: hypnosis, focus, browser, analyze, notes, rewards.");
+    if (meta) meta.setAttribute("content", "Roadmap-first home: hypnosis, focus, browser, notes, rewards.");
   }, []);
 
   return (

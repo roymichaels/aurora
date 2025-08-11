@@ -540,7 +540,6 @@ All colors MUST be HSL.
 .room-hypno { --primary: 270 75% 60%; --accent: 270 75% 60%; }
 .room-voice { --primary: 214 84% 56%; --accent: 214 84% 56%; }
 .room-notes { --primary: 35 95% 55%; --accent: 35 95% 55%; }
-.room-analyze { --primary: 199 90% 54%; --accent: 199 90% 54%; }
 .room-browser { --primary: 210 90% 60%; --accent: 210 90% 60%; }
 .room-portal { --primary: 150 80% 50%; --accent: 150 80% 50%; }
 .room-archive { --primary: 260 60% 60%; --accent: 260 60% 60%; }

@@ -50,8 +50,6 @@ function iconFor(t: RoadmapNode["type"]) {
       return <span>⏱️</span>;
     case "browser":
       return <span>🌐</span>;
-    case "analyze":
-      return <span>🧠</span>;
     case "coach":
       return <span>🎧</span>;
     case "note":
