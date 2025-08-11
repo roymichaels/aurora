@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useBackgroundAudio } from "@/hooks/useBackgroundAudio";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
+import { useVoiceStore } from "@/state/voice";
 
 type Segment = { key: string; text: string };
 
@@ -52,11 +53,12 @@ export default function HypnosisLauncher() {
     }
   };
 
-  const fetchAudioDataUrl = async (text: string): Promise<string> => {
-    logger.debug("[Hypnosis] Requesting TTS for", text.slice(0, 40), "...");
-    const { data, error } = await supabase.functions.invoke("tts-generate", {
-      body: { text },
-    });
+    const fetchAudioDataUrl = async (text: string): Promise<string> => {
+      logger.debug("[Hypnosis] Requesting TTS for", text.slice(0, 40), "...");
+      const voiceId = useVoiceStore.getState().voiceId;
+      const { data, error } = await supabase.functions.invoke("tts-generate", {
+        body: { text, voiceId },
+      });
     if (error) {
       console.error("TTS invoke error:", error);
       throw new Error(error.message || "TTS call failed");
