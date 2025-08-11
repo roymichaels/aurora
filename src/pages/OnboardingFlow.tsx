@@ -54,14 +54,17 @@ export default function OnboardingFlow() {
     if (step < total) {
       setMessages((m) => [...m, { role: "assistant", content: QUESTIONS[step] }]);
     } else if (step === total && user) {
-      // finished
-      supabase
-        .from("profiles")
-        .update({ onboarded_at: new Date().toISOString() })
-        .eq("id", user.id)
-        .then(() => navigate("/app", { replace: true }));
+      const finalize = async () => {
+        await supabase
+          .from("profiles")
+          .update({ onboarded_at: new Date().toISOString() })
+          .eq("id", user.id);
+        await supabase.functions.invoke("generate-plan", { body: { answers } });
+        navigate("/app/plan", { replace: true });
+      };
+      finalize();
     }
-  }, [step, total, user, navigate]);
+  }, [step, total, user, navigate, answers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +99,14 @@ export default function OnboardingFlow() {
       setMessages((m) => [...m, { role: "assistant", content: data.content }]);
     }
     if (error) return;
+
+    if (user) {
+      await supabase.from("onboarding_answers").insert({
+        user_id: user.id,
+        question: QUESTIONS[step],
+        answer: userMsg.content,
+      });
+    }
 
     setAnswers((a) => [...a, userMsg.content]);
     setStep((s) => s + 1);
