@@ -272,7 +272,13 @@ export default function OnboardingFlow() {
     (sum, arr) => sum + arr.filter(Boolean).length,
     0,
   );
-  const progress = (answeredCount / total) * 100;
+  const progressPercent = Math.floor((answeredCount / total) * 100);
+  useEffect(() => {
+    localStorage.setItem(
+      "onboarding_progress_percent",
+      progressPercent.toString(),
+    );
+  }, [progressPercent]);
   const shouldShowForm = phase !== "vision" && phase !== "start";
 
   return (
@@ -280,7 +286,12 @@ export default function OnboardingFlow() {
       <div className="os-bg" />
       <div className="relative z-10 flex h-full flex-col">
         <div className="p-4">
-          <Progress value={progress} />
+          <div className="relative">
+            <Progress value={progressPercent} />
+            <div className="absolute inset-0 grid place-items-center pointer-events-none">
+              <span className="text-xs text-secondary-foreground">{progressPercent}%</span>
+            </div>
+          </div>
         </div>
         <ScrollArea className="flex-1 px-4">
           <div className="space-y-3 text-sm">
