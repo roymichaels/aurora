@@ -1,4 +1,5 @@
 import { Subscription, UsageStats } from '@/modules/payments/types/subscription'
+import { loggedFetch } from '@/lib/loggedFetch'
 
 /**
  * TODO: Enable subscription API when payments module is activated.
@@ -13,7 +14,7 @@ async function request(path: string, options: RequestInit = {}) {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
+  const res = await loggedFetch(`${API_BASE_URL}${path}`, { ...options, headers }, `subscription:${path}`)
   const data = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error((data as any)?.message || res.statusText)

@@ -195,6 +195,14 @@ export class IndexedDbMemory {
       .slice(0, topK)
       .map((s) => s.m);
   }
+
+  exportAll() {
+    return {
+      semantic: [...this.memories.semantic],
+      episodic: [...this.memories.episodic],
+      procedural: [...this.memories.procedural],
+    };
+  }
 }
 
 export const memoryStore = new IndexedDbMemory();

@@ -18,6 +18,8 @@ import TriggersPanel from "@/components/settings/TriggersPanel";
 import ModelPanel from "@/components/settings/ModelPanel";
 import DataSourcesPanel from "@/components/settings/DataSourcesPanel";
 import MemoryPanel from "@/components/settings/MemoryPanel";
+import ApiCallLogPanel from "@/components/settings/ApiCallLogPanel";
+import FeatureFlagsPanel from "@/components/settings/FeatureFlagsPanel";
 
 
 export default function SettingsView() {
@@ -91,6 +93,8 @@ export default function SettingsView() {
             <TriggersPanel />
             <ModelPanel />
             <MemoryPanel />
+            <ApiCallLogPanel />
+            <FeatureFlagsPanel />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">You are not signed in.</p>
