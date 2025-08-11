@@ -3,7 +3,6 @@ export const DAILY_QUESTS = [
   { id: 'start-hypno', label: 'Start 1 Hypno Session' },
   { id: 'add-note', label: 'Add One Note' },
   { id: 'record-voice', label: 'Record Voice Note' },
-  { id: 'open-analyze', label: 'Open Analyze Tool' },
 ] as const;
 
 export const REWARDS = { completeQuest: 10, fullClear: 25 } as const;

@@ -22,7 +22,7 @@ import FastTravel from '@/components/overlays/FastTravel';
 import HypnoPanel from '@/components/hypno/HypnoPanel';
 import { useGameStore } from '@/game/store';
 import { REWARDS, DAILY_QUESTS } from '@/game/QuestEngine';
-type PanelKey = 'live' | 'archive' | 'control' | 'create' | 'analyze';
+type PanelKey = 'live' | 'archive' | 'control' | 'create';
 
 const panelMap: Record<
   PanelKey,
@@ -47,11 +47,6 @@ const panelMap: Record<
     grid: [1, 0],
     title: 'Create',
     subtitle: 'Guided prompts to capture ideas',
-  },
-  analyze: {
-    grid: [1, 2],
-    title: 'Analyze',
-    subtitle: 'Decision tools: If–Then, Pros/Cons, One Metric',
   },
 };
 
@@ -213,36 +208,6 @@ function CreatePanel() {
             or archive cards.
           </p>
         </div>
-      </main>
-    </section>
-  );
-}
-
-function AnalyzePanel() {
-  return (
-    <section className="w-full h-full flex flex-col">
-      <PanelHeaderUnified
-        title="Analyze"
-        subtitle="Decision tools coming in Sprint 2"
-      />
-      <main className="flex-1 min-h-0 overflow-y-auto p-6 max-w-3xl mx-auto w-full grid grid-cols-2 sm:grid-cols-4 gap-4 content-start">
-        {['If–Then', 'Pros / Cons', 'One Constraint', 'One Metric'].map(
-          (tool) => (
-            <button
-              key={tool}
-              onClick={() =>
-                toast({
-                  title: tool,
-                  description: 'Will save as analysis cards linked to goals.',
-                })
-              }
-              className="glass-panel rounded-xl p-4 elev smooth hover:scale-[1.02] text-left"
-            >
-              <span className="font-semibold">{tool}</span>
-              <p className="text-xs text-muted-foreground mt-1">Tap to start</p>
-            </button>
-          )
-        )}
       </main>
     </section>
   );
@@ -519,12 +484,11 @@ const Index = () => {
   };
 
   const handleNavSelect = (
-    key: 'home' | 'map' | 'live' | 'rank' | 'aurora'
+    key: 'home' | 'map' | 'live' | 'aurora'
   ) => {
     if (key === 'home') gotoPanel('live');
     if (key === 'map') gotoPanel('control');
     if (key === 'live') gotoPanel('create');
-    if (key === 'rank') gotoPanel('analyze');
     if (key === 'aurora') gotoPanel('archive');
   };
 
@@ -572,12 +536,6 @@ const Index = () => {
       awardXP(REWARDS.completeQuest);
       checkFullClear();
     };
-    const onAnalyze = () => {
-      go('analyze', 'Analyze', 'Decision tools');
-      completeQuest('open-analyze');
-      awardXP(REWARDS.completeQuest);
-      checkFullClear();
-    };
     const onMap = () => {
       window.dispatchEvent(new CustomEvent('open-fast-travel'));
     };
@@ -588,7 +546,6 @@ const Index = () => {
       if (t === 'startHypnosis') onHypno();
       if (t === 'voiceNote') onVoice();
       if (t === 'addNote') onNote();
-      if (t === 'openAnalyze') onAnalyze();
       if (t === 'openMap') onMap();
     };
     window.addEventListener('mos', onMos as any);
@@ -651,17 +608,6 @@ const Index = () => {
             style={{ left: '100vw', top: '0', width: '100vw', height: '100vh' }}
           >
             <CreatePanel />
-          </div>
-          <div
-            className="absolute"
-            style={{
-              left: '100vw',
-              top: '200vh',
-              width: '100vw',
-              height: '100vh',
-            }}
-          >
-            <AnalyzePanel />
           </div>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { MoodCarousel } from "@/components/live/MoodCarousel";
 import HypnosisLauncher from "@/components/hypnosis/HypnosisLauncher";
 import AgentPanel from "@/components/agent/AgentPanel";
 
-export type OverlayId = "mentor" | "library" | "garden" | "focus" | "analyze" | "agent";
+export type OverlayId = "mentor" | "library" | "garden" | "focus" | "agent";
 
 function OverlayShell({ title, children, onClose }: PropsWithChildren<{ title: string; onClose: () => void }>) {
   return (
@@ -72,12 +72,5 @@ export default function WorldOverlayRouter({ id, onClose }: { id: OverlayId | nu
       </OverlayShell>
     );
   }
-  // analyze
-  return (
-    <OverlayShell title="Analyze Lab" onClose={onClose}>
-      <div className="glass-panel rounded-xl p-4">
-        <p className="text-sm text-muted-foreground">Analyze Tool is coming soon. You will be able to send tasks and notes here for insights.</p>
-      </div>
-    </OverlayShell>
-  );
+  return null;
 }

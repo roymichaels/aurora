@@ -63,7 +63,6 @@ export default function AppShell() {
         startHypnosis: 'hypno',
         voiceNote: 'voice',
         addNote: 'notes',
-        openAnalyze: 'analyze',
         openMap: 'portal',
       };
       const vid = t ? map[t] : undefined;
@@ -80,7 +79,7 @@ export default function AppShell() {
     if (meta) {
       document.title = `Aurora OS — ${meta.label}`;
       // SEO: update description and canonical
-      const description = `Aurora OS — ${meta.label} room for focus, voice, hypnosis, and analytics.`;
+      const description = `Aurora OS — ${meta.label} room for focus, voice, and hypnosis.`;
       let md = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
       if (!md) {
         md = document.createElement('meta');

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 
 // Keep this local to avoid coupling game layer to React components
-export type OverlayId = "mentor" | "library" | "garden" | "focus" | "analyze";
+export type OverlayId = "mentor" | "library" | "garden" | "focus";
 
 interface Bridge {
   input: { x: number; y: number };
@@ -71,7 +71,6 @@ export default class MindWorldScene extends Phaser.Scene {
       { x: 1400, id: "library", label: "Sound Studio" },
       { x: 1900, id: "library", label: "Idea Forest" },
       { x: 2450, id: "library", label: "Memory Vault" },
-      { x: 3000, id: "analyze", label: "Arena" },
     ];
 
     const style: Phaser.Types.GameObjects.Text.TextStyle = {

@@ -312,9 +312,6 @@ export default function LiveFocusView({
             description: 'Starting focus mode soon.',
           })
         }
-        onAnalyze={() =>
-          toast({ title: 'Analyze', description: 'Analyze tools coming soon.' })
-        }
       />
     </section>
   );

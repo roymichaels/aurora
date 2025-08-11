@@ -4,7 +4,6 @@ import { getNodeById } from "@/data/roadmap";
 import HypnosisRunner from "@/nodes/HypnosisRunner";
 import FocusRunner from "@/nodes/FocusRunner";
 import BrowserRunner from "@/nodes/BrowserRunner";
-import AnalyzeRunner from "@/nodes/AnalyzeRunner";
 import CoachRunner from "@/nodes/CoachRunner";
 import NoteRunner from "@/nodes/NoteRunner";
 import RewardRunner from "@/nodes/RewardRunner";
@@ -37,8 +36,6 @@ export default function NodeRunner() {
       return <FocusRunner {...common} />;
     case "browser":
       return <BrowserRunner {...common} />;
-    case "analyze":
-      return <AnalyzeRunner {...common} />;
     case "coach":
       return <CoachRunner {...common} />;
     case "note":

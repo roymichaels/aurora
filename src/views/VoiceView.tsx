@@ -61,14 +61,6 @@ export default function VoiceView() {
     }
   };
 
-  const sendToAnalyze = () => {
-    const text = encodeURIComponent((finalText || partial).trim());
-    if (!text) {
-      toast({ title: "No text", description: "Say something to analyze." });
-      return;
-    }
-    nav("analyze", { text });
-  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -101,9 +93,6 @@ export default function VoiceView() {
             </Button>
             <Button variant="secondary" onClick={saveNote} className="justify-start gap-2">
               <Save className="w-4 h-4" /> Save to Notes
-            </Button>
-            <Button variant="soft" onClick={sendToAnalyze} className="justify-start gap-2">
-              <Send className="w-4 h-4" /> Send to Analyze
             </Button>
           </CardContent>
         </Card>
