@@ -13,6 +13,7 @@ from typing import Callable, Iterable, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
 from memory.store import save_memory
+from persona.style import apply_style
 from safety.filter import filter_output
 from .logger import get_logger
 from .metrics import metrics
@@ -132,3 +133,5 @@ class BrainAgent:
         self._save_memory_async(message, "user")
         self._save_memory_async(final, "assistant")
         return final
+        response = apply_style(response)
+        return filter_output(response)
