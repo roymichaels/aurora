@@ -10,10 +10,18 @@ from fastapi import FastAPI, Request
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRecorder
 
+from core.metrics import metrics
 from .stt import transcribe_audio
 from .tts import synthesize_reply
 
 app = FastAPI()
+
+
+@app.get("/metrics")
+async def metrics_endpoint():
+    """Expose application metrics."""
+
+    return metrics.as_dict()
 
 
 @app.post("/voice")
