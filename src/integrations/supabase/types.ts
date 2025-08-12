@@ -224,6 +224,7 @@ export type Database = {
           onboarded_at: string | null
           role: string
           theme: Json | null
+          persona: Json | null
           updated_at: string
         }
         Insert: {
@@ -233,6 +234,7 @@ export type Database = {
           onboarded_at?: string | null
           role?: string
           theme?: Json | null
+          persona?: Json | null
           updated_at?: string
         }
         Update: {
@@ -242,6 +244,7 @@ export type Database = {
           onboarded_at?: string | null
           role?: string
           theme?: Json | null
+          persona?: Json | null
           updated_at?: string
         }
         Relationships: []

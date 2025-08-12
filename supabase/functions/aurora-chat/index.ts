@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import brain from "../../../src/brain/Brain.ts";
 import { getFilterName } from "../../../src/brain/filters.ts";
@@ -27,7 +28,27 @@ serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { messages, prompt, model, profile } = body ?? {};
+    const { messages, prompt, model } = body ?? {};
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase env vars");
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { Authorization: req.headers.get("Authorization") || "" } },
+    });
+
+    const { data: auth } = await supabase.auth.getUser();
+    let profile: UserProfile | null = null;
+    if (auth.user) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("persona")
+        .eq("id", auth.user.id)
+        .single();
+      profile = (data?.persona as UserProfile) ?? null;
+    }
 
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
@@ -48,7 +69,7 @@ serve(async (req) => {
       systemMessages.push({ role: "system", content: `Available skills: ${skillPrompt}` });
     }
 
-    const profileSummary = summarizeProfile(profile as UserProfile | null);
+    const profileSummary = summarizeProfile(profile);
     if (profileSummary) {
       systemMessages.unshift({ role: "system", content: `User profile: ${profileSummary}` });
     }
