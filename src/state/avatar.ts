@@ -7,9 +7,11 @@ type AvatarState = {
   enabled: boolean;
   color: string;
   audio: HTMLAudioElement | null;
+  sentiment: number;
   setEnabled: (v: boolean) => void;
   setColor: (c: string) => void;
   setAudio: (a: HTMLAudioElement | null) => void;
+  setSentiment: (s: number) => void;
 };
 
 export const useAvatarStore = create<AvatarState>((set) => ({
@@ -22,6 +24,7 @@ export const useAvatarStore = create<AvatarState>((set) => ({
       ? localStorage.getItem(AVATAR_COLOR_KEY) || "#ffcc99"
       : "#ffcc99",
   audio: null,
+  sentiment: 0,
   setEnabled: (v) => {
     try {
       localStorage.setItem(AVATAR_ENABLE_KEY, String(v));
@@ -39,5 +42,6 @@ export const useAvatarStore = create<AvatarState>((set) => ({
     set({ color });
   },
   setAudio: (audio) => set({ audio }),
+  setSentiment: (sentiment) => set({ sentiment }),
 }));
 

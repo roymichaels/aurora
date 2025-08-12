@@ -10,6 +10,7 @@ import { saveMemory, queryMemory } from "@/memory/store";
 import brain from "@/brain/Brain";
 import { filterRegistry } from "@/brain/filters";
 import { scanResponse, explainIssues } from "@/agent/safety";
+import { useAvatarStore } from "@/state/avatar";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -89,8 +90,8 @@ export class AuroraAgent {
           },
           ...this.history,
         ];
-        const { content } = await auroraChat(messages, { confidence });
-        this.say(content);
+        const { content, sentiment } = await auroraChat(messages, { confidence });
+        this.say(content, sentiment);
       } catch (e) {
         console.error('aurora-chat failed', e);
         this.say('Could you elaborate?');
@@ -133,15 +134,15 @@ export class AuroraAgent {
           : []),
         ...this.history,
       ];
-      const { content } = await auroraChat(messages, { confidence });
-      this.say(content);
+      const { content, sentiment } = await auroraChat(messages, { confidence });
+      this.say(content, sentiment);
     } catch (e) {
       console.error('aurora-chat failed', e);
       this.say('Okay.');
     }
   }
 
-    say(text: string) {
+    say(text: string, sentiment = 0) {
       const { ok, issues } = scanResponse(text);
       let output = text;
       let skipSafety = false;
@@ -165,6 +166,7 @@ export class AuroraAgent {
       memoryStore.add('episodic', 'assistant', output).catch(() => {});
       saveMemory(output, { role: 'assistant' }).catch(() => {});
       this.events.onResponse?.(output);
+      useAvatarStore.getState().setSentiment(sentiment);
       void this.voice.speak(output);
     }
   }
