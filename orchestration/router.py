@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
@@ -59,20 +58,35 @@ def _metrics():
     return _metrics
 
 
-@dataclass
 class RouterConfig:
-    """Configuration controlling routing behaviour."""
+    """Configuration controlling routing behaviour.
 
-    # Route short, inexpensive prompts to Gemini by default
-    max_gemini_tokens: int = 128
-    gemini_cost_per_token: float = 0.000002
+    ``max_local_tokens`` mirrors the previous configuration option used in
+    tests and acts as an alias for ``max_gemini_tokens``.  Both may be
+    provided, with ``max_gemini_tokens`` taking precedence when set.
+    """
 
-    # ChatGPT is used for longer or deeper prompts when affordable
-    chatgpt_cost_per_token: float = 0.000015  # approximate USD
-    max_chatgpt_cost: float = 0.01
+    def __init__(
+        self,
+        max_local_tokens: int = 128,
+        *,
+        max_gemini_tokens: int | None = None,
+        gemini_cost_per_token: float = 0.000002,
+        chatgpt_cost_per_token: float = 0.000015,
+        max_chatgpt_cost: float = 0.01,
+        depth_threshold: int = 2,
+    ) -> None:
+        self.max_local_tokens = (
+            max_gemini_tokens if max_gemini_tokens is not None else max_local_tokens
+        )
+        self.gemini_cost_per_token = gemini_cost_per_token
+        self.chatgpt_cost_per_token = chatgpt_cost_per_token
+        self.max_chatgpt_cost = max_chatgpt_cost
+        self.depth_threshold = depth_threshold
 
-    # Depth value above which ChatGPT is preferred
-    depth_threshold: int = 2
+    @property
+    def max_gemini_tokens(self) -> int:  # pragma: no cover - simple alias
+        return self.max_local_tokens
 
 
 class UsageLogger:

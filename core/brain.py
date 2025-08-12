@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import threading
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, Protocol, Sequence
+from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
 from memory.store import save_memory
@@ -40,7 +40,8 @@ class BrainAgent:
         Callable returning a short string describing the user's ideal persona.
     memory_store:
         Callable accepting a message and returning an iterable of memory
-        snippets relevant to that message.
+        snippets relevant to that message.  Each item may be either a plain
+        string or a mapping containing a ``text`` field.
     agents:
         Sequence of sub-agents responsible for specific tasks.  Each must
         implement :class:`SupportsAgent`.
@@ -54,7 +55,7 @@ class BrainAgent:
     """
 
     persona_store: Callable[[], str]
-    memory_store: Callable[[str], Iterable[str]]
+    memory_store: Callable[[str], Iterable[str | Mapping[str, Any]]]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
     coach: CoachingAgent | None = None
     prompt_template: str = (
@@ -105,13 +106,22 @@ class BrainAgent:
         persona = self.persona_store() or ""
 
         try:
-            memories = list(self.memory_store(message))
+            raw_memories = list(self.memory_store(message))
         except Exception:
             metrics.errors += 1
             logger.exception("memory store error", extra={"request_id": request_id, "agent": "memory_store"})
-            memories = []
+            raw_memories = []
         else:
             metrics.memory_queries += 1
+
+        memories = []
+        for mem in raw_memories:
+            if isinstance(mem, str):
+                memories.append(mem)
+            elif isinstance(mem, Mapping):
+                text = mem.get("text")
+                if text:
+                    memories.append(str(text))
 
         memory_text = "\n".join(memories)
         context = self.prompt_template.format(persona=persona, memories=memory_text)

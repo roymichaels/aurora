@@ -1,14 +1,13 @@
-import os
+"""Persistent memory store backed by SQLite and a vector index."""
+from __future__ import annotations
+
 import json
+import os
 import sqlite3
 import threading
 from typing import Any, Dict, List
 
-try:
-    import chromadb
-    from chromadb.utils import embedding_functions
-except Exception:  # pragma: no cover - chromadb optional
-    chromadb = None
+from .vector_store import VectorStore
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "memory.db")
 CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
@@ -23,22 +22,15 @@ cur.execute(
         text TEXT NOT NULL,
         metadata TEXT
     )
-    """
+    """,
 )
 conn.commit()
 
-collection = None
-if chromadb is not None:
-    client = chromadb.PersistentClient(path=CHROMA_PATH)
-    embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-        model_name="all-MiniLM-L6-v2"
-    )
-    collection = client.get_or_create_collection(
-        "memories", embedding_function=embed_fn
-    )
+vector_store = VectorStore(CHROMA_PATH)
 
 
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
+    """Persist ``text`` and optional ``metadata`` and index its embedding."""
     metadata = metadata or {}
     with db_lock:
         cur.execute(
@@ -47,8 +39,7 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
         )
         mem_id = cur.lastrowid
         conn.commit()
-    if collection is not None:
-        collection.add(documents=[text], metadatas=[metadata], ids=[str(mem_id)])
+    vector_store.add(str(mem_id), text, metadata)
     return mem_id
 
 
@@ -57,36 +48,17 @@ def save_plan(
     steps: List[str],
     external_ids: Dict[str, List[str]] | None = None,
 ) -> int:
-    """Persist a plan in the memory database.
-
-    Parameters
-    ----------
-    goal:
-        Goal the plan addresses.
-    steps:
-        Ordered list of steps for achieving the goal.
-    external_ids:
-        Optional mapping of integration names to lists of external
-        identifiers for the created steps.
-
-    Returns
-    -------
-    int
-        ID of the stored memory entry.
-    """
-
+    """Persist a plan in the memory database."""
     text = f"Plan for {goal}: " + " | ".join(steps)
-    metadata = {"tag": "plan", "goal": goal, "steps": steps}
+    metadata: Dict[str, Any] = {"tag": "plan", "goal": goal, "steps": steps}
     if external_ids:
         metadata["external_ids"] = external_ids
     return save_memory(text, metadata)
 
 
 def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
-    if collection is None:
-        return []
-    results = collection.query(query_texts=[query], n_results=k)
-    ids = [int(i) for i in results.get("ids", [[""]])[0] if i]
+    """Return top ``k`` memories relevant to ``query`` using similarity search."""
+    ids = [int(i) for i in vector_store.query(query, k)]
     if not ids:
         return []
     placeholders = ",".join(["?"] * len(ids))
@@ -96,8 +68,7 @@ def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
     )
     rows = cur.fetchall()
     output: List[Dict[str, Any]] = []
-    for row in rows:
-        mid, text, meta_json = row
+    for mid, text, meta_json in rows:
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
@@ -106,7 +77,7 @@ def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
     return output
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover - convenience CLI
     import sys
 
     if len(sys.argv) < 2:
