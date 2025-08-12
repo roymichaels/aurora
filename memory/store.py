@@ -1,6 +1,7 @@
 import os
 import json
 import sqlite3
+import threading
 from typing import Any, Dict, List
 
 try:
@@ -12,8 +13,9 @@ except Exception:  # pragma: no cover - chromadb optional
 DB_PATH = os.path.join(os.path.dirname(__file__), "memory.db")
 CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
 
-conn = sqlite3.connect(DB_PATH)
+conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cur = conn.cursor()
+db_lock = threading.Lock()
 cur.execute(
     """
     CREATE TABLE IF NOT EXISTS memories (
@@ -38,12 +40,13 @@ if chromadb is not None:
 
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     metadata = metadata or {}
-    cur.execute(
-        "INSERT INTO memories (text, metadata) VALUES (?, ?)",
-        (text, json.dumps(metadata)),
-    )
-    mem_id = cur.lastrowid
-    conn.commit()
+    with db_lock:
+        cur.execute(
+            "INSERT INTO memories (text, metadata) VALUES (?, ?)",
+            (text, json.dumps(metadata)),
+        )
+        mem_id = cur.lastrowid
+        conn.commit()
     if collection is not None:
         collection.add(documents=[text], metadatas=[metadata], ids=[str(mem_id)])
     return mem_id
