@@ -23,7 +23,7 @@ brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [])
 
 @app.get("/metrics")
 async def metrics_endpoint():
-    """Expose application metrics."""
+    """Expose application metrics including agent call counts."""
 
     return metrics.as_dict()
 
