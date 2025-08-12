@@ -14,7 +14,7 @@ from aiortc.contrib.media import MediaRecorder
 from core.brain import BrainAgent
 from core.metrics import metrics
 from memory.store import query_memory
-from persona.style import _load_profile
+from persona.style import load_persona as _load_profile
 from .stt import transcribe_audio
 from .tts import synthesize_reply
 
@@ -24,9 +24,9 @@ app = FastAPI()
 def load_persona() -> str:
     profile = _load_profile()
     tone = profile.get("tone", "")
-    goals = profile.get("goals", "")
-    catchphrases = " ".join(profile.get("catchphrases", []))
-    parts = [tone, goals, catchphrases]
+    values = profile.get("values", "")
+    phrases = " ".join(profile.get("signature_phrases", []))
+    parts = [tone, values, phrases]
     return " ".join(part for part in parts if part)
 
 

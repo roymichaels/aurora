@@ -4,8 +4,8 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-def _load_profile() -> Dict[str, Any]:
-    """Load persona data from profile.json if it exists."""
+def load_persona() -> Dict[str, Any]:
+    """Load persona data from ``profile.json`` if it exists."""
     path = Path(__file__).with_name("profile.json")
     if not path.exists():
         return {}
@@ -14,18 +14,18 @@ def _load_profile() -> Dict[str, Any]:
 
 
 def apply_style(text: str) -> str:
-    """Return ``text`` adapted to the saved persona tone and catchphrases."""
-    profile = _load_profile()
+    """Return ``text`` adapted to the saved persona tone and signature phrases."""
+    profile = load_persona()
     tone = profile.get("tone")
-    catchphrases = profile.get("catchphrases", [])
+    phrases = profile.get("signature_phrases", [])
 
     result = text
     if tone:
         result = f"[{tone}] {result}"
 
-    if catchphrases:
-        prefix = catchphrases[0]
-        suffix = catchphrases[-1] if len(catchphrases) > 1 else catchphrases[0]
+    if phrases:
+        prefix = phrases[0]
+        suffix = phrases[-1] if len(phrases) > 1 else phrases[0]
         result = f"{prefix} {result} {suffix}"
 
     return result
