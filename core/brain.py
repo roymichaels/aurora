@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
+from persona.style import apply_style
 from safety.filter import filter_output
 from .logger import get_logger
 from .metrics import metrics
@@ -113,4 +114,5 @@ class BrainAgent:
             coaching = self.coach.generate(context)
             response = f"{response}\n\n{coaching}".strip()
 
+        response = apply_style(response)
         return filter_output(response)
