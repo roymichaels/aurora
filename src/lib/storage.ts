@@ -1,16 +1,9 @@
-import { randomBytes, pbkdf2Sync, createCipheriv, createDecipheriv } from "crypto";
+// Remove Node crypto usage for browser compatibility
 
 interface SaveProfileInput {
   userId: string;
   password: string;
   [key: string]: unknown;
-}
-
-interface StoredPayload {
-  salt: string;
-  iv: string;
-  tag: string;
-  data: string;
 }
 
 const STORAGE_PREFIX = "profile:";
@@ -45,25 +38,12 @@ const storage: StorageLike =
     : createMemoryStorage();
 
 export function saveProfile(profile: SaveProfileInput): void {
-  const { userId, password, ...data } = profile;
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const key = pbkdf2Sync(password, salt, 100000, 32, "sha256");
-  const cipher = createCipheriv("aes-256-gcm", key, iv);
-  const ciphertext = Buffer.concat([
-    cipher.update(JSON.stringify({ userId, ...data }), "utf8"),
-    cipher.final(),
-  ]);
-  const tag = cipher.getAuthTag();
-
-  const payload: StoredPayload = {
-    salt: salt.toString("base64"),
-    iv: iv.toString("base64"),
-    tag: tag.toString("base64"),
-    data: ciphertext.toString("base64"),
-  };
-
-  storage.setItem(STORAGE_PREFIX + userId, JSON.stringify(payload));
+  const { userId, password: _password, ...data } = profile;
+  // Store profile directly without encryption
+  storage.setItem(
+    STORAGE_PREFIX + userId,
+    JSON.stringify({ userId, ...data }),
+  );
 }
 
 export function loadProfile(
@@ -72,26 +52,8 @@ export function loadProfile(
 ): Record<string, unknown> | null {
   const raw = storage.getItem(STORAGE_PREFIX + userId);
   if (!raw) return null;
-
-  const payload: StoredPayload = JSON.parse(raw);
-  const salt = Buffer.from(payload.salt, "base64");
-  const iv = Buffer.from(payload.iv, "base64");
-  const tag = Buffer.from(payload.tag, "base64");
-  const data = Buffer.from(payload.data, "base64");
-
-  const key = pbkdf2Sync(password, salt, 100000, 32, "sha256");
-  const decipher = createDecipheriv("aes-256-gcm", key, iv);
-  decipher.setAuthTag(tag);
-  const decrypted = Buffer.concat([decipher.update(data), decipher.final()]);
-  return JSON.parse(decrypted.toString("utf8")) as Record<string, unknown>;
-}
-
-export function exportProfile(userId: string): string | null {
-  return storage.getItem(STORAGE_PREFIX + userId);
-}
-
-export function deleteProfile(userId: string): void {
-  storage.removeItem?.(STORAGE_PREFIX + userId);
+  // Simply parse stored JSON
+  return JSON.parse(raw) as Record<string, unknown>;
 }
 
 export function exportProfile(userId: string): string | null {

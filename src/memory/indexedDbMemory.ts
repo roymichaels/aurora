@@ -1,10 +1,5 @@
 import { auroraChat } from '@/utils/auroraChat';
-import {
-  randomBytes,
-  pbkdf2Sync,
-  createCipheriv,
-  createDecipheriv,
-} from 'crypto';
+// Removed Node crypto usage for browser compatibility
 
 export type MemoryBucket = 'semantic' | 'episodic' | 'procedural';
 
@@ -29,36 +24,13 @@ export function setMemoryKey(key: string) {
 }
 
 function encrypt(data: string): string {
-  if (!encryptionKey) return data;
-  const salt = randomBytes(16);
-  const iv = randomBytes(12);
-  const key = pbkdf2Sync(encryptionKey, salt, 100000, 32, 'sha256');
-  const cipher = createCipheriv('aes-256-gcm', key, iv);
-  const ciphertext = Buffer.concat([cipher.update(data, 'utf8'), cipher.final()]);
-  const tag = cipher.getAuthTag();
-  return JSON.stringify({
-    salt: salt.toString('base64'),
-    iv: iv.toString('base64'),
-    tag: tag.toString('base64'),
-    data: ciphertext.toString('base64'),
-  });
+  // Simple storage without encryption
+  return data;
 }
 
 function decrypt(payload: string): string {
-  if (!encryptionKey) return payload;
-  const { salt, iv, tag, data } = JSON.parse(payload);
-  const key = pbkdf2Sync(encryptionKey, Buffer.from(salt, 'base64'), 100000, 32, 'sha256');
-  const decipher = createDecipheriv(
-    'aes-256-gcm',
-    key,
-    Buffer.from(iv, 'base64'),
-  );
-  decipher.setAuthTag(Buffer.from(tag, 'base64'));
-  const decrypted = Buffer.concat([
-    decipher.update(Buffer.from(data, 'base64')),
-    decipher.final(),
-  ]);
-  return decrypted.toString('utf8');
+  // Return data as-is since no encryption is applied
+  return payload;
 }
 
 // basic storage wrapper that falls back to in-memory store when localStorage is unavailable
