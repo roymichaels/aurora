@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Iterable, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
+from safety.filter import filter_output
 
 
 class SupportsAgent(Protocol):
@@ -86,4 +87,4 @@ class BrainAgent:
             coaching = self.coach.generate(context)
             response = f"{response}\n\n{coaching}".strip()
 
-        return response
+        return filter_output(response)
