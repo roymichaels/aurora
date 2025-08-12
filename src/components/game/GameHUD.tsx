@@ -6,6 +6,7 @@ import { AvatarSphere } from "@/components/avatar/AvatarSphere";
 import { Mic, ChevronDown, ChevronUp } from "lucide-react";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import { useAvatarStore } from "@/state/avatar";
+import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
 
 function fire(type: string, payload?: any) {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -15,6 +16,7 @@ export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
   const { run } = useHUDActions();
   const avatarEnabled = useAvatarStore((s) => s.enabled);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -43,14 +45,16 @@ export function GameHUD() {
   }, []);
 
   return (
-    <div
-      className="fixed left-3 right-3"
-      style={{
-        bottom: 'max(12px, env(safe-area-inset-bottom))',
-        zIndex: 'var(--z-hud)',
-        pointerEvents: 'auto',
-      }}
-    >
+    <>
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <div
+        className="fixed left-3 right-3"
+        style={{
+          bottom: 'max(12px, env(safe-area-inset-bottom))',
+          zIndex: 'var(--z-hud)',
+          pointerEvents: 'auto',
+        }}
+      >
       <div className="hud-panel hud-maple rounded-2xl px-4 py-3 select-none" aria-label="Game HUD">
         <span className="hud-spot" />
         <div className="flex flex-col gap-3">
@@ -101,6 +105,17 @@ export function GameHUD() {
                 <span className="hidden sm:inline text-sm">Agent</span>
               </button>
             </li>
+            <li className="snap-start">
+              <button
+                type="button"
+                className="action-chip"
+                aria-label="Open Settings"
+                title="Settings"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+            </li>
           </ul>
         </div>
 
@@ -146,5 +161,6 @@ export function GameHUD() {
         )}
       </div>
     </div>
+    </>
   );
 }
