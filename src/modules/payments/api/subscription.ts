@@ -1,10 +1,7 @@
 import { Subscription, UsageStats } from '@/modules/payments/types/subscription'
 import { loggedFetch } from '@/lib/loggedFetch'
 
-/**
- * TODO: Enable subscription API when payments module is activated.
- */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
+const API_BASE_URL = process.env.VITE_API_BASE_URL ?? ''
 
 async function request(path: string, options: RequestInit = {}) {
   const token = localStorage.getItem('accessToken')
