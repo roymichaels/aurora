@@ -20,6 +20,7 @@ import DataSourcesPanel from "@/components/settings/DataSourcesPanel";
 import MemoryPanel from "@/components/settings/MemoryPanel";
 import ApiCallLogPanel from "@/components/settings/ApiCallLogPanel";
 import FeatureFlagsPanel from "@/components/settings/FeatureFlagsPanel";
+import DeviceManagerPanel from "@/components/settings/DeviceManagerPanel";
 
 
 export default function SettingsView() {
@@ -93,6 +94,7 @@ export default function SettingsView() {
             <TriggersPanel />
             <ModelPanel />
             <MemoryPanel />
+            <DeviceManagerPanel />
             <ApiCallLogPanel />
             <FeatureFlagsPanel />
           </div>

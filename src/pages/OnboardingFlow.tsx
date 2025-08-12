@@ -14,6 +14,7 @@ import {
   ConversationResponse,
   saveProfile,
 } from "@/data/profile";
+import { setEncryptionKey } from "@/state/encryption";
 
 
 type Msg = { role: "assistant" | "user"; content: string };
@@ -105,6 +106,10 @@ export default function OnboardingFlow() {
   const [scopes, setScopes] = useState<string[]>([]);
   const [missionPreview, setMissionPreview] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user) setEncryptionKey(user.id);
+  }, [user]);
 
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
 
