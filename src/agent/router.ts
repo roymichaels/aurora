@@ -41,7 +41,7 @@ export async function routeChat(
   messages: ChatMessage[],
   profile: UserProfile | null,
   options: ChatOptions = {},
-): Promise<{ content: string }> {
+): Promise<{ content: string; sentiment: number }> {
   const tokens = estimateTokens(messages);
   const depth = options.depth ?? 1;
   const chosen = chooseRoute(tokens, depth);
@@ -58,10 +58,12 @@ export async function routeChat(
 
   const safeMessages = stripSensitive(messages);
   const safeProfile = sanitizeProfile(profile);
-  const { data, error } = await supabase.functions.invoke<{ content: string }>(
-    'aurora-chat',
-    { body: { messages: safeMessages, profile: safeProfile, ...options } },
-  );
+  const { data, error } = await supabase.functions.invoke<{
+    content: string;
+    sentiment: number;
+  }>('aurora-chat', {
+    body: { messages: safeMessages, profile: safeProfile, ...options },
+  });
   if (error) throw error;
-  return data ?? { content: '' };
+  return data ?? { content: '', sentiment: 0 };
 }

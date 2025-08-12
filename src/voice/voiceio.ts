@@ -80,6 +80,7 @@ export class VoiceIO {
           useVoiceStore.getState().setSpeaking(false);
           this.callbacks.onSpeakingChange?.(false);
           useAvatarStore.getState().setAudio(null);
+          useAvatarStore.getState().setSentiment(0);
         };
         audio.onended = end;
         audio.onerror = (e) => {
@@ -115,6 +116,7 @@ export class VoiceIO {
     try { this.audio?.pause(); } catch {}
     this.audio = null;
     useAvatarStore.getState().setAudio(null);
+    useAvatarStore.getState().setSentiment(0);
     try { window.speechSynthesis.cancel(); } catch {}
     useVoiceStore.getState().setSpeaking(false);
     this.callbacks.onSpeakingChange?.(false);

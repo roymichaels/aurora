@@ -5,6 +5,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import brain from "../../../src/brain/Brain.ts";
 import { getFilterName } from "../../../src/brain/filters.ts";
 import { summarizeProfile, UserProfile } from "../../../src/data/profile.ts";
+import { analyzeSentiment } from "../../../src/utils/sentiment.ts";
 
 
 const corsHeaders = {
@@ -116,7 +117,9 @@ serve(async (req) => {
       content = filter(content);
     }
 
-    return new Response(JSON.stringify({ content }), {
+    const sentiment = analyzeSentiment(content);
+
+    return new Response(JSON.stringify({ content, sentiment }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

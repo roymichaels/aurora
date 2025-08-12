@@ -70,7 +70,7 @@ async function getProfile(): Promise<UserProfile | null> {
 export async function auroraChat(
   messages: ChatMessage[],
   options: ChatOptions = {},
-): Promise<{ content: string }> {
+): Promise<{ content: string; sentiment: number }> {
   const profile = await getProfile();
   const systemMessages = buildSystemMessages(profile);
 
@@ -84,12 +84,12 @@ export async function auroraChat(
   else if (preference === 'cloud') route = 'cloud';
   else if (offline || lowBandwidth) route = 'local';
 
-  const { content } = await routeChat(
+  const { content, sentiment } = await routeChat(
     [...systemMessages, ...messages],
     profile,
     { ...options, route, fallbackToCloud },
   );
   let filtered = content;
   for (const filter of brain.filters) filtered = filter(filtered);
-  return { content: filtered };
+  return { content: filtered, sentiment };
 }

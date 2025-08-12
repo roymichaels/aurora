@@ -1,4 +1,5 @@
 import type { ChatMessage, ChatOptions } from '@/types/chat';
+import { analyzeSentiment } from '@/utils/sentiment';
 
 let baseEngine: any;
 let tunedEngine: any;
@@ -9,7 +10,7 @@ const TUNED_MODEL = 'Llama-3.1-8B-Instruct-q4f32_1-MLC-Aurora';
 export async function localChat(
   messages: ChatMessage[],
   options: ChatOptions = {},
-): Promise<{ content: string }> {
+): Promise<{ content: string; sentiment: number }> {
   if (typeof window === 'undefined') {
     throw new Error('Local model not available');
   }
@@ -42,7 +43,8 @@ export async function localChat(
 
   const resp = await engine.chat.completions.create({ messages });
   const content = resp?.choices?.[0]?.message?.content ?? '';
-  return { content };
+  const sentiment = analyzeSentiment(content);
+  return { content, sentiment };
 }
 
 export function resetLocalEngines() {

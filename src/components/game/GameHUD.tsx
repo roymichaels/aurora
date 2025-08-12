@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { quickSlots } from "@/game/hud/hud.data";
-import { LipSyncAvatar } from "@/components/avatar/LipSyncAvatar";
+import { AvatarSphere } from "@/components/avatar/AvatarSphere";
 import { Mic, ChevronDown, ChevronUp } from "lucide-react";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import { useAvatarStore } from "@/state/avatar";
@@ -59,7 +59,7 @@ export function GameHUD() {
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
             {avatarEnabled && (
-              <LipSyncAvatar size={44} />
+              <AvatarSphere size={44} />
             )}
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">

@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import type { Task } from '@/state/task';
 import { validateAnswer } from '@/utils/validation';
 import { auroraChat } from '@/utils/auroraChat';
+import { useAvatarStore } from '@/state/avatar';
 
 type ChatMessage = {
   id: string;
@@ -113,10 +114,11 @@ export function FloatingAssistant({
             "The user's last message was incomplete or uninformative. Ask a follow-up question to clarify.",
         });
       }
-      const { content: replyText } = await auroraChat(
+      const { content: replyText, sentiment } = await auroraChat(
         [...systemMessages, ...history],
         { model: 'o4-mini-2025-04-16' }
       );
+      useAvatarStore.getState().setSentiment(sentiment);
       const reply: ChatMessage = {
         id: crypto.randomUUID(),
         role: 'assistant',
