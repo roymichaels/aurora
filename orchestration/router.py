@@ -1,9 +1,9 @@
-"""Utilities for routing prompts between local and cloud LLMs.
+"""Utilities for routing prompts between Gemini and ChatGPT LLMs.
 
-The router chooses the most cost–effective backend based on prompt
-length and estimated API cost.  When a cloud model is used, obvious
-personal identifiers are redacted to protect the user's privacy.  Each
-call is logged for future optimisation.
+The router chooses the most appropriate backend using simple heuristics
+based on prompt length, estimated API cost and required reasoning depth.
+Obvious personal identifiers are redacted before any cloud call and each
+invocation is logged for later optimisation.
 """
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ from typing import Protocol
 import socket
 
 from models import preload as preload_models
-from core.metrics import metrics
 
 
 class Model(Protocol):
@@ -52,13 +51,28 @@ def is_online() -> bool:
         return False
 
 
+def _metrics():
+    """Return metrics object lazily to avoid circular imports."""
+
+    from core.metrics import metrics as _metrics  # type: ignore import-not-found
+
+    return _metrics
+
+
 @dataclass
 class RouterConfig:
     """Configuration controlling routing behaviour."""
 
-    max_local_tokens: int = 512
-    cloud_cost_per_token: float = 0.000015  # approximate USD
-    max_cloud_cost: float = 0.01
+    # Route short, inexpensive prompts to Gemini by default
+    max_gemini_tokens: int = 128
+    gemini_cost_per_token: float = 0.000002
+
+    # ChatGPT is used for longer or deeper prompts when affordable
+    chatgpt_cost_per_token: float = 0.000015  # approximate USD
+    max_chatgpt_cost: float = 0.01
+
+    # Depth value above which ChatGPT is preferred
+    depth_threshold: int = 2
 
 
 class UsageLogger:
@@ -80,18 +94,18 @@ class UsageLogger:
 
 
 class ModelRouter:
-    """Route prompts to either a local or cloud model."""
+    """Route prompts to Gemini or ChatGPT using simple heuristics."""
 
     def __init__(
         self,
-        local_model: Model,
-        cloud_model: Model,
+        gemini_model: Model,
+        chatgpt_model: Model,
         config: RouterConfig | None = None,
         logger: UsageLogger | None = None,
     ) -> None:
         preload_models()
-        self.local_model = local_model
-        self.cloud_model = cloud_model
+        self.gemini_model = gemini_model
+        self.chatgpt_model = chatgpt_model
         self.config = config or RouterConfig()
         self.logger = logger or UsageLogger()
 
@@ -100,33 +114,41 @@ class ModelRouter:
 
         return len(text.split())
 
-    def route(self, prompt: str) -> str:
+    def route(self, prompt: str, depth: int = 0) -> str:
         """Send ``prompt`` to the appropriate model.
 
-        Prompts longer than ``max_local_tokens`` *and* whose estimated
-        cost is within ``max_cloud_cost`` are sent to the cloud model.
-        Otherwise the local model is used.  When the cloud model is
-        selected, personal data is first abstracted to preserve privacy.
-        Usage information for every call is appended to ``router_usage.log``.
+        Gemini handles short, inexpensive prompts.  ChatGPT is selected
+        when the prompt exceeds ``max_gemini_tokens`` or when ``depth`` is
+        at least ``depth_threshold`` and the estimated cost remains below
+        ``max_chatgpt_cost``.  All prompts have obvious personal data
+        abstracted prior to dispatch.  Each call is logged to
+        ``router_usage.log``.
         """
 
         tokens = self._estimate_tokens(prompt)
-        cloud_cost = tokens * self.config.cloud_cost_per_token
+        gemini_cost = tokens * self.config.gemini_cost_per_token
+        chatgpt_cost = tokens * self.config.chatgpt_cost_per_token
 
         if not is_online():
-            response = self.local_model(prompt)
-            self.logger.log("local_offline", tokens, 0.0)
-            metrics.router_local += 1
+            response = self.gemini_model(prompt)
+            self.logger.log("gemini_offline", tokens, 0.0)
+            _metrics().router_local += 1
             return response
 
-        if tokens > self.config.max_local_tokens and cloud_cost <= self.config.max_cloud_cost:
-            sanitized = abstract_sensitive_data(prompt)
-            response = self.cloud_model(sanitized)
-            self.logger.log("cloud", tokens, cloud_cost)
-            metrics.router_cloud += 1
+        use_chatgpt = (
+            (tokens > self.config.max_gemini_tokens or depth >= self.config.depth_threshold)
+            and chatgpt_cost <= self.config.max_chatgpt_cost
+        )
+
+        sanitized = abstract_sensitive_data(prompt)
+
+        if use_chatgpt:
+            response = self.chatgpt_model(sanitized)
+            self.logger.log("chatgpt", tokens, chatgpt_cost)
+            _metrics().router_cloud += 1
             return response
 
-        response = self.local_model(prompt)
-        self.logger.log("local", tokens, 0.0)
-        metrics.router_local += 1
+        response = self.gemini_model(sanitized)
+        self.logger.log("gemini", tokens, gemini_cost)
+        _metrics().router_local += 1
         return response

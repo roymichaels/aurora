@@ -1,0 +1,6 @@
+gemini:
+  api_key: YOUR_GEMINI_API_KEY
+  rate_limit_per_minute: 60
+chatgpt:
+  api_key: YOUR_CHATGPT_API_KEY
+  rate_limit_per_minute: 60
