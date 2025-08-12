@@ -16,6 +16,7 @@ from typing import Protocol
 import socket
 
 from models import preload as preload_models
+from core.metrics import metrics
 
 
 class Model(Protocol):
@@ -115,14 +116,17 @@ class ModelRouter:
         if not is_online():
             response = self.local_model(prompt)
             self.logger.log("local_offline", tokens, 0.0)
+            metrics.router_local += 1
             return response
 
         if tokens > self.config.max_local_tokens and cloud_cost <= self.config.max_cloud_cost:
             sanitized = abstract_sensitive_data(prompt)
             response = self.cloud_model(sanitized)
             self.logger.log("cloud", tokens, cloud_cost)
+            metrics.router_cloud += 1
             return response
 
         response = self.local_model(prompt)
         self.logger.log("local", tokens, 0.0)
+        metrics.router_local += 1
         return response
