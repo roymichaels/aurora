@@ -44,17 +44,24 @@ export async function routeChat(
 ): Promise<{ content: string }> {
   const tokens = estimateTokens(messages);
   const depth = options.depth ?? 1;
-  const route = chooseRoute(tokens, depth);
+  const chosen = chooseRoute(tokens, depth);
+  const route = options.route ?? chosen;
 
   if (route === 'local') {
-    return localChat(messages, options);
+    try {
+      return await localChat(messages, options);
+    } catch (e) {
+      if (!options.fallbackToCloud) throw e;
+      console.warn('Local model failed, falling back to cloud', e);
+    }
   }
 
   const safeMessages = stripSensitive(messages);
   const safeProfile = sanitizeProfile(profile);
-  const { data, error } = await supabase.functions.invoke<{ content: string }>('aurora-chat', {
-    body: { messages: safeMessages, profile: safeProfile, ...options },
-  });
+  const { data, error } = await supabase.functions.invoke<{ content: string }>(
+    'aurora-chat',
+    { body: { messages: safeMessages, profile: safeProfile, ...options } },
+  );
   if (error) throw error;
   return data ?? { content: '' };
 }

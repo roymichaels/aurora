@@ -13,4 +13,8 @@ export interface ChatOptions {
   confidence?: number;
   /** Threshold above which the tuned model will be used. Default 0.8 */
   tunedThreshold?: number;
+  /** Force routing to a specific model */
+  route?: 'local' | 'cloud';
+  /** When routing to local fails, allow fallback to cloud */
+  fallbackToCloud?: boolean;
 }

@@ -4,6 +4,7 @@ import { getFilterName } from '@/brain/filters';
 import { routeChat } from '@/agent/router';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
+import { useModelPreference } from '@/state/modelPreference';
 
 function buildSystemMessages(profile: UserProfile | null): ChatMessage[] {
   const systemMessages: ChatMessage[] = [
@@ -72,10 +73,21 @@ export async function auroraChat(
 ): Promise<{ content: string }> {
   const profile = await getProfile();
   const systemMessages = buildSystemMessages(profile);
+
+  const { preference, fallbackToCloud } = useModelPreference.getState();
+  const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+  const conn = typeof navigator !== 'undefined' ? (navigator as any).connection : undefined;
+  const lowBandwidth = !!conn && (conn.saveData || ['slow-2g', '2g'].includes(conn.effectiveType || ''));
+
+  let route: 'local' | 'cloud' | undefined;
+  if (preference === 'local') route = 'local';
+  else if (preference === 'cloud') route = 'cloud';
+  else if (offline || lowBandwidth) route = 'local';
+
   const { content } = await routeChat(
     [...systemMessages, ...messages],
     profile,
-    options,
+    { ...options, route, fallbackToCloud },
   );
   let filtered = content;
   for (const filter of brain.filters) filtered = filter(filtered);

@@ -44,3 +44,8 @@ export async function localChat(
   const content = resp?.choices?.[0]?.message?.content ?? '';
   return { content };
 }
+
+export function resetLocalEngines() {
+  baseEngine = undefined;
+  tunedEngine = undefined;
+}
