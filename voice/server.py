@@ -5,6 +5,7 @@ import asyncio
 import base64
 import json
 import tempfile
+from typing import List
 
 from fastapi import FastAPI, Request
 from aiortc import RTCPeerConnection, RTCSessionDescription
@@ -12,13 +13,28 @@ from aiortc.contrib.media import MediaRecorder
 
 from core.brain import BrainAgent
 from core.metrics import metrics
+from memory.store import query_memory
+from persona.style import _load_profile
 from .stt import transcribe_audio
 from .tts import synthesize_reply
 
 app = FastAPI()
 
 
-brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [])
+def load_persona() -> str:
+    profile = _load_profile()
+    tone = profile.get("tone", "")
+    goals = profile.get("goals", "")
+    catchphrases = " ".join(profile.get("catchphrases", []))
+    parts = [tone, goals, catchphrases]
+    return " ".join(part for part in parts if part)
+
+
+def fetch_memories(message: str) -> List[str]:
+    return [m["text"] for m in query_memory(message)]
+
+
+brain = BrainAgent(persona_store=load_persona, memory_store=fetch_memories)
 
 
 @app.get("/metrics")
