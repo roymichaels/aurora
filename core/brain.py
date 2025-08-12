@@ -6,10 +6,13 @@ dispatching a user message to a suitable sub-agent.
 """
 from __future__ import annotations
 
+import asyncio
+import threading
 from dataclasses import dataclass, field
 from typing import Callable, Iterable, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
+from memory.store import save_memory
 from safety.filter import filter_output
 from .logger import get_logger
 from .metrics import metrics
@@ -57,6 +60,18 @@ class BrainAgent:
         "Persona: {persona}\n"
         "Relevant memories:\n{memories}\n"
     )
+
+    def _save_memory_async(self, text: str, role: str) -> None:
+        """Persist ``text`` with ``role`` metadata without blocking."""
+        metadata = {"role": role}
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            threading.Thread(
+                target=save_memory, args=(text, metadata), daemon=True
+            ).start()
+        else:
+            loop.run_in_executor(None, save_memory, text, metadata)
 
     def process(self, message: str, request_id: str | None = None) -> str:
         """Process a user ``message`` by delegating to a sub-agent.
@@ -113,4 +128,7 @@ class BrainAgent:
             coaching = self.coach.generate(context)
             response = f"{response}\n\n{coaching}".strip()
 
-        return filter_output(response)
+        final = filter_output(response)
+        self._save_memory_async(message, "user")
+        self._save_memory_async(final, "assistant")
+        return final
