@@ -10,11 +10,15 @@ from fastapi import FastAPI, Request
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRecorder
 
+from core.brain import BrainAgent
 from core.metrics import metrics
 from .stt import transcribe_audio
 from .tts import synthesize_reply
 
 app = FastAPI()
+
+
+brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [])
 
 
 @app.get("/metrics")
@@ -54,12 +58,14 @@ async def voice_endpoint(request: Request):
             with open(recorder_file.name, "rb") as f:
                 audio_bytes = f.read()
             text = transcribe_audio(audio_bytes)
-            reply_audio = synthesize_reply(f"You said: {text}")
+            reply_text = brain.process(text)
+            reply_audio = synthesize_reply(reply_text)
             message = {
                 "transcript": text,
                 "audio": base64.b64encode(reply_audio).decode(),
             }
             channel.send(json.dumps(message))
+            metrics.conversations += 1
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
