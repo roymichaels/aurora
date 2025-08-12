@@ -7,7 +7,7 @@ moving forward.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -19,12 +19,43 @@ class CoachingAgent:
     returns a short motivational reply.
     """
 
-    micro_commitment_template: str = (
-        "Commit to one tiny action in the next few minutes: {step}."
+    templates: dict[str, dict[str, str]] = field(
+        default_factory=lambda: {
+            "health": {
+                "keywords": ["health", "exercise", "fitness", "workout", "run"],
+                "step": "take a quick stretch or brisk walk",
+                "affirmation": "I care for my body and it rewards me",
+                "template": (
+                    "Your body thrives on movement. Commit to {step}. Tell yourself: \"{affirmation}\""
+                ),
+            },
+            "study": {
+                "keywords": ["study", "learn", "exam", "homework", "read"],
+                "step": "review just one page of notes",
+                "affirmation": "Every bit of study grows my skills",
+                "template": (
+                    "Feed your curiosity: {step}. Remind yourself: \"{affirmation}\""
+                ),
+            },
+            "default": {
+                "keywords": [],
+                "step": "start with just two minutes of focused effort",
+                "affirmation": "I am capable and every small step matters",
+                "template": (
+                    "Commit to one tiny action in the next few minutes: {step}. Tell yourself: \"{affirmation}\""
+                ),
+            },
+        }
     )
-    positive_self_talk_template: str = (
-        "Tell yourself: \"{affirmation}\""
-    )
+
+    def detect_theme(self, context: str) -> str:
+        """Return a theme name based on keyword matches in ``context``."""
+        lower = context.lower()
+        for theme, data in self.templates.items():
+            for keyword in data.get("keywords", []):
+                if keyword in lower:
+                    return theme
+        return "default"
 
     def generate(self, context: str) -> str:
         """Craft a motivational reply from ``context``.
@@ -44,11 +75,8 @@ class CoachingAgent:
             a line of positive self-talk.
         """
 
-        step = "start with just two minutes of focused effort"
-        affirmation = "I am capable and every small step matters"
-
-        micro = self.micro_commitment_template.format(step=step)
-        positive = self.positive_self_talk_template.format(
-            affirmation=affirmation
+        theme = self.detect_theme(context)
+        data = self.templates[theme]
+        return data["template"].format(
+            step=data["step"], affirmation=data["affirmation"]
         )
-        return f"{micro} {positive}"
