@@ -37,6 +37,23 @@ describe('diffUserProfile', () => {
   });
 });
 
+describe('generateGoalStructure', () => {
+  it('creates full goal entries when new goals are added', () => {
+    const oldProfile: UserProfile = { goals: '', habits: '', history: [] };
+    const newProfile: UserProfile = { goals: 'Write a novel', habits: '', history: [] };
+
+    const initialPlan: MasterPlan = { goals: [], habits: [], plan_versions: [] };
+    const updated = updatePlan(oldProfile, newProfile, initialPlan);
+
+    const goal = updated.goals[0];
+    expect(goal.name).toBe('Write a novel');
+    expect(goal.milestones.annual).toEqual(['Write a novel annual milestone']);
+    expect(goal.milestones.quarterly).toEqual(['Write a novel quarterly milestone']);
+    expect(goal.tasks.daily[0].title).toBe('Daily progress for Write a novel');
+    expect(goal.tasks.weekly[0].title).toBe('Weekly review of Write a novel');
+  });
+});
+
 describe('updatePlan', () => {
   it('applies profile diff and records version history', () => {
     const oldProfile: UserProfile = {
