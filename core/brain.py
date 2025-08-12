@@ -113,6 +113,8 @@ class BrainAgent:
                         },
                     )
                     response = agent.handle(message, context)
+                    agent_name = type(agent).__name__.replace("Agent", "").lower()
+                    metrics.increment_agent(agent_name)
                     break
             except Exception:
                 metrics.errors += 1
@@ -127,6 +129,8 @@ class BrainAgent:
 
         if self.coach is not None:
             coaching = self.coach.generate(context)
+            coach_name = type(self.coach).__name__.replace("Agent", "").lower()
+            metrics.increment_agent(coach_name)
             response = f"{response}\n\n{coaching}".strip()
 
         response = apply_style(response)
