@@ -11,6 +11,8 @@ from typing import Callable, Iterable, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
 from safety.filter import filter_output
+from .logger import get_logger
+from .metrics import metrics
 
 
 class SupportsAgent(Protocol):
@@ -56,7 +58,7 @@ class BrainAgent:
         "Relevant memories:\n{memories}\n"
     )
 
-    def process(self, message: str) -> str:
+    def process(self, message: str, request_id: str | None = None) -> str:
         """Process a user ``message`` by delegating to a sub-agent.
 
         The method retrieves persona and memory snippets, constructs the
@@ -65,8 +67,21 @@ class BrainAgent:
         returned so callers can decide how to handle it.
         """
 
+        logger = get_logger(__name__)
+        metrics.conversations += 1
+        logger.info("processing message", extra={"request_id": request_id, "agent": "BrainAgent"})
+
         persona = self.persona_store() or ""
-        memories = list(self.memory_store(message))
+
+        try:
+            memories = list(self.memory_store(message))
+        except Exception:
+            metrics.errors += 1
+            logger.exception("memory store error", extra={"request_id": request_id, "agent": "memory_store"})
+            memories = []
+        else:
+            metrics.memory_queries += 1
+
         memory_text = "\n".join(memories)
         context = self.prompt_template.format(persona=persona, memories=memory_text)
 
@@ -74,10 +89,21 @@ class BrainAgent:
         for agent in self.agents:
             try:
                 if agent.can_handle(message):
+                    logger.info(
+                        "invoking agent",
+                        extra={
+                            "request_id": request_id,
+                            "agent": type(agent).__name__,
+                        },
+                    )
                     response = agent.handle(message, context)
                     break
             except Exception:
-                # A misbehaving agent should not crash the BrainAgent
+                metrics.errors += 1
+                logger.exception(
+                    "agent error",
+                    extra={"request_id": request_id, "agent": type(agent).__name__},
+                )
                 continue
 
         if response is None:
