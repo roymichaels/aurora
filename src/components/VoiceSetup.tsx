@@ -4,6 +4,7 @@ import { useVoiceStore } from "@/state/voice";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function VoiceSetup() {
   const {
@@ -39,6 +40,24 @@ export default function VoiceSetup() {
       const json = await resp.json();
       if (json?.voice_id) {
         setVoiceId(json.voice_id);
+        try {
+          const { data: auth } = await supabase.auth.getUser();
+          const uid = auth.user?.id;
+          if (uid) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("persona")
+              .eq("id", uid)
+              .single();
+            const persona = (prof?.persona as any) || {};
+            await supabase
+              .from("profiles")
+              .update({ persona: { ...persona, voiceId: json.voice_id } })
+              .eq("id", uid);
+          }
+        } catch (e) {
+          console.warn("Failed to save voiceId to profile", e);
+        }
         toast({ title: "Voice saved", description: "Custom voice ready." });
       } else {
         throw new Error("No voice id returned");

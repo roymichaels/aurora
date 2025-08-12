@@ -23,16 +23,18 @@ serve(async (req) => {
   }
 
   try {
-      const body = await req.json();
-      const {
-        text,
-        voiceId: reqVoiceId,
-        modelId = "eleven_turbo_v2_5",
-        outputFormat = "mp3_44100_128",
-      } = body ?? {};
-      const voiceId = typeof reqVoiceId === "string" && reqVoiceId.length
-        ? reqVoiceId
-        : "9BWtsMINqrJLrRacOk9x"; // Aria (default voice)
+    const { searchParams } = new URL(req.url);
+    const queryVoiceId = searchParams.get("voiceId") ?? undefined;
+    const body = (await req.json().catch(() => ({}))) as any;
+    const {
+      text,
+      voiceId: bodyVoiceId,
+      modelId = "eleven_turbo_v2_5",
+      outputFormat = "mp3_44100_128",
+    } = body;
+    const voiceId = [bodyVoiceId, queryVoiceId].find(
+      (v): v is string => typeof v === "string" && v.length > 0,
+    ) ?? "9BWtsMINqrJLrRacOk9x"; // Aria (default voice)
 
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "Missing text" }), {

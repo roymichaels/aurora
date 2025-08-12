@@ -63,36 +63,34 @@ export class VoiceIO {
   async speak(text: string) {
     const { voiceId, speed, pitch, expression, emotion } =
       useVoiceStore.getState();
-    if (voiceId) {
-      try {
-        const { data, error } = await supabase.functions.invoke("tts-generate", {
-          body: { text, voiceId, emotion, speed, pitch, expression },
-        });
-        if (!error && data?.audioBase64) {
-          const src = `data:${data.contentType};base64,${data.audioBase64}`;
-          const audio = new Audio(src);
-          this.audio = audio;
-          useAvatarStore.getState().setAudio(audio);
-          audio.onplay = () => {
-            useVoiceStore.getState().setSpeaking(true);
-            this.callbacks.onSpeakingChange?.(true);
-          };
-          const end = () => {
-            useVoiceStore.getState().setSpeaking(false);
-            this.callbacks.onSpeakingChange?.(false);
-            useAvatarStore.getState().setAudio(null);
-          };
-          audio.onended = end;
-          audio.onerror = (e) => {
-            end();
-            this.callbacks.onError?.(e);
-          };
-          await audio.play();
-          return;
-        }
-      } catch (e) {
-        this.callbacks.onError?.(e);
+    try {
+      const { data, error } = await supabase.functions.invoke("tts-generate", {
+        body: { text, voiceId, emotion, speed, pitch, expression },
+      });
+      if (!error && data?.audioBase64) {
+        const src = `data:${data.contentType};base64,${data.audioBase64}`;
+        const audio = new Audio(src);
+        this.audio = audio;
+        useAvatarStore.getState().setAudio(audio);
+        audio.onplay = () => {
+          useVoiceStore.getState().setSpeaking(true);
+          this.callbacks.onSpeakingChange?.(true);
+        };
+        const end = () => {
+          useVoiceStore.getState().setSpeaking(false);
+          this.callbacks.onSpeakingChange?.(false);
+          useAvatarStore.getState().setAudio(null);
+        };
+        audio.onended = end;
+        audio.onerror = (e) => {
+          end();
+          this.callbacks.onError?.(e);
+        };
+        await audio.play();
+        return;
       }
+    } catch (e) {
+      this.callbacks.onError?.(e);
     }
 
     if (!('speechSynthesis' in window)) return;
