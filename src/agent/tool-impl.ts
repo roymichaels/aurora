@@ -48,7 +48,15 @@ export const ToolImpl = {
       return { ok: false } as any;
     }
     if (hypnosis) {
-      window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
+      const consent = typeof window !== 'undefined' && typeof window.confirm === 'function'
+        ? window.confirm('Begin hypnosis session?')
+        : false;
+      if (consent) {
+        window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));
+      } else {
+        toast({ title: 'Hypnosis cancelled' });
+        hypnosis = null;
+      }
     }
     window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startFocus' } }));
     toast({ title: `Focus started`, description: `${minutes} minutes${hypnosis ? ` · with ${hypnosis}` : ''}` });
@@ -59,6 +67,13 @@ export const ToolImpl = {
     duration = Math.round(duration);
     if (!Number.isFinite(duration) || duration < 1 || duration > 600) {
       toast({ title: "Invalid duration", description: "Duration must be between 1 and 600 seconds." });
+      return { ok: false } as any;
+    }
+    const consent = typeof window !== 'undefined' && typeof window.confirm === 'function'
+      ? window.confirm('Begin hypnosis session?')
+      : false;
+    if (!consent) {
+      toast({ title: 'Hypnosis cancelled' });
       return { ok: false } as any;
     }
     window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'startHypnosis' } }));

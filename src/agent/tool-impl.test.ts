@@ -5,7 +5,8 @@ jest.mock('@/components/ui/use-toast', () => ({ toast: jest.fn() }));
 
 // minimal DOM stubs
 const dispatchEvent = jest.fn();
-(global as any).window = { dispatchEvent };
+const confirm = jest.fn(() => true);
+(global as any).window = { dispatchEvent, confirm };
 class CustomEventMock<T> {
   type: string;
   detail: T;
@@ -19,6 +20,8 @@ class CustomEventMock<T> {
 describe('ToolImpl.start_focus', () => {
   beforeEach(() => {
     dispatchEvent.mockClear();
+    confirm.mockClear();
+    confirm.mockReturnValue(true);
     (toast as jest.Mock).mockClear();
   });
 
@@ -38,6 +41,8 @@ describe('ToolImpl.start_focus', () => {
 describe('ToolImpl.start_hypnosis', () => {
   beforeEach(() => {
     dispatchEvent.mockClear();
+    confirm.mockClear();
+    confirm.mockReturnValue(true);
     (toast as jest.Mock).mockClear();
   });
 
@@ -51,5 +56,12 @@ describe('ToolImpl.start_hypnosis', () => {
     const res = await ToolImpl.start_hypnosis({ mode: 'calm', duration: 0 });
     expect(res).toEqual({ ok: false });
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Invalid duration' }));
+  });
+
+  it('requires user confirmation', async () => {
+    confirm.mockReturnValueOnce(false);
+    const res = await ToolImpl.start_hypnosis({ mode: 'focus' });
+    expect(res).toEqual({ ok: false });
+    expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Hypnosis cancelled' }));
   });
 });
