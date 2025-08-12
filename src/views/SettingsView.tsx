@@ -58,6 +58,24 @@ export default function SettingsView() {
     toast({ title: "Profile deleted", description: "Your profile has been removed." });
   };
 
+  const handleBackup = async () => {
+    const passphrase = prompt("Enter backup passphrase") || "";
+    if (!passphrase) return;
+    const picker = await (window as any).showSaveFilePicker({
+      suggestedName: "aurora-backup.bin",
+    });
+    const writable = await picker.createWritable();
+    const res = await fetch("/api/backup/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passphrase }),
+    });
+    const blob = await res.blob();
+    await writable.write(blob);
+    await writable.close();
+    toast({ title: "Backup exported", description: "Encrypted backup saved." });
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-4">
       <h1 className="text-2xl font-semibold">Settings</h1>
@@ -68,6 +86,9 @@ export default function SettingsView() {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={handleExport}>
                 Export Profile
+              </Button>
+              <Button variant="outline" onClick={handleBackup}>
+                Backup Data
               </Button>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
