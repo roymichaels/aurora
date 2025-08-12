@@ -23,8 +23,8 @@ def test_tone_is_applied(monkeypatch):
 
     monkeypatch.setattr(
         persona_style,
-        "_load_profile",
-        lambda: {"tone": "cheerful", "catchphrases": []},
+        "load_persona",
+        lambda: {"tone": "cheerful", "signature_phrases": []},
     )
     brain = _make_brain()
 
@@ -33,13 +33,13 @@ def test_tone_is_applied(monkeypatch):
     assert result == "[cheerful] base response"
 
 
-def test_catchphrases_are_applied(monkeypatch):
-    """Catchphrases from the persona profile should wrap the response."""
+def test_signature_phrases_are_applied(monkeypatch):
+    """Signature phrases from the persona profile should wrap the response."""
 
     monkeypatch.setattr(
         persona_style,
-        "_load_profile",
-        lambda: {"tone": "", "catchphrases": ["yo", "buddy"]},
+        "load_persona",
+        lambda: {"tone": "", "signature_phrases": ["yo", "buddy"]},
     )
     brain = _make_brain()
 

@@ -4,10 +4,10 @@ from pathlib import Path
 
 QUESTIONS = [
     ("tone", "How would you describe your preferred communication tone?"),
-    ("goals", "What personal goals should the AI keep in mind?"),
+    ("values", "What personal values should the AI reflect?"),
     (
-        "catchphrases",
-        "List any catchphrases or phrases you often use (comma separated):",
+        "signature_phrases",
+        "List any signature phrases you often use (comma separated):",
     ),
 ]
 
@@ -17,7 +17,7 @@ def run_interview() -> None:
     profile = {}
     for key, prompt in QUESTIONS:
         answer = input(prompt + " ").strip()
-        if key == "catchphrases":
+        if key == "signature_phrases":
             profile[key] = [p.strip() for p in answer.split(",") if p.strip()]
         else:
             profile[key] = answer
