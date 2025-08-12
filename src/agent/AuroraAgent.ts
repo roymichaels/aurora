@@ -109,8 +109,23 @@ export class AuroraAgent {
       return;
     }
 
-    if (/\b(hypnosis|induction|calm|confidence|focus)\b/.test(lower)) {
-      const mode = /confidence/.test(lower) ? 'confidence' : /calm/.test(lower) ? 'calm' : 'focus';
+    if (/start\s+hypnosis\s+mode/.test(lower)) {
+      const mode = /confidence/.test(lower)
+        ? 'confidence'
+        : /calm/.test(lower)
+        ? 'calm'
+        : 'focus';
+      await ToolImpl.start_hypnosis({ mode: mode as any, duration: 60 });
+      this.say(`Running a short ${mode} induction.`);
+      return;
+    }
+
+    if (/\b(hypnosis|induction|calm|confidence)\b/.test(lower)) {
+      const mode = /confidence/.test(lower)
+        ? 'confidence'
+        : /calm/.test(lower)
+        ? 'calm'
+        : 'focus';
       await ToolImpl.start_hypnosis({ mode: mode as any, duration: 60 });
       this.say(`Running a short ${mode} induction.`);
       return;
