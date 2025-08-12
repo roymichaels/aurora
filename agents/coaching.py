@@ -3,11 +3,16 @@
 This lightweight agent synthesizes a short coaching message using
 pre-defined templates focused on micro-commitments and positive
 self-talk.  The goal is to provide gentle nudges that keep the user
-moving forward.
+moving forward.  Recent goal memories are consulted so the reply can
+adapt affirmations based on whether the user has been succeeding or
+struggling lately.
 """
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+
+from memory import store
 
 
 @dataclass
@@ -19,31 +24,64 @@ class CoachingAgent:
     returns a short motivational reply.
     """
 
-    templates: dict[str, dict[str, str]] = field(
+    templates: dict[str, dict[str, dict[str, str] | list[str]]] = field(
         default_factory=lambda: {
             "health": {
                 "keywords": ["health", "exercise", "fitness", "workout", "run"],
-                "step": "take a quick stretch or brisk walk",
-                "affirmation": "I care for my body and it rewards me",
-                "template": (
-                    "Your body thrives on movement. Commit to {step}. Tell yourself: \"{affirmation}\""
-                ),
+                "progress": {
+                    "on_track": {
+                        "step": "take a quick stretch or brisk walk",
+                        "affirmation": "I care for my body and it rewards me",
+                        "template": (
+                            "You're on track. Your body thrives on movement. Commit to {step}. Tell yourself: \"{affirmation}\""
+                        ),
+                    },
+                    "stalled": {
+                        "step": "take a quick stretch or brisk walk",
+                        "affirmation": "Every restart makes me stronger",
+                        "template": (
+                            "Setbacks happen. Restart with {step}. Tell yourself: \"{affirmation}\""
+                        ),
+                    },
+                },
             },
             "study": {
                 "keywords": ["study", "learn", "exam", "homework", "read"],
-                "step": "review just one page of notes",
-                "affirmation": "Every bit of study grows my skills",
-                "template": (
-                    "Feed your curiosity: {step}. Remind yourself: \"{affirmation}\""
-                ),
+                "progress": {
+                    "on_track": {
+                        "step": "review just one page of notes",
+                        "affirmation": "Every bit of study grows my skills",
+                        "template": (
+                            "You're on track. Feed your curiosity: {step}. Remind yourself: \"{affirmation}\""
+                        ),
+                    },
+                    "stalled": {
+                        "step": "review just one page of notes",
+                        "affirmation": "Every restart refocuses me",
+                        "template": (
+                            "It's okay to feel stuck. {step} to regain momentum. Remind yourself: \"{affirmation}\""
+                        ),
+                    },
+                },
             },
             "default": {
                 "keywords": [],
-                "step": "start with just two minutes of focused effort",
-                "affirmation": "I am capable and every small step matters",
-                "template": (
-                    "Commit to one tiny action in the next few minutes: {step}. Tell yourself: \"{affirmation}\""
-                ),
+                "progress": {
+                    "on_track": {
+                        "step": "start with just two minutes of focused effort",
+                        "affirmation": "I am capable and every small step matters",
+                        "template": (
+                            "You're on track. Commit to one tiny action in the next few minutes: {step}. Tell yourself: \"{affirmation}\""
+                        ),
+                    },
+                    "stalled": {
+                        "step": "start with just two minutes of focused effort",
+                        "affirmation": "Each restart matters",
+                        "template": (
+                            "Small restarts matter. Commit to one tiny action: {step}. Tell yourself: \"{affirmation}\""
+                        ),
+                    },
+                },
             },
         }
     )
@@ -56,6 +94,30 @@ class CoachingAgent:
                 if keyword in lower:
                     return theme
         return "default"
+
+    def _progress_state(self, k: int = 5) -> str:
+        """Return ``on_track`` or ``stalled`` based on recent goal memories."""
+
+        with store.db_lock:
+            store.cur.execute(
+                "SELECT metadata FROM memories ORDER BY id DESC LIMIT ?", (k,)
+            )
+            rows = store.cur.fetchall()
+        success = struggle = 0
+        for (meta_json,) in rows:
+            try:
+                meta = json.loads(meta_json) if meta_json else {}
+            except Exception:
+                meta = {}
+            if meta.get("tag") == "goal":
+                status = meta.get("status")
+                if status == "success":
+                    success += 1
+                elif status == "struggle":
+                    struggle += 1
+        if success >= struggle:
+            return "on_track"
+        return "stalled"
 
     def generate(self, context: str) -> str:
         """Craft a motivational reply from ``context``.
@@ -76,7 +138,8 @@ class CoachingAgent:
         """
 
         theme = self.detect_theme(context)
-        data = self.templates[theme]
+        progress = self._progress_state()
+        data = self.templates[theme]["progress"][progress]
         return data["template"].format(
             step=data["step"], affirmation=data["affirmation"]
         )

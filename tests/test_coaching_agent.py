@@ -1,4 +1,5 @@
 from agents.coaching import CoachingAgent
+from memory import store
 
 
 def test_generate_varies_with_context():
@@ -17,3 +18,30 @@ def test_generate_varies_with_context():
     assert "stretch" in health or "walk" in health
     assert "page of notes" in study
     assert "two minutes" in default
+
+
+def test_output_varies_with_history():
+    agent = CoachingAgent()
+
+    with store.db_lock:
+        store.cur.execute("DELETE FROM memories")
+        store.conn.commit()
+
+    store.save_memory("finished workout", {"tag": "goal", "status": "success"})
+    store.save_memory("ate salad", {"tag": "goal", "status": "success"})
+    on_track = agent.generate(
+        "I want to improve my health by doing more exercise"
+    )
+
+    with store.db_lock:
+        store.cur.execute("DELETE FROM memories")
+        store.conn.commit()
+
+    store.save_memory("skipped workout", {"tag": "goal", "status": "struggle"})
+    stalled = agent.generate(
+        "I want to improve my health by doing more exercise"
+    )
+
+    assert on_track != stalled
+    assert "on track" in on_track.lower()
+    assert "setbacks" in stalled.lower() or "restart" in stalled.lower()
