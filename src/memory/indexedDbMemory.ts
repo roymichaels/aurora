@@ -155,9 +155,29 @@ export class IndexedDbMemory {
     }
   }
 
-  private prune(bucket: MemoryBucket, limit = 200) {
+  private async prune(bucket: MemoryBucket, limit = 200) {
     if (this.memories[bucket].length > limit) {
-      this.memories[bucket] = this.memories[bucket].slice(-limit);
+      const excess = this.memories[bucket].splice(
+        0,
+        this.memories[bucket].length - limit,
+      );
+      if (excess.length) {
+        const summaryText = excess
+          .map((m) => `${m.role}: ${m.content}`)
+          .join('\n');
+        const embedding = await getEmbedding(summaryText);
+        this.memories.semantic.push({
+          id: Math.random().toString(36).slice(2),
+          role: "assistant",
+          content: summaryText,
+          timestamp: Date.now(),
+          embedding,
+          tags: ["summary", bucket],
+        });
+        if (this.memories.semantic.length > limit) {
+          this.memories.semantic = this.memories.semantic.slice(-limit);
+        }
+      }
     }
   }
 
@@ -188,7 +208,7 @@ export class IndexedDbMemory {
       confidence: meta.confidence,
       tags: meta.tags,
     });
-    this.prune(bucket);
+    await this.prune(bucket);
     this.persist();
   }
 
