@@ -5,12 +5,14 @@ import './index.css'
 import './styles/hud-fixes.css'
 import { registerSW } from 'virtual:pwa-register';
 import { initSettings } from './state/settings';
+import { preloadLocalModels } from './models/preload';
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true })
 }
 
 initSettings();
+preloadLocalModels().catch(() => {});
 
 createRoot(document.getElementById('root')!).render(
   <ErrorBoundary>

@@ -1,4 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SoundControl } from "@/components/sounds/SoundControl";
 import { AuthMenu } from "@/components/auth/AuthMenu";
@@ -7,6 +8,18 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 export default function AppHeader() {
   const { user, initializing } = useSupabaseAuth();
   const navigate = useNavigate();
+  const [online, setOnline] = useState(true);
+
+  useEffect(() => {
+    const update = () => setOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   return (
     <header className="fixed top-0 inset-x-0 z-30">
@@ -26,6 +39,7 @@ export default function AppHeader() {
 
           {/* Right controls */}
           <nav className="flex items-center gap-2">
+            {!online && <span className="text-xs text-muted-foreground">Offline</span>}
             <Button asChild variant="ghost" size="sm">
               <Link to="/stack" aria-label="View Tech Stack">Stack</Link>
             </Button>
