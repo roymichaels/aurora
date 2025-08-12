@@ -19,13 +19,9 @@ export default function Onboarding() {
   const saveProfile = async () => {
     const data = { name, goals, voiceId };
     try {
-      const fs = await import("fs");
-      const path = await import("path");
-      const filePath = path.resolve("persona", "profile.json");
-      await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
-      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+      localStorage.setItem("persona-profile", JSON.stringify(data));
     } catch (err) {
-      console.error("Failed to save profile.json", err);
+      console.error("Failed to save profile", err);
     }
     if (user) {
       await supabase

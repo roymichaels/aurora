@@ -1,10 +1,4 @@
 import { create } from 'zustand';
-import { readFileSync, writeFileSync } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const configPath = path.resolve(__dirname, '../../settings/config.json');
 
 export interface IntegrationsConfig {
   calendar: boolean;
@@ -18,29 +12,41 @@ export interface AppSettings {
   integrations: IntegrationsConfig;
 }
 
+const STORAGE_KEY = 'app-settings';
+
+const defaultSettings: AppSettings = {
+  voiceOutput: true,
+  hypnosisMode: false,
+  memoryRetention: 30,
+  integrations: { calendar: false, todo: false },
+};
+
 function loadSettings(): AppSettings {
+  if (typeof localStorage === 'undefined') return defaultSettings;
   try {
-    const raw = readFileSync(configPath, 'utf-8');
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultSettings;
     const parsed = JSON.parse(raw) as Partial<AppSettings>;
     return {
-      voiceOutput: true,
-      hypnosisMode: false,
-      memoryRetention: 30,
-      integrations: { calendar: false, todo: false, ...(parsed.integrations || {}) },
+      ...defaultSettings,
       ...parsed,
+      integrations: {
+        ...defaultSettings.integrations,
+        ...(parsed.integrations ?? {}),
+      },
     };
   } catch {
-    return {
-      voiceOutput: true,
-      hypnosisMode: false,
-      memoryRetention: 30,
-      integrations: { calendar: false, todo: false },
-    };
+    return defaultSettings;
   }
 }
 
 function saveSettings(s: AppSettings) {
-  writeFileSync(configPath, JSON.stringify(s, null, 2));
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+  } catch {
+    // ignore write errors
+  }
 }
 
 const initial = loadSettings();
