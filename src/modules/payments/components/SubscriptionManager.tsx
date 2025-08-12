@@ -20,11 +20,8 @@ import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
 import { formatDistanceToNow } from 'date-fns';
 
-/**
- * TODO: Activate billing UI when payments module is ready.
- */
 export function SubscriptionManager() {
-  return null;
+  return <SubscriptionManagerUI />;
 }
 
 function SubscriptionManagerUI() {
