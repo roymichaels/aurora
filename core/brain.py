@@ -7,7 +7,9 @@ dispatching a user message to a suitable sub-agent.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, List, Protocol, Sequence
+from typing import Callable, Iterable, Protocol, Sequence
+
+from agents.coaching import CoachingAgent
 
 
 class SupportsAgent(Protocol):
@@ -34,6 +36,10 @@ class BrainAgent:
     agents:
         Sequence of sub-agents responsible for specific tasks.  Each must
         implement :class:`SupportsAgent`.
+    coach:
+        Optional :class:`CoachingAgent` that always generates a short
+        motivational snippet which is appended to the chosen agent's
+        response.
     prompt_template:
         Format string used to build the master prompt.  ``{persona}`` and
         ``{memories}`` placeholders will be replaced prior to dispatch.
@@ -42,6 +48,7 @@ class BrainAgent:
     persona_store: Callable[[], str]
     memory_store: Callable[[str], Iterable[str]]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
+    coach: CoachingAgent | None = None
     prompt_template: str = (
         "You are the idealized version of the user.\n"
         "Persona: {persona}\n"
@@ -62,13 +69,21 @@ class BrainAgent:
         memory_text = "\n".join(memories)
         context = self.prompt_template.format(persona=persona, memories=memory_text)
 
+        response = None
         for agent in self.agents:
             try:
                 if agent.can_handle(message):
-                    return agent.handle(message, context)
+                    response = agent.handle(message, context)
+                    break
             except Exception:
                 # A misbehaving agent should not crash the BrainAgent
                 continue
 
-        # No agent handled the message; fall back to returning context.
-        return context
+        if response is None:
+            response = context
+
+        if self.coach is not None:
+            coaching = self.coach.generate(context)
+            response = f"{response}\n\n{coaching}".strip()
+
+        return response
