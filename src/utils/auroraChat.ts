@@ -3,6 +3,7 @@ import brain from '@/brain/Brain';
 import { getFilterName } from '@/brain/filters';
 import { routeChat } from '@/agent/router';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
+import { supabase } from '@/integrations/supabase/client';
 
 function buildSystemMessages(profile: UserProfile | null): ChatMessage[] {
   const systemMessages: ChatMessage[] = [
@@ -51,9 +52,17 @@ function buildSystemMessages(profile: UserProfile | null): ChatMessage[] {
 
 let cachedProfile: UserProfile | null | undefined;
 
-function getProfile(): UserProfile | null {
+async function getProfile(): Promise<UserProfile | null> {
   if (cachedProfile !== undefined) return cachedProfile;
-  cachedProfile = loadProfile();
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('persona')
+      .single();
+    cachedProfile = (data?.persona as UserProfile) ?? loadProfile();
+  } catch {
+    cachedProfile = loadProfile();
+  }
   return cachedProfile;
 }
 
@@ -61,7 +70,7 @@ export async function auroraChat(
   messages: ChatMessage[],
   options: ChatOptions = {},
 ): Promise<{ content: string }> {
-  const profile = getProfile();
+  const profile = await getProfile();
   const systemMessages = buildSystemMessages(profile);
   const { content } = await routeChat(
     [...systemMessages, ...messages],

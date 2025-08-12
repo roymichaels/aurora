@@ -270,7 +270,14 @@ export default function OnboardingFlow() {
           if (ans) responses.push({ question: q.prompt, answer: ans });
         });
       });
-      saveProfile(buildProfile(responses));
+      const profileData = buildProfile(responses);
+      saveProfile(profileData);
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ persona: profileData })
+          .eq("id", user.id);
+      }
 
       if (currentModule === 0) {
         if (questionIndex === 0) setHeadline(userMsg.content);
