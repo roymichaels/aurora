@@ -14,6 +14,8 @@ class HypnosisAgent:
         goal: str,
         duration: Optional[int] = None,
         mode: Optional[str] = None,
+        anchor_cue: str = "press your thumb and forefinger together",
+        anchor_phrase: str = "I am calm and confident",
     ) -> str:
         """Return a structured hypnotic script.
 
@@ -22,6 +24,8 @@ class HypnosisAgent:
             goal: Desired outcome for the session.
             duration: Optional length of the session in seconds.
             mode: Focus of the session, e.g. "confidence", "calm", "focus", "reset".
+            anchor_cue: Physical gesture or action used to trigger the anchor.
+            anchor_phrase: Mental phrase repeated to reinforce the anchor.
 
         Returns:
             A multi‑section guided imagery script ending with a positive anchor.
@@ -45,10 +49,12 @@ class HypnosisAgent:
             f"Preparation:\n{pace}{context} Allow yourself to get comfortable.",
             "Induction:\nClose your eyes and take slow, deep breaths, letting tension melt away.",
             "Deepening:\nWith each count from ten down to one, you feel twice as relaxed, drifting deeper.",
+            f"Visualization:\nPicture {goal} in vivid, sensory detail, as if it is happening now.",
+            f"Suggestion:\nAs you rest, {suggestion}.",
             (
-                "Suggestion:\nAs you rest, "
-                f"{suggestion}. Visualize {goal} as already unfolding perfectly. "
-                "Whenever you press your thumb and forefinger together, this feeling returns."
+                "Anchoring:\n"
+                f"Whenever you {anchor_cue}, let the phrase '{anchor_phrase}' echo in your mind, "
+                "and this vivid image and feeling return effortlessly."
             ),
             "Awakening:\nTake a final deep breath, gently wiggle your fingers, and open your eyes, bringing this feeling back with you.",
         ]
