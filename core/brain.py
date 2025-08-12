@@ -15,6 +15,7 @@ from agents.coaching import CoachingAgent
 from memory.store import save_memory
 from persona.style import apply_style
 from safety.filter import filter_output
+from orchestration.router import ModelRouter, UsageLogger
 from .logger import get_logger
 from .metrics import metrics
 
@@ -61,6 +62,20 @@ class BrainAgent:
         "Persona: {persona}\n"
         "Relevant memories:\n{memories}\n"
     )
+    router: ModelRouter = field(init=False)
+    _current_agent: SupportsAgent | None = field(init=False, default=None)
+    _current_message: str = field(init=False, default="")
+
+    def __post_init__(self) -> None:
+        self.router = ModelRouter(self._local_model, self._cloud_model, logger=UsageLogger())
+
+    def _local_model(self, prompt: str) -> str:
+        if self._current_agent is not None:
+            return self._current_agent.handle(self._current_message, prompt)
+        return prompt
+
+    def _cloud_model(self, prompt: str) -> str:
+        return self._local_model(prompt)
 
     def _save_memory_async(self, text: str, role: str) -> None:
         """Persist ``text`` with ``role`` metadata without blocking."""
@@ -115,6 +130,7 @@ class BrainAgent:
                     response = agent.handle(message, context)
                     agent_name = type(agent).__name__.replace("Agent", "").lower()
                     metrics.increment_agent(agent_name)
+
                     break
             except Exception:
                 metrics.errors += 1
@@ -125,7 +141,9 @@ class BrainAgent:
                 continue
 
         if response is None:
-            response = context
+            self._current_agent = None
+            self._current_message = message
+            response = self.router.route(context)
 
         if self.coach is not None:
             coaching = self.coach.generate(context)
