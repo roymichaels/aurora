@@ -6,6 +6,7 @@ import {
   memoryStore,
   retrieveRelevantMemories,
 } from "@/memory/indexedDbMemory";
+import { saveMemory, queryMemory } from "@/memory/store";
 import brain from "@/brain/Brain";
 import { filterRegistry } from "@/brain/filters";
 import { scanResponse, explainIssues } from "@/agent/safety";
@@ -53,13 +54,18 @@ export class AuroraAgent {
 
     // persist user turn into long-term memory
     await memoryStore.add('episodic', 'user', text);
+    await saveMemory(text, { role: 'user' });
 
-    const memories = await retrieveRelevantMemories(text);
-    const memoryContext = memories
-      .map((m) => `${m.role}: ${m.content}`)
-      .join('\n');
+    const [memories, longTerm] = await Promise.all([
+      retrieveRelevantMemories(text),
+      queryMemory(text, 5),
+    ]);
+    const memoryContext = [
+      ...memories.map((m) => `${m.role}: ${m.content}`),
+      ...longTerm.map((m) => `${m.metadata?.role ?? 'memory'}: ${m.text}`),
+    ].join('\n');
 
-    const confidence = memories.length > 2 ? 0.9 : 0.5;
+    const confidence = memories.length + longTerm.length > 2 ? 0.9 : 0.5;
 
     const userSummary = this.history
       .filter((m) => m.role === 'user')
@@ -172,6 +178,7 @@ export class AuroraAgent {
       if (this.history.length > 20) this.history = this.history.slice(-20);
       // store assistant response asynchronously
       memoryStore.add('episodic', 'assistant', output).catch(() => {});
+      saveMemory(output, { role: 'assistant' }).catch(() => {});
       this.events.onResponse?.(output);
       void this.voice.speak(output);
     }

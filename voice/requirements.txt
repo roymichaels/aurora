@@ -1,0 +1,6 @@
+faster-whisper
+TTS
+soundfile
+fastapi
+aiohttp
+aiortc
