@@ -52,7 +52,11 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     return mem_id
 
 
-def save_plan(goal: str, steps: List[str]) -> int:
+def save_plan(
+    goal: str,
+    steps: List[str],
+    external_ids: Dict[str, List[str]] | None = None,
+) -> int:
     """Persist a plan in the memory database.
 
     Parameters
@@ -61,6 +65,9 @@ def save_plan(goal: str, steps: List[str]) -> int:
         Goal the plan addresses.
     steps:
         Ordered list of steps for achieving the goal.
+    external_ids:
+        Optional mapping of integration names to lists of external
+        identifiers for the created steps.
 
     Returns
     -------
@@ -70,6 +77,8 @@ def save_plan(goal: str, steps: List[str]) -> int:
 
     text = f"Plan for {goal}: " + " | ".join(steps)
     metadata = {"tag": "plan", "goal": goal, "steps": steps}
+    if external_ids:
+        metadata["external_ids"] = external_ids
     return save_memory(text, metadata)
 
 

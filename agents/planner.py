@@ -7,14 +7,22 @@ store using the ``plan`` tag so they can be retrieved later.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List
+from typing import Any, Dict, List
 
 from memory import store
+from settings import settings
 
 
 @dataclass
 class PlannerAgent:
-    """Generate basic plans for user goals."""
+    """Generate basic plans for user goals.
+
+    Optional calendar or todo API clients can be supplied to push the
+    generated steps to external services.
+    """
+
+    calendar_api: Any | None = None
+    todo_api: Any | None = None
 
     def can_handle(self, message: str) -> bool:
         """Return ``True`` if ``message`` appears to be a planning request."""
@@ -33,12 +41,24 @@ class PlannerAgent:
         ]
 
     def handle(self, message: str, context: str) -> str:
-        """Generate a plan and persist it to memory."""
+        """Generate a plan, optionally push to integrations and persist."""
 
         goal = message.split(" ", 1)[1] if " " in message else ""
         goal = goal.strip() or "your goal"
         steps = self.plan(goal)
-        store.save_plan(goal, steps)
+
+        external_ids: Dict[str, List[str]] = {}
+        if settings.get("integrations", {}).get("calendar") and self.calendar_api:
+            calendar_ids = [self.calendar_api.create_event(step) for step in steps]
+            if calendar_ids:
+                external_ids["calendar"] = calendar_ids
+
+        if settings.get("integrations", {}).get("todo") and self.todo_api:
+            todo_ids = [self.todo_api.create_task(step) for step in steps]
+            if todo_ids:
+                external_ids["todo"] = todo_ids
+
+        store.save_plan(goal, steps, external_ids or None)
         numbered = "\n".join(
             f"{i + 1}. {step}" for i, step in enumerate(steps)
         )

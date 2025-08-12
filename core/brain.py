@@ -129,9 +129,8 @@ class BrainAgent:
             coaching = self.coach.generate(context)
             response = f"{response}\n\n{coaching}".strip()
 
+        response = apply_style(response)
         final = filter_output(response)
         self._save_memory_async(message, "user")
         self._save_memory_async(final, "assistant")
         return final
-        response = apply_style(response)
-        return filter_output(response)

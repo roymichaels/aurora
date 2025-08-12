@@ -6,18 +6,36 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const configPath = path.resolve(__dirname, '../../settings/config.json');
 
+export interface IntegrationsConfig {
+  calendar: boolean;
+  todo: boolean;
+}
+
 export interface AppSettings {
   voiceOutput: boolean;
   hypnosisMode: boolean;
   memoryRetention: number;
+  integrations: IntegrationsConfig;
 }
 
 function loadSettings(): AppSettings {
   try {
     const raw = readFileSync(configPath, 'utf-8');
-    return JSON.parse(raw) as AppSettings;
+    const parsed = JSON.parse(raw) as Partial<AppSettings>;
+    return {
+      voiceOutput: true,
+      hypnosisMode: false,
+      memoryRetention: 30,
+      integrations: { calendar: false, todo: false, ...(parsed.integrations || {}) },
+      ...parsed,
+    };
   } catch {
-    return { voiceOutput: true, hypnosisMode: false, memoryRetention: 30 };
+    return {
+      voiceOutput: true,
+      hypnosisMode: false,
+      memoryRetention: 30,
+      integrations: { calendar: false, todo: false },
+    };
   }
 }
 
@@ -31,6 +49,8 @@ export const useAppSettings = create<AppSettings & {
   toggleVoiceOutput: () => void;
   toggleHypnosisMode: () => void;
   setMemoryRetention: (v: number) => void;
+  toggleCalendarIntegration: () => void;
+  toggleTodoIntegration: () => void;
 }>((set, get) => ({
   ...initial,
   toggleVoiceOutput() {
@@ -45,6 +65,28 @@ export const useAppSettings = create<AppSettings & {
   },
   setMemoryRetention(v: number) {
     const next = { ...get(), memoryRetention: v };
+    saveSettings(next);
+    set(next);
+  },
+  toggleCalendarIntegration() {
+    const next = {
+      ...get(),
+      integrations: {
+        ...get().integrations,
+        calendar: !get().integrations.calendar,
+      },
+    };
+    saveSettings(next);
+    set(next);
+  },
+  toggleTodoIntegration() {
+    const next = {
+      ...get(),
+      integrations: {
+        ...get().integrations,
+        todo: !get().integrations.todo,
+      },
+    };
     saveSettings(next);
     set(next);
   },

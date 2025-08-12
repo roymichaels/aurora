@@ -1,5 +1,9 @@
 {
   "voiceOutput": true,
   "hypnosisMode": false,
-  "memoryRetention": 30
+  "memoryRetention": 30,
+  "integrations": {
+    "calendar": false,
+    "todo": false
+  }
 }
