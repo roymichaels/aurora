@@ -1,79 +1,61 @@
 import { useState, useRef, useCallback } from 'react'
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY as string | undefined
-
 export function useVoiceInput() {
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
-  const recognitionRef = useRef<any>(null)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+  const pcRef = useRef<RTCPeerConnection | null>(null)
+  const channelRef = useRef<RTCDataChannel | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
   const start = useCallback(async () => {
     if (isRecording) return
-    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
-      const Rec = (window.SpeechRecognition || window.webkitSpeechRecognition)!
-      const recognition = new Rec()
-      recognition.lang = 'en-US'
-      recognition.interimResults = false
-      recognition.onresult = e => {
-        const text = Array.from(e.results).map(r => r[0].transcript).join(' ')
-        setTranscript(text)
-      }
-      recognition.onend = () => setIsRecording(false)
-      recognition.onerror = () => setIsRecording(false)
-      recognition.start()
-      recognitionRef.current = recognition
-      setIsRecording(true)
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        const recorder = new MediaRecorder(stream)
-        chunksRef.current = []
-        recorder.ondataavailable = e => {
-          if (e.data.size > 0) chunksRef.current.push(e.data)
-        }
-        recorder.onstop = async () => {
-          const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-          try {
-            const formData = new FormData()
-            formData.append('file', blob, 'recording.webm')
-            formData.append('model', 'whisper-1')
+    const pc = new RTCPeerConnection()
+    pcRef.current = pc
 
-            const apiKey = OPENAI_API_KEY
-            if (!apiKey) throw new Error('Missing OpenAI API key')
-
-            const res = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-              method: 'POST',
-              headers: {
-                Authorization: `Bearer ${apiKey}`
-              },
-              body: formData
-            })
-            const data = await res.json()
-            if (data?.text) setTranscript(data.text)
-          } catch (err) {
-            console.error('Whisper transcription failed', err)
+    pc.ondatachannel = e => {
+      channelRef.current = e.channel
+      e.channel.onmessage = ev => {
+        try {
+          const msg = JSON.parse(ev.data)
+          if (msg.transcript) setTranscript(msg.transcript)
+          if (msg.audio) {
+            const audio = new Audio('data:audio/wav;base64,' + msg.audio)
+            audio.play()
+            audioRef.current = audio
           }
-          setIsRecording(false)
-        }
-        recorder.start()
-        mediaRecorderRef.current = recorder
-        setIsRecording(true)
-      } catch (err) {
-        console.error('Unable to access microphone', err)
+        } catch { /* ignore */ }
       }
     }
+
+    pc.ontrack = ev => {
+      const audio = new Audio()
+      audio.srcObject = ev.streams[0]
+      audio.play()
+      audioRef.current = audio
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    stream.getTracks().forEach(t => pc.addTrack(t, stream))
+
+    const offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
+    const res = await fetch('/voice', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sdp: offer.sdp, type: offer.type })
+    })
+    const answer = await res.json()
+    await pc.setRemoteDescription(answer)
+    setIsRecording(true)
   }, [isRecording])
 
   const stop = useCallback(() => {
-    recognitionRef.current?.stop()
-    recognitionRef.current = null
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop()
-      mediaRecorderRef.current = null
-    }
+    channelRef.current?.close()
+    pcRef.current?.getSenders().forEach(s => s.track?.stop())
+    pcRef.current?.close()
+    pcRef.current = null
+    setIsRecording(false)
   }, [])
 
-  return { startRecording: start, stopRecording: stop, transcript, setTranscript, isRecording }
+  return { startRecording: start, stopRecording: stop, transcript, setTranscript, isRecording, audioRef }
 }
