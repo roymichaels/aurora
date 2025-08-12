@@ -49,6 +49,27 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     return mem_id
 
 
+def save_plan(goal: str, steps: List[str]) -> int:
+    """Persist a plan in the memory database.
+
+    Parameters
+    ----------
+    goal:
+        Goal the plan addresses.
+    steps:
+        Ordered list of steps for achieving the goal.
+
+    Returns
+    -------
+    int
+        ID of the stored memory entry.
+    """
+
+    text = f"Plan for {goal}: " + " | ".join(steps)
+    metadata = {"tag": "plan", "goal": goal, "steps": steps}
+    return save_memory(text, metadata)
+
+
 def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
     if collection is None:
         return []
