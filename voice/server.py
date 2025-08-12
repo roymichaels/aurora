@@ -65,7 +65,6 @@ async def voice_endpoint(request: Request):
                 "audio": base64.b64encode(reply_audio).decode(),
             }
             channel.send(json.dumps(message))
-            metrics.conversations += 1
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()

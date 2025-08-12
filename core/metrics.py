@@ -11,6 +11,8 @@ class Metrics:
     planner_calls: int = 0
     hypnosis_calls: int = 0
     coaching_calls: int = 0
+    router_local: int = 0
+    router_cloud: int = 0
 
     def as_dict(self) -> dict[str, int]:
         return asdict(self)
