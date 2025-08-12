@@ -13,6 +13,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
+import socket
+
+from models import preload as preload_models
 
 
 class Model(Protocol):
@@ -37,6 +40,15 @@ def abstract_sensitive_data(text: str) -> str:
     text = _EMAIL_RE.sub("[REDACTED_EMAIL]", text)
     text = _PHONE_RE.sub("[REDACTED_PHONE]", text)
     return text
+
+
+def is_online() -> bool:
+    """Return ``True`` if basic network connectivity is available."""
+    try:
+        socket.create_connection(("8.8.8.8", 53), timeout=1.0)
+        return True
+    except OSError:
+        return False
 
 
 @dataclass
@@ -76,6 +88,7 @@ class ModelRouter:
         config: RouterConfig | None = None,
         logger: UsageLogger | None = None,
     ) -> None:
+        preload_models()
         self.local_model = local_model
         self.cloud_model = cloud_model
         self.config = config or RouterConfig()
@@ -98,6 +111,11 @@ class ModelRouter:
 
         tokens = self._estimate_tokens(prompt)
         cloud_cost = tokens * self.config.cloud_cost_per_token
+
+        if not is_online():
+            response = self.local_model(prompt)
+            self.logger.log("local_offline", tokens, 0.0)
+            return response
 
         if tokens > self.config.max_local_tokens and cloud_cost <= self.config.max_cloud_cost:
             sanitized = abstract_sensitive_data(prompt)
