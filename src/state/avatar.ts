@@ -8,11 +8,15 @@ type AvatarState = {
   color: string;
   audio: HTMLAudioElement | null;
   sentiment: number;
+  mood: AvatarMood;
   setEnabled: (v: boolean) => void;
   setColor: (c: string) => void;
   setAudio: (a: HTMLAudioElement | null) => void;
   setSentiment: (s: number) => void;
+  setMood: (m: AvatarMood) => void;
 };
+
+export type AvatarMood = "neutral" | "focused" | "relaxed";
 
 export const useAvatarStore = create<AvatarState>((set) => ({
   enabled:
@@ -25,6 +29,7 @@ export const useAvatarStore = create<AvatarState>((set) => ({
       : "#ffcc99",
   audio: null,
   sentiment: 0,
+  mood: "neutral",
   setEnabled: (v) => {
     try {
       localStorage.setItem(AVATAR_ENABLE_KEY, String(v));
@@ -43,5 +48,6 @@ export const useAvatarStore = create<AvatarState>((set) => ({
   },
   setAudio: (audio) => set({ audio }),
   setSentiment: (sentiment) => set({ sentiment }),
+  setMood: (mood) => set({ mood }),
 }));
 

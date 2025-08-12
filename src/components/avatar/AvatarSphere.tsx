@@ -1,19 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useAvatarStore } from '@/state/avatar';
+import { useAvatarStore, type AvatarMood } from '@/state/avatar';
 
 interface Props {
   size?: number;
 }
 
 export function AvatarSphere({ size = 96 }: Props) {
-  const { enabled, sentiment, audio } = useAvatarStore();
+  const { enabled, sentiment, audio, mood } = useAvatarStore();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const matRef = useRef<THREE.MeshStandardMaterial | null>(null);
   const geomRef = useRef<THREE.IcosahedronGeometry | null>(null);
   const basePositions = useRef<Float32Array | null>(null);
+  const moodRef = useRef<AvatarMood>('neutral');
 
   // Setup scene
   useEffect(() => {
@@ -49,7 +50,16 @@ export function AvatarSphere({ size = 96 }: Props) {
         let sum = 0;
         for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
         const level = sum / data.length / 128;
-        meshRef.current.scale.setScalar(1 + level * 0.3);
+        const time = performance.now() * 0.001;
+        const mood = moodRef.current;
+        let scale = 1 + level * 0.3;
+        if (mood === 'focused') {
+          meshRef.current.rotation.y += 0.02;
+        } else if (mood === 'relaxed') {
+          meshRef.current.rotation.y += 0.005;
+          scale *= 1 + Math.sin(time) * 0.05;
+        }
+        meshRef.current.scale.setScalar(scale);
       }
       renderer.render(scene, camera);
     };
@@ -112,6 +122,22 @@ export function AvatarSphere({ size = 96 }: Props) {
     geom.computeVertexNormals();
     geom.attributes.position.needsUpdate = true;
   }, [sentiment]);
+
+  // React to avatar mood
+  useEffect(() => {
+    moodRef.current = mood;
+    if (!matRef.current) return;
+    switch (mood) {
+      case 'focused':
+        matRef.current.emissive.set('#3366ff');
+        break;
+      case 'relaxed':
+        matRef.current.emissive.set('#00ffff');
+        break;
+      default:
+        matRef.current.emissive.set('#000000');
+    }
+  }, [mood]);
 
   if (!enabled) return null;
   return <div ref={mountRef} style={{ width: size, height: size }} />;
