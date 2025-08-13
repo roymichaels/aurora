@@ -1,5 +1,9 @@
 import { useState, useRef, useCallback } from 'react'
 
+function fire(type: string, detail: boolean) {
+  window.dispatchEvent(new CustomEvent(type, { detail }))
+}
+
 export function useVoiceInput() {
   const [isRecording, setIsRecording] = useState(false)
   const [transcript, setTranscript] = useState('')
@@ -17,7 +21,10 @@ export function useVoiceInput() {
       e.channel.onmessage = ev => {
         try {
           const msg = JSON.parse(ev.data)
-          if (msg.transcript) setTranscript(msg.transcript)
+          if (msg.transcript) {
+            setTranscript(msg.transcript)
+            fire('voice-processing', false)
+          }
           if (msg.audio) {
             const audio = new Audio('data:audio/wav;base64,' + msg.audio)
             audio.play()
@@ -47,6 +54,8 @@ export function useVoiceInput() {
     const answer = await res.json()
     await pc.setRemoteDescription(answer)
     setIsRecording(true)
+    fire('voice-listening', true)
+    fire('voice-processing', false)
   }, [isRecording])
 
   const stop = useCallback(() => {
@@ -55,6 +64,8 @@ export function useVoiceInput() {
     pcRef.current?.close()
     pcRef.current = null
     setIsRecording(false)
+    fire('voice-listening', false)
+    fire('voice-processing', true)
   }, [])
 
   return { startRecording: start, stopRecording: stop, transcript, setTranscript, isRecording, audioRef }

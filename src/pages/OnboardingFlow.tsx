@@ -343,18 +343,6 @@ export default function OnboardingFlow() {
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex-shrink-0 flex flex-col items-center gap-4 p-4">
           <EvolvingSphere size={220} speaking={isSpeaking} />
-          <div className="flex items-center gap-2">
-            {!enabled && (
-              <button
-                type="button"
-                onClick={enable}
-                className="rounded-full bg-white/10 px-3 py-1 text-xs text-white hover:bg-white/20"
-                title="Enable voice"
-              >
-                Enable Voice
-              </button>
-            )}
-          </div>
           <div className="relative w-full">
             <Progress value={progressPercent} />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">

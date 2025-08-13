@@ -3,6 +3,10 @@ import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
 import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 
+function fire(type: string, detail: boolean) {
+  window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+
 const ELEVENLABS_DEFAULT_VOICE_ID =
   import.meta.env.VITE_ELEVENLABS_DEFAULT_VOICE_ID ||
   "21m00Tcm4TlvDq8ikWAM"; // Rachel (stock voice)
@@ -51,6 +55,7 @@ export function useTextToSpeech() {
   const speak = useCallback(
     async (text: string) => {
       if (!enabled || !text?.trim()) return; // gate prevents NotAllowedError
+      fire('voice-processing', true);
 
       let current = mode;
       const locale = navigator.language;
@@ -67,7 +72,10 @@ export function useTextToSpeech() {
             speed,
             pitch,
             expression,
-            onStart: () => setIsSpeaking(true),
+            onStart: () => {
+              fire('voice-processing', false);
+              setIsSpeaking(true);
+            },
             onEnd: () => setIsSpeaking(false),
           });
           if (audio) {
@@ -89,7 +97,10 @@ export function useTextToSpeech() {
               speed,
               pitch,
               expression,
-              onStart: () => setIsSpeaking(true),
+              onStart: () => {
+                fire('voice-processing', false);
+                setIsSpeaking(true);
+              },
               onEnd: () => setIsSpeaking(false),
             },
           );
@@ -125,7 +136,10 @@ export function useTextToSpeech() {
             u.voice = v;
             u.rate = speed;
             u.pitch = pitch;
-            u.onstart = () => setIsSpeaking(true);
+            u.onstart = () => {
+              fire('voice-processing', false);
+              setIsSpeaking(true);
+            };
             u.onend = () => setIsSpeaking(false);
             u.onerror = () => setIsSpeaking(false);
             window.speechSynthesis.speak(u);
@@ -142,6 +156,7 @@ export function useTextToSpeech() {
           continue;
         }
       }
+      fire('voice-processing', false);
     },
     [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode],
 
