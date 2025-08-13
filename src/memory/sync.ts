@@ -1,4 +1,5 @@
 import type { MemoryBucket, MemoryEntry } from './indexedDbMemory';
+import { retryWithBackoff } from '@/utils/retry';
 
 export interface SyncAdapter {
   pull(): Promise<Record<MemoryBucket, MemoryEntry[]>>;
@@ -44,7 +45,7 @@ export class CloudSyncAdapter implements SyncAdapter {
 
   async pull() {
     try {
-      const res = await fetch(this.endpoint);
+      const res = await retryWithBackoff(() => fetch(this.endpoint));
       if (!res.ok) throw new Error('failed');
       return (await res.json()) as Record<MemoryBucket, MemoryEntry[]>;
     } catch {
@@ -54,11 +55,13 @@ export class CloudSyncAdapter implements SyncAdapter {
 
   async push(data: Record<MemoryBucket, MemoryEntry[]>) {
     try {
-      await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      await retryWithBackoff(() =>
+        fetch(this.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        }),
+      );
     } catch {
       // ignore
     }

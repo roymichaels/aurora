@@ -1,5 +1,6 @@
 import { auroraChat } from '@/utils/auroraChat';
 import { toast } from '@/hooks/use-toast';
+import { retryWithBackoff } from '@/utils/retry';
 // Removed Node crypto usage for browser compatibility
 
 export type MemoryBucket = 'semantic' | 'episodic' | 'procedural';
@@ -74,19 +75,21 @@ function cosineSimilarity(a: number[], b: number[]) {
 
 export async function getEmbedding(text: string): Promise<number[]> {
   try {
-    const { content } = await auroraChat(
-      [
-        {
-          role: 'system',
-          content:
-            'You are an embedding service. Return a JSON array of numbers representing the embedding of the user text.',
-        },
-        { role: 'user', content: text },
-      ],
-      { model: 'embedding' }
+    const { content } = await retryWithBackoff(() =>
+      auroraChat(
+        [
+          {
+            role: 'system',
+            content:
+              'You are an embedding service. Return a JSON array of numbers representing the embedding of the user text.',
+          },
+          { role: 'user', content: text },
+        ],
+        { model: 'embedding' }
+      )
     );
     const parsed = JSON.parse(content);
-    if (Array.isArray(parsed)) return parsed.map((n: any) => Number(n));
+    if (Array.isArray(parsed)) return parsed.map((n: unknown) => Number(n));
   } catch (e) {
     // fall back to simple deterministic embedding when auroraChat is unavailable
     return Array.from(text).map((c) => c.charCodeAt(0) / 255);
@@ -125,16 +128,16 @@ export class IndexedDbMemory {
   }
 
   private persist() {
-    try {
+    retryWithBackoff(async () => {
       const data = JSON.stringify(this.memories);
       memoryStorage.setItem(STORAGE_KEY, encrypt(data));
-    } catch (err) {
+    }).catch(() => {
       toast({
         title: 'Storage error',
         description: 'Failed to save memories',
         variant: 'destructive',
       });
-    }
+    });
   }
 
   private async prune(bucket: MemoryBucket, limit = 200) {
