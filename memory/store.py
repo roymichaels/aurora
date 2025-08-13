@@ -16,25 +16,73 @@ CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cur = conn.cursor()
 db_lock = threading.Lock()
-# Ensure the backing table exists and has a ``created_at`` column for age filtering
-cur.execute(
+
+# -- Schema setup ---------------------------------------------------------
+# Create core tables used by the memory store.  ``memories`` holds the raw
+# memory text and associated metadata, ``embeddings`` stores vector
+# representations for semantic search, ``summaries`` keeps optional
+# condensed versions, and ``meta`` tracks schema metadata such as the
+# current version.
+cur.executescript(
     """
     CREATE TABLE IF NOT EXISTS memories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
         metadata TEXT,
-        created_at REAL DEFAULT (strftime('%s','now'))
-    )
-    """,
+        created_at REAL DEFAULT (strftime('%s','now')),
+        ts REAL DEFAULT (strftime('%s','now')),
+        type TEXT,
+        hash TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS embeddings (
+        memory_id INTEGER PRIMARY KEY,
+        embedding BLOB,
+        FOREIGN KEY(memory_id) REFERENCES memories(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS summaries (
+        memory_id INTEGER PRIMARY KEY,
+        summary TEXT,
+        FOREIGN KEY(memory_id) REFERENCES memories(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    );
+    """
 )
 conn.commit()
 
-# Backwards compatibility: older databases might lack ``created_at``
+# Backwards compatibility: older databases might lack newer columns
 cur.execute("PRAGMA table_info(memories)")
 columns = {row[1] for row in cur.fetchall()}
 if "created_at" not in columns:
-    cur.execute("ALTER TABLE memories ADD COLUMN created_at REAL DEFAULT (strftime('%s','now'))")
-    conn.commit()
+    cur.execute(
+        "ALTER TABLE memories ADD COLUMN created_at REAL DEFAULT (strftime('%s','now'))"
+    )
+if "ts" not in columns:
+    cur.execute("ALTER TABLE memories ADD COLUMN ts REAL DEFAULT (strftime('%s','now'))")
+if "type" not in columns:
+    cur.execute("ALTER TABLE memories ADD COLUMN type TEXT")
+if "hash" not in columns:
+    cur.execute("ALTER TABLE memories ADD COLUMN hash TEXT")
+conn.commit()
+
+# Add indexes for efficient lookup and deduplication
+cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_ts ON memories(ts DESC)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)")
+cur.execute(
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_hash ON memories(hash)"
+)
+conn.commit()
+
+# Seed schema version information
+cur.execute(
+    "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')"
+)
+conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
 
