@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -19,141 +20,168 @@ CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cur = conn.cursor()
 db_lock = threading.Lock()
-# Ensure the backing table exists and has a ``created_at`` column for age filtering
-cur.execute(
+
+# -- Schema setup ---------------------------------------------------------
+cur.executescript(
     """
     CREATE TABLE IF NOT EXISTS memories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
         metadata TEXT,
         embedding BLOB,
-        created_at REAL DEFAULT (strftime('%s','now'))
-    )
-    """,
+        created_at REAL DEFAULT (strftime('%s','now')),
+        ts REAL DEFAULT (strftime('%s','now')),
+        type TEXT,
+        hash TEXT,
+        compacted INTEGER DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS summaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ts REAL DEFAULT (strftime('%s','now')),
+        scope TEXT,
+        text TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS meta (
+        key TEXT PRIMARY KEY,
+        value TEXT
+    );
+    """
 )
 conn.commit()
 
-# Backwards compatibility: older databases might lack columns
+# Backwards-compat: add missing columns/indexes if upgrading
 cur.execute("PRAGMA table_info(memories)")
 columns = {row[1] for row in cur.fetchall()}
-if "created_at" not in columns:
-    cur.execute("ALTER TABLE memories ADD COLUMN created_at REAL DEFAULT (strftime('%s','now'))")
-    conn.commit()
-if "embedding" not in columns:
-    cur.execute("ALTER TABLE memories ADD COLUMN embedding BLOB")
-    conn.commit()
+def _add_col(name: str, ddl: str) -> None:
+    if name not in columns:
+        cur.execute(f"ALTER TABLE memories ADD COLUMN {ddl}")
+
+_add_col("embedding", "embedding BLOB")
+_add_col("created_at", "created_at REAL DEFAULT (strftime('%s','now'))")
+_add_col("ts", "ts REAL DEFAULT (strftime('%s','now'))")
+_add_col("type", "type TEXT")
+_add_col("hash", "hash TEXT")
+_add_col("compacted", "compacted INTEGER DEFAULT 0")
+conn.commit()
+
+cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_ts ON memories(ts DESC)")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)")
+cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_hash ON memories(hash)")
+conn.commit()
+
+cur.execute(
+    "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')"
+)
+conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
 
-
+# -- Helpers --------------------------------------------------------------
 def _to_blob(vec: np.ndarray) -> bytes:
     return vec.astype(np.float32).tobytes()
-
 
 def _from_blob(blob: bytes | None) -> np.ndarray:
     if not blob:
         return np.array([], dtype=np.float32)
     return np.frombuffer(blob, dtype=np.float32)
 
+def _hash_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+# -- Writes ---------------------------------------------------------------
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
-    """Persist ``text`` and optional ``metadata`` and index its embedding."""
+    """Persist text + metadata, compute embedding, dedupe by hash, keep vector index in sync."""
     metadata = metadata or {}
     emb = vector_store.embed(text)
-    with db_lock:
-        cur.execute(
-            "INSERT INTO memories (text, metadata, embedding) VALUES (?, ?, ?)",
-            (text, json.dumps(metadata), _to_blob(emb)),
-        )
-        mem_id = cur.lastrowid
-        conn.commit()
-    vector_store.add(str(mem_id), text, metadata)
-    return mem_id
+    h = _hash_text(text)
 
+    with db_lock:
+        # Deduplicate on exact text hash if already present
+        cur.execute("SELECT id FROM memories WHERE hash = ?", (h,))
+        row = cur.fetchone()
+        if row:
+            mem_id = int(row[0])
+            # Still refresh metadata/ts if you want; here we leave as-is to avoid churn.
+        else:
+            cur.execute(
+                "INSERT INTO memories (text, metadata, embedding, hash) VALUES (?, ?, ?, ?)",
+                (text, json.dumps(metadata), _to_blob(emb), h),
+            )
+            mem_id = cur.lastrowid
+        conn.commit()
+
+    # Keep auxiliary in-memory/chroma index updated (best-effort)
+    vector_store.delete(str(mem_id))
+    vector_store.add(str(mem_id), text, metadata)
+    return int(mem_id)
 
 def save_plan(
     goal: str,
     steps: List[str],
     external_ids: Dict[str, Dict[str, str]] | None = None,
 ) -> int:
-    """Persist a plan in the memory database.
-
-    ``external_ids`` maps integration names (e.g. ``"calendar"``) to a
-    mapping of step text -> external task or event identifiers.  This allows
-    later follow-up with the respective services.
-    """
     text = f"Plan for {goal}: " + " | ".join(steps)
     metadata: Dict[str, Any] = {"tag": "plan", "goal": goal, "steps": steps}
     if external_ids:
         metadata["external_ids"] = external_ids
     return save_memory(text, metadata)
 
-
 def save_onboarding(text: str) -> int:
-    """Convenience wrapper for onboarding memories."""
     return save_memory(text, {"tag": "onboarding"})
 
-
 def save_profile(text: str) -> int:
-    """Convenience wrapper for profile memories."""
     return save_memory(text, {"tag": "profile"})
 
-
 def save_insight(text: str) -> int:
-    """Convenience wrapper for insight memories."""
     return save_memory(text, {"tag": "insight"})
 
-
+# -- Reads ---------------------------------------------------------------
 def query_memory(
     query: str,
     k: int = 5,
     exclude_ids: Iterable[int] | None = None,
     min_age_days: int | None = None,
 ) -> List[Dict[str, Any]]:
-    """Return top ``k`` memories relevant to ``query`` using similarity search.
-
-    Parameters
-    ----------
-    query:
-        Search query.
-    k:
-        Maximum number of memories to return.
-    exclude_ids:
-        Iterable of memory IDs that should be skipped.
-    min_age_days:
-        Minimum age in days for returned memories.  Memories newer than this
-        threshold are excluded.
-    """
-
-    exclude_ids_set = set(exclude_ids or [])
+    """Return top-k memories relevant to `query` using cosine similarity over stored embeddings."""
+    exclude_ids_set = set(int(i) for i in (exclude_ids or []))
 
     qvec = vector_store.embed(query)
-    cur.execute("SELECT id, text, metadata, created_at, embedding FROM memories")
-    rows = cur.fetchall()
-    scored: List[tuple[float, Dict[str, Any]]] = []
+
+    with db_lock:
+        cur.execute("SELECT id, text, metadata, created_at, embedding FROM memories")
+        rows = cur.fetchall()
+
     now = time.time()
+    scored: List[tuple[float, Dict[str, Any]]] = []
     for mid, text, meta_json, created_at, emb_blob in rows:
+        mid = int(mid)
         if mid in exclude_ids_set:
             continue
         if min_age_days is not None and created_at is not None:
-            age_days = (now - float(created_at)) / 86400
-            if age_days < min_age_days:
+            age_days = (now - float(created_at)) / 86400.0
+            if age_days < float(min_age_days):
                 continue
+
         emb = _from_blob(emb_blob)
         score = vector_store._cosine(qvec, emb)
         if score <= 0:
             continue
+
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
-        scored.append((score, {"id": mid, "text": text, "metadata": meta, "created_at": created_at}))
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [item for _, item in scored[:k]]
 
+        scored.append(
+            (score, {"id": mid, "text": text, "metadata": meta, "created_at": created_at})
+        )
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in scored[: max(0, int(k))]]
 
 def list_memories() -> List[Dict[str, Any]]:
-    """Return all stored memories."""
     with db_lock:
         cur.execute("SELECT id, text, metadata FROM memories")
         rows = cur.fetchall()
@@ -163,30 +191,28 @@ def list_memories() -> List[Dict[str, Any]]:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
-        output.append({"id": mid, "text": text, "metadata": meta})
+        output.append({"id": int(mid), "text": text, "metadata": meta})
     return output
 
-
 def update_memory(mem_id: int, text: str, metadata: Dict[str, Any] | None = None) -> bool:
-    """Update an existing memory and re-index its embedding."""
+    """Update an existing memory, recompute embedding, and refresh vector index."""
     metadata = metadata or {}
+    emb = vector_store.embed(text)
     with db_lock:
         cur.execute("SELECT 1 FROM memories WHERE id=?", (mem_id,))
         if not cur.fetchone():
             return False
-        emb = vector_store.embed(text)
         cur.execute(
-            "UPDATE memories SET text=?, metadata=?, embedding=? WHERE id=?",
+            "UPDATE memories SET text=?, metadata=?, embedding=?, ts=(strftime('%s','now')) WHERE id=?",
             (text, json.dumps(metadata), _to_blob(emb), mem_id),
         )
         conn.commit()
+
     vector_store.delete(str(mem_id))
     vector_store.add(str(mem_id), text, metadata)
     return True
 
-
 def delete_memory(mem_id: int) -> bool:
-    """Remove a memory and its embedding."""
     with db_lock:
         cur.execute("DELETE FROM memories WHERE id=?", (mem_id,))
         removed = cur.rowcount > 0
@@ -196,18 +222,18 @@ def delete_memory(mem_id: int) -> bool:
         vector_store.delete(str(mem_id))
     return removed
 
-
 if __name__ == "__main__":  # pragma: no cover - convenience CLI
     import sys
-
     if len(sys.argv) < 2:
         print("{}", end="")
-        sys.exit(0)
+        raise SystemExit(0)
+
     cmd = sys.argv[1]
     if cmd == "save":
         text = sys.argv[2] if len(sys.argv) > 2 else ""
         meta = json.loads(sys.argv[3]) if len(sys.argv) > 3 else {}
-        save_memory(text, meta)
+        mem_id = save_memory(text, meta)
+        print(json.dumps({"id": mem_id}))
     elif cmd == "query":
         query = sys.argv[2] if len(sys.argv) > 2 else ""
         k = int(sys.argv[3]) if len(sys.argv) > 3 else 5
