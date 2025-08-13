@@ -6,10 +6,12 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from '@/hooks/use-toast';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { exportEncryptedBrain, importEncryptedBrain } from '@/memory/brainBackup';
+import { openBrainDb } from '@/memory/brainDb';
 
 export default function BrainBackupPanel() {
   const [passphrase, setPassphrase] = useLocalStorage<string>('brain.backup.passphrase', '');
   const [enabled, setEnabled] = useLocalStorage<boolean>('brain.backup.enabled', false);
+  const [encryptEnabled, setEncryptEnabled] = useLocalStorage<boolean>('brain.encrypt.enabled', false);
   const [busy, setBusy] = useState(false);
 
   const download = async () => {
@@ -75,6 +77,27 @@ export default function BrainBackupPanel() {
       <div className="flex items-center gap-2">
         <Switch id="brain-weekly" checked={enabled} onCheckedChange={setEnabled} />
         <Label htmlFor="brain-weekly">Upload weekly to Supabase</Label>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          id="brain-encrypt"
+          checked={encryptEnabled}
+          onCheckedChange={async (checked) => {
+            if (checked && !passphrase) {
+              toast({ title: 'Passphrase required', description: 'Set a passphrase first.' });
+              return;
+            }
+            localStorage.setItem('brain.encrypt.enabled', JSON.stringify(checked));
+            setEncryptEnabled(checked);
+            const db = await openBrainDb();
+            await db.saveToDisk();
+            toast({
+              title: checked ? 'Brain encrypted' : 'Encryption disabled',
+              description: checked ? 'Database stored encrypted.' : 'Database stored unencrypted.',
+            });
+          }}
+        />
+        <Label htmlFor="brain-encrypt">Encrypt brain on disk</Label>
       </div>
       <div className="flex gap-2">
         <Button variant="outline" onClick={download} disabled={busy}>

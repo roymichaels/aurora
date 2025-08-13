@@ -3,9 +3,72 @@ import initSqlJs, { Database } from "sql.js";
 const DB_FILE = "brain.db";
 const IDB_NAME = "brain-db";
 const IDB_STORE = "files";
+const SALT_LEN = 16;
+const IV_LEN = 12;
 
 export interface BrainDatabase extends Database {
   saveToDisk(): Promise<void>;
+}
+
+function getEncryptionSettings() {
+  if (typeof localStorage === "undefined") {
+    return { enabled: false, passphrase: "" };
+  }
+  try {
+    const enabled = JSON.parse(
+      localStorage.getItem("brain.encrypt.enabled") || "false",
+    ) as boolean;
+    const passphrase = JSON.parse(
+      localStorage.getItem("brain.backup.passphrase") || '""',
+    ) as string;
+    return { enabled, passphrase };
+  } catch {
+    return { enabled: false, passphrase: "" };
+  }
+}
+
+async function deriveKey(passphrase: string, salt: Uint8Array) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+async function encryptData(data: Uint8Array, passphrase: string) {
+  const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
+  const iv = crypto.getRandomValues(new Uint8Array(IV_LEN));
+  const key = await deriveKey(passphrase, salt);
+  const encrypted = new Uint8Array(
+    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data),
+  );
+  const out = new Uint8Array(salt.length + iv.length + encrypted.length);
+  out.set(salt, 0);
+  out.set(iv, salt.length);
+  out.set(encrypted, salt.length + iv.length);
+  return out;
+}
+
+async function decryptData(data: Uint8Array, passphrase: string) {
+  if (data.length < SALT_LEN + IV_LEN) throw new Error("Invalid data");
+  const salt = data.slice(0, SALT_LEN);
+  const iv = data.slice(SALT_LEN, SALT_LEN + IV_LEN);
+  const enc = data.slice(SALT_LEN + IV_LEN);
+  const key = await deriveKey(passphrase, salt);
+  const decrypted = new Uint8Array(
+    await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, enc),
+  );
+  return decrypted;
 }
 
 async function openIndexedDb(): Promise<IDBDatabase> {
@@ -58,15 +121,25 @@ export async function openBrainDb(): Promise<BrainDatabase> {
     let db: BrainDatabase;
     try {
       const file = await handle.getFile();
-      const buffer = await file.arrayBuffer();
+      let buffer = new Uint8Array(await file.arrayBuffer());
+      const { passphrase } = getEncryptionSettings();
+      if (passphrase && buffer.byteLength) {
+        try {
+          buffer = await decryptData(buffer, passphrase);
+        } catch {}
+      }
       db = buffer.byteLength
-        ? (new SQL.Database(new Uint8Array(buffer)) as BrainDatabase)
+        ? (new SQL.Database(buffer) as BrainDatabase)
         : (new SQL.Database() as BrainDatabase);
     } catch {
       db = new SQL.Database() as BrainDatabase;
     }
     db.saveToDisk = async () => {
-      const data = db.export();
+      let data = db.export();
+      const { enabled, passphrase } = getEncryptionSettings();
+      if (enabled && passphrase) {
+        data = await encryptData(data, passphrase);
+      }
       const writable = await handle.createWritable();
       await writable.write(data);
       await writable.close();
@@ -74,12 +147,22 @@ export async function openBrainDb(): Promise<BrainDatabase> {
     return db;
   }
 
-  const bytes = await idbGet(DB_FILE);
+  let bytes = await idbGet(DB_FILE);
+  const { passphrase } = getEncryptionSettings();
+  if (bytes && passphrase) {
+    try {
+      bytes = await decryptData(bytes, passphrase);
+    } catch {}
+  }
   const db = bytes
     ? (new SQL.Database(bytes) as BrainDatabase)
     : (new SQL.Database() as BrainDatabase);
   db.saveToDisk = async () => {
-    const data = db.export();
+    let data = db.export();
+    const { enabled, passphrase } = getEncryptionSettings();
+    if (enabled && passphrase) {
+      data = await encryptData(data, passphrase);
+    }
     await idbSet(DB_FILE, data);
   };
   return db;
