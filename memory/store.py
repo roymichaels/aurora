@@ -46,9 +46,14 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
 def save_plan(
     goal: str,
     steps: List[str],
-    external_ids: Dict[str, List[str]] | None = None,
+    external_ids: Dict[str, Dict[str, str]] | None = None,
 ) -> int:
-    """Persist a plan in the memory database."""
+    """Persist a plan in the memory database.
+
+    ``external_ids`` maps integration names (e.g. ``"calendar"``) to a
+    mapping of step text -> external task or event identifiers.  This allows
+    later follow-up with the respective services.
+    """
     text = f"Plan for {goal}: " + " | ".join(steps)
     metadata: Dict[str, Any] = {"tag": "plan", "goal": goal, "steps": steps}
     if external_ids:
