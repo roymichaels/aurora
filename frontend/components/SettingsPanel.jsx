@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAppSettings } from '../../src/state/settings.ts';
+import VoiceSettings from '../../src/components/settings/VoiceSettings.tsx';
 
 export default function SettingsPanel({ open, onClose }) {
   const {
@@ -28,10 +29,13 @@ export default function SettingsPanel({ open, onClose }) {
     >
       <div style={{ padding: '16px' }}>
         <h2 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px' }}>Settings</h2>
-        <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-          <input type="checkbox" checked={voiceOutput} onChange={toggleVoiceOutput} style={{ marginRight: '8px' }} />
-          Voice Output
-        </label>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <input type="checkbox" checked={voiceOutput} onChange={toggleVoiceOutput} style={{ marginRight: '8px' }} />
+            Voice Output
+          </label>
+          <div style={{ marginBottom: '12px' }}>
+            <VoiceSettings />
+          </div>
         <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
           <input type="checkbox" checked={hypnosisMode} onChange={toggleHypnosisMode} style={{ marginRight: '8px' }} />
           Hypnosis Mode
