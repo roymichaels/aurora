@@ -88,6 +88,18 @@ class VectorStore:
         return [self._ids[i] for i in order[:k] if sims[i] > 0]
 
     # ------------------------------------------------------------------
+    def delete(self, doc_id: str) -> None:
+        """Remove a document and its embedding from the store."""
+        if self._use_chroma and self._collection is not None:  # pragma: no cover
+            self._collection.delete(ids=[doc_id])
+            return
+        if doc_id in self._ids:
+            idx = self._ids.index(doc_id)
+            del self._ids[idx]
+            del self._docs[idx]
+            del self._embeddings[idx]
+
+    # ------------------------------------------------------------------
     def clear(self) -> None:
         """Remove all stored documents."""
         if self._use_chroma and self._collection is not None:  # pragma: no cover
