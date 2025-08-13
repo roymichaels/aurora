@@ -78,6 +78,13 @@ conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
 
+HIGH_VALUE_TAGS = {"onboarding", "profile", "plan"}
+
+
+def _hash_text(text: str) -> str:
+    """Return a stable hash for ``text``."""
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
 # -- Helpers --------------------------------------------------------------
 def _to_blob(vec: np.ndarray) -> bytes:
     return vec.astype(np.float32).tobytes()
@@ -94,6 +101,19 @@ def _hash_text(text: str) -> str:
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     """Persist text + metadata, compute embedding, dedupe by hash, keep vector index in sync."""
     metadata = metadata or {}
+    tag = metadata.get("tag")
+    hash_val = None if tag in HIGH_VALUE_TAGS else _hash_text(text)
+    with db_lock:
+        if hash_val is not None:
+            cur.execute("SELECT id FROM memories WHERE hash=?", (hash_val,))
+            row = cur.fetchone()
+            if row:
+                return int(row[0])
+        cur.execute(
+            "INSERT INTO memories (text, metadata, type, hash) VALUES (?, ?, ?, ?)",
+            (text, json.dumps(metadata), tag, hash_val),
+        )
+        mem_id = cur.lastrowid
     emb = vector_store.embed(text)
     h = _hash_text(text)
 
@@ -147,6 +167,27 @@ def query_memory(
     """Return top-k memories relevant to `query` using cosine similarity over stored embeddings."""
     exclude_ids_set = set(int(i) for i in (exclude_ids or []))
 
+    k = min(k, 5)
+    exclude_ids_set = set(exclude_ids or [])
+
+    cand = vector_store.query(query, k + len(exclude_ids_set))
+    scores = {int(i): s for i, s in cand if int(i) not in exclude_ids_set}
+    ids = list(scores.keys())
+    if not ids:
+        return []
+
+    placeholders = ",".join(["?"] * len(ids))
+    cur.execute(
+        f"SELECT id, text, metadata, created_at FROM memories WHERE id IN ({placeholders})",
+        ids,
+    )
+    rows = cur.fetchall()
+    now = time.time()
+    results: List[Dict[str, Any]] = []
+    for mid, text, meta_json, created_at in rows:
+        age_days = (now - float(created_at)) / 86400 if created_at else None
+        if min_age_days is not None and age_days is not None and age_days < min_age_days:
+            continue
     qvec = vector_store.embed(query)
 
     with db_lock:
@@ -168,11 +209,29 @@ def query_memory(
         score = vector_store._cosine(qvec, emb)
         if score <= 0:
             continue
-
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
+        importance = float(meta.get("importance", 1.0))
+        recency = 1.0 / (1.0 + (age_days or 0.0))
+        relevance = float(scores.get(mid, 0.0))
+        score = relevance * recency * importance
+        results.append(
+            {
+                "id": mid,
+                "text": text,
+                "metadata": meta,
+                "created_at": created_at,
+                "_score": score,
+            }
+        )
+    results.sort(key=lambda m: m["_score"], reverse=True)
+    trimmed = results[:k]
+    for r in trimmed:
+        r.pop("_score", None)
+    return trimmed
+
 
         scored.append(
             (score, {"id": mid, "text": text, "metadata": meta, "created_at": created_at})
