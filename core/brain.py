@@ -6,8 +6,6 @@ dispatching a user message to a suitable sub-agent.
 """
 from __future__ import annotations
 
-import asyncio
-import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
@@ -60,7 +58,7 @@ class BrainAgent:
     """
 
     persona_store: Callable[[], str]
-    memory_store: Callable[[str], Iterable[str | Mapping[str, Any]]]
+    memory_store: Callable[[str, Iterable[int] | None], Iterable[str | Mapping[str, Any]]]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
     coach: CoachingAgent | None = None
     prompt_template: str = (
@@ -73,6 +71,7 @@ class BrainAgent:
     router: ModelRouter = field(init=False)
     _current_agent: SupportsAgent | None = field(init=False, default=None)
     _current_message: str = field(init=False, default="")
+    _recent_memory_ids: list[int] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
         self.router = ModelRouter(self._local_model, self._cloud_model, logger=UsageLogger())
@@ -86,16 +85,10 @@ class BrainAgent:
         return self._local_model(prompt)
 
     def _save_memory_async(self, text: str, role: str) -> None:
-        """Persist ``text`` with ``role`` metadata without blocking."""
-        metadata = {"role": role}
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            threading.Thread(
-                target=save_memory, args=(text, metadata), daemon=True
-            ).start()
-        else:
-            loop.run_in_executor(None, save_memory, text, metadata)
+        """Persist ``text`` with ``role`` metadata and record its ID."""
+
+        mem_id = save_memory(text, {"role": role})
+        self._recent_memory_ids.append(mem_id)
 
     def process(self, message: str, request_id: str | None = None) -> str:
         """Process a user ``message`` by delegating to a sub-agent.
@@ -113,7 +106,7 @@ class BrainAgent:
         persona = self.persona_store() or ""
 
         try:
-            raw_memories = list(self.memory_store(message))
+            raw_memories = list(self.memory_store(message, exclude_ids=self._recent_memory_ids))
         except Exception:
             metrics.errors += 1
             logger.exception("memory store error", extra={"request_id": request_id, "agent": "memory_store"})

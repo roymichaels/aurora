@@ -25,7 +25,7 @@ def test_planner_calls_are_counted() -> None:
         def handle(self, message: str, context: str) -> str:
             return "plan"
 
-    brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [], agents=[PlannerAgent()])
+    brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg, exclude_ids=None: [], agents=[PlannerAgent()])
     brain.process("anything")
 
     assert metrics.planner_calls == 1
@@ -40,7 +40,7 @@ def test_hypnosis_calls_are_counted() -> None:
         def handle(self, message: str, context: str) -> str:
             return "hypnosis"
 
-    brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [], agents=[HypnosisAgent()])
+    brain = BrainAgent(persona_store=lambda: "", memory_store=lambda _msg, exclude_ids=None: [], agents=[HypnosisAgent()])
     brain.process("anything")
 
     assert metrics.hypnosis_calls == 1
@@ -61,7 +61,7 @@ def test_coaching_calls_are_counted() -> None:
 
     brain = BrainAgent(
         persona_store=lambda: "",
-        memory_store=lambda _msg: [],
+        memory_store=lambda _msg, exclude_ids=None: [],
         agents=[DummyAgent()],
         coach=CoachingAgent(),
     )

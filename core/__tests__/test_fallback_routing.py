@@ -9,7 +9,7 @@ def test_user_message_appended_when_routed(monkeypatch):
 
     brain = BrainAgent(
         persona_store=lambda: "persona",
-        memory_store=lambda _msg: ["memory"],
+        memory_store=lambda _msg, exclude_ids=None: ["memory"],
         agents=[],
     )
 

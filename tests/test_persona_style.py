@@ -39,7 +39,7 @@ def test_persona_profile_applied(tmp_path):
     try:
         brain = BrainAgent(
             persona_store=lambda: "",
-            memory_store=lambda _msg: [],
+            memory_store=lambda _msg, exclude_ids=None: [],
             agents=[EchoAgent()],
         )
         result = brain.process("Hi")

@@ -5,7 +5,8 @@ import json
 import os
 import sqlite3
 import threading
-from typing import Any, Dict, List
+import time
+from typing import Any, Dict, Iterable, List
 
 from .vector_store import VectorStore
 
@@ -15,16 +16,25 @@ CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
 cur = conn.cursor()
 db_lock = threading.Lock()
+# Ensure the backing table exists and has a ``created_at`` column for age filtering
 cur.execute(
     """
     CREATE TABLE IF NOT EXISTS memories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
-        metadata TEXT
+        metadata TEXT,
+        created_at REAL DEFAULT (strftime('%s','now'))
     )
     """,
 )
 conn.commit()
+
+# Backwards compatibility: older databases might lack ``created_at``
+cur.execute("PRAGMA table_info(memories)")
+columns = {row[1] for row in cur.fetchall()}
+if "created_at" not in columns:
+    cur.execute("ALTER TABLE memories ADD COLUMN created_at REAL DEFAULT (strftime('%s','now'))")
+    conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
 
@@ -61,24 +71,52 @@ def save_plan(
     return save_memory(text, metadata)
 
 
-def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
-    """Return top ``k`` memories relevant to ``query`` using similarity search."""
-    ids = [int(i) for i in vector_store.query(query, k)]
+def query_memory(
+    query: str,
+    k: int = 5,
+    exclude_ids: Iterable[int] | None = None,
+    min_age_days: int | None = None,
+) -> List[Dict[str, Any]]:
+    """Return top ``k`` memories relevant to ``query`` using similarity search.
+
+    Parameters
+    ----------
+    query:
+        Search query.
+    k:
+        Maximum number of memories to return.
+    exclude_ids:
+        Iterable of memory IDs that should be skipped.
+    min_age_days:
+        Minimum age in days for returned memories.  Memories newer than this
+        threshold are excluded.
+    """
+
+    exclude_ids_set = set(exclude_ids or [])
+
+    ids = [int(i) for i in vector_store.query(query, k + len(exclude_ids_set))]
+    ids = [i for i in ids if i not in exclude_ids_set]
     if not ids:
         return []
+
     placeholders = ",".join(["?"] * len(ids))
     cur.execute(
-        f"SELECT id, text, metadata FROM memories WHERE id IN ({placeholders})",
+        f"SELECT id, text, metadata, created_at FROM memories WHERE id IN ({placeholders})",
         ids,
     )
     rows = cur.fetchall()
     output: List[Dict[str, Any]] = []
-    for mid, text, meta_json in rows:
+    now = time.time()
+    for mid, text, meta_json, created_at in rows:
+        if min_age_days is not None and created_at is not None:
+            age_days = (now - float(created_at)) / 86400
+            if age_days < min_age_days:
+                continue
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
-        output.append({"id": mid, "text": text, "metadata": meta})
+        output.append({"id": mid, "text": text, "metadata": meta, "created_at": created_at})
     return output
 
 
