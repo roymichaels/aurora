@@ -3,6 +3,8 @@ import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
 import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 import { ttsAutoplayToast } from "@/voice/ttsAutoplayToast";
+import { useSubscription } from "@/modules/payments/hooks/useSubscription";
+import { guardPremiumAction } from "@/modules/payments/guard";
 
 function fire(type: string, detail: boolean) {
   window.dispatchEvent(new CustomEvent(type, { detail }));
@@ -31,6 +33,7 @@ export function useTextToSpeech() {
       setMode: s.setMode,
 
     }));
+  const { canAccessFeature } = useSubscription();
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
   useEffect(() => {
@@ -84,6 +87,21 @@ export function useTextToSpeech() {
 
       while (current && current !== "off") {
         if (current === "cloned") {
+          const result = await guardPremiumAction(
+            canAccessFeature,
+            "voice_features",
+            "voice_clone",
+            "use the default voice instead",
+          );
+          if (result === null) {
+            fire('voice-processing', false);
+            return;
+          }
+          if (result === 'free') {
+            current = "eleven-default";
+            setMode("eleven-default", false);
+            continue;
+          }
           if (!voiceId) {
             current = "eleven-default";
             setMode("eleven-default", false);
