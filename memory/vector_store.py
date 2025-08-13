@@ -61,10 +61,31 @@ class VectorStore:
                     self._embedder = None
 
     # ------------------------------------------------------------------
+    def _basic_embed(self, text: str, dim: int = 256) -> np.ndarray:
+        """Fallback embedding when no model is available.
+
+        Uses a simple hashed bag-of-characters approach so cosine similarity
+        roughly reflects textual overlap.  This keeps the memory store
+        functional in minimal environments and during tests without requiring
+        heavy model downloads.
+        """
+
+        vec = np.zeros(dim, dtype=np.float32)
+        for b in text.encode("utf-8"):
+            vec[b % dim] += 1.0
+        if np.linalg.norm(vec):
+            vec /= np.linalg.norm(vec)
+        return vec
+
     def _embed(self, text: str) -> np.ndarray:
         if self._embedder is None:
-            raise RuntimeError("sentence-transformers is required for embeddings")
+            return self._basic_embed(text)
         return np.array(self._embedder.encode(text))
+
+    # ------------------------------------------------------------------
+    def embed(self, text: str) -> np.ndarray:
+        """Public wrapper used by other modules to obtain embeddings."""
+        return self._embed(text)
 
     def _cosine(self, a: np.ndarray, b: np.ndarray) -> float:
         if not a.size or not b.size:
