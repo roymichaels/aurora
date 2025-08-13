@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/components/ui/use-toast";
 import { Mic, MicOff, Save, Sparkles, Send } from "lucide-react";
-import VoiceSetup from "@/components/VoiceSetup";
 import { useViewNav } from "@/state/view";
 import { VoiceIO } from "@/voice/voiceio";
 
@@ -97,9 +96,6 @@ export default function VoiceView() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-      <div className="mt-6">
-        <VoiceSetup />
       </div>
     </div>
   );

@@ -67,8 +67,12 @@ export async function playClonedVoice(
         audio.onended = onEnd;
         audio.onerror = onEnd;
       }
-      await audio.play();
-      return { audio };
+      try {
+        await audio.play();
+        return { audio };
+      } catch (err) {
+        return { audio, error: err };
+      }
     }
 
     const { data, error } = await supabase.functions.invoke("tts-generate", {
@@ -89,8 +93,12 @@ export async function playClonedVoice(
         audio.onended = onEnd;
         audio.onerror = onEnd;
       }
-      await audio.play();
-      return { audio };
+      try {
+        await audio.play();
+        return { audio };
+      } catch (err) {
+        return { audio, error: err };
+      }
     }
     if (error) {
       return { audio: null, error };
