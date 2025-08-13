@@ -26,8 +26,8 @@ type VoiceState = {
   emotion: string;
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
-  setMode: (m: VoiceMode) => void;
-  setLocale: (l: string) => void;
+
+  setMode: (m: VoiceMode, persist?: boolean) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
@@ -77,11 +77,13 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     }
     set({ voiceId: id });
   },
-  setMode: (mode) => {
-    try {
-      window.localStorage.setItem(VOICE_MODE_KEY, mode);
-    } catch {
-      /* ignore */
+  setMode: (mode, persist = true) => {
+    if (persist) {
+      try {
+        window.localStorage.setItem(VOICE_MODE_KEY, mode);
+      } catch {
+        /* ignore */
+      }
     }
     set({ mode });
   },

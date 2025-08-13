@@ -1,7 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
 import { supabase } from "@/integrations/supabase/client";
+
+const ELEVENLABS_DEFAULT_VOICE_ID =
+  import.meta.env.VITE_ELEVEN_DEFAULT_VOICE_ID || "9BWtsMINqrJLrRacOk9x";
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -10,7 +14,9 @@ export function useTextToSpeech() {
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { voiceId, speed, pitch, expression, emotion, mode, locale } =
+  const downgradeToast = useRef(false);
+  const { voiceId, speed, pitch, expression, emotion, mode, setMode } =
+
     useVoiceStore((s) => ({
       voiceId: s.voiceId,
       speed: s.speed,
@@ -18,7 +24,8 @@ export function useTextToSpeech() {
       expression: s.expression,
       emotion: s.emotion,
       mode: s.mode,
-      locale: s.locale,
+      setMode: s.setMode,
+
     }));
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
@@ -28,6 +35,7 @@ export function useTextToSpeech() {
       setEnabled(true);
       localStorage.setItem("aurora_voice_enabled", "1");
       try {
+        window.speechSynthesis.getVoices();
         window.speechSynthesis.resume();
       } catch {
         /* ignore */
@@ -43,61 +51,106 @@ export function useTextToSpeech() {
 
   const speak = useCallback(
     async (text: string) => {
-      if (!enabled || !text?.trim() || mode === "off") return; // <- gate prevents NotAllowedError
-      // Try cloned voice via Supabase when selected
-      if (mode === "cloned" && voiceId) {
-        const audio = await playClonedVoice(text, voiceId, {
-          emotion,
-          speed,
-          pitch,
-          expression,
-          onStart: () => setIsSpeaking(true),
-          onEnd: () => setIsSpeaking(false),
-        });
-        if (audio) {
-          audioRef.current = audio;
-          return;
-        }
-      }
+      if (!enabled || !text?.trim()) return; // gate prevents NotAllowedError
 
-      if (mode !== "browser-tts") {
-        try {
-          const { data, error } = await supabase.functions.invoke("tts-generate", {
-            body: { text, voiceId: mode === "cloned" ? voiceId : undefined, emotion, speed, pitch, expression },
+      let current = mode;
+      const locale = navigator.language;
+
+      while (current && current !== "off") {
+        if (current === "cloned") {
+          if (!voiceId) {
+            current = "eleven-default";
+            setMode("eleven-default", false);
+            continue;
+          }
+          const { audio, error } = await playClonedVoice(text, voiceId, {
+            emotion,
+            speed,
+            pitch,
+            expression,
+            onStart: () => setIsSpeaking(true),
+            onEnd: () => setIsSpeaking(false),
           });
-          if (!error && data?.audioBase64) {
-            const src = `data:${data.contentType};base64,${data.audioBase64}`;
-            const audio = new Audio(src);
+          if (audio) {
             audioRef.current = audio;
-            audio.onplay = () => setIsSpeaking(true);
-            const end = () => setIsSpeaking(false);
-            audio.onended = end;
-            audio.onerror = end;
-            await audio.play();
             return;
           }
-        } catch (e) {
-          console.error("[tts] tts-generate failed", e);
+          const status = (error as { status?: number } | undefined)?.status;
+          if ((status === 401 || status === 429) && !downgradeToast.current) {
+            toast({
+              title: "Cloned voice unavailable",
+              description: "Using default voice",
+            });
+            downgradeToast.current = true;
+          }
+          current = "eleven-default";
+          setMode("eleven-default", false);
+          continue;
+        }
+        if (current === "eleven-default") {
+          const { audio } = await playClonedVoice(
+            text,
+            ELEVENLABS_DEFAULT_VOICE_ID,
+            {
+              emotion,
+              speed,
+              pitch,
+              expression,
+              onStart: () => setIsSpeaking(true),
+              onEnd: () => setIsSpeaking(false),
+            },
+          );
+          if (audio) {
+            audioRef.current = audio;
+            return;
+          }
+          current = "browser-tts";
+          setMode("browser-tts", false);
+          continue;
+        }
+        if (current === "browser-tts") {
+          try {
+            window.speechSynthesis.cancel();
+            let voices = window.speechSynthesis.getVoices();
+            if (!voices.length) {
+              await new Promise((r) => setTimeout(r, 250));
+              voices = window.speechSynthesis.getVoices();
+            }
+            const v = voices.find(
+              (vo) =>
+                vo.lang === locale ||
+                vo.lang.startsWith(locale.split("-")[0]),
+            );
+            if (!v) {
+              current = "off";
+              setMode("off", false);
+              continue;
+            }
+            const u = new SpeechSynthesisUtterance(text);
+            utterRef.current = u;
+            u.voice = v;
+            u.rate = speed;
+            u.pitch = pitch;
+            u.onstart = () => setIsSpeaking(true);
+            u.onend = () => setIsSpeaking(false);
+            u.onerror = () => setIsSpeaking(false);
+            window.speechSynthesis.speak(u);
+            return;
+          } catch {
+            current = "off";
+            setMode("off", false);
+            continue;
+          }
+        }
+        if (current === "local-tts") {
+          current = "off";
+          setMode("off", false);
+          continue;
         }
       }
-
-      // Fallback to Web Speech API
-      try {
-        window.speechSynthesis.cancel();
-        const u = new SpeechSynthesisUtterance(text);
-        utterRef.current = u;
-        u.rate = speed;
-        u.pitch = pitch;
-        u.lang = locale;
-        u.onstart = () => setIsSpeaking(true);
-        u.onend = () => setIsSpeaking(false);
-        u.onerror = () => setIsSpeaking(false);
-        window.speechSynthesis.speak(u);
-      } catch {
-        setIsSpeaking(false);
-      }
     },
-    [enabled, voiceId, speed, pitch, expression, emotion, mode, locale],
+    [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode],
+
   );
 
   const cancel = useCallback(() => {
@@ -115,6 +168,7 @@ export function useTextToSpeech() {
     setEnabled(true);
     localStorage.setItem("aurora_voice_enabled", "1");
     try {
+      window.speechSynthesis.getVoices();
       window.speechSynthesis.resume();
     } catch {
       /* ignore */
