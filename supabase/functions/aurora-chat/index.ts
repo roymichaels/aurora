@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import brain from "../../../src/brain/Brain.ts";
 import { getFilterName } from "../../../src/brain/filters.ts";
-import { summarizeProfile, UserProfile } from "../../../src/data/profile.ts";
+import { UserProfile } from "../../../src/data/profile.ts";
 import { analyzeSentiment } from "../../../src/utils/sentiment.ts";
 import { buildPrompt } from "../../../core/prompt.ts";
 
@@ -54,14 +54,16 @@ serve(async (req) => {
 
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
-    const profileSummary = summarizeProfile(profile);
     const filterNames = brain.filters
       .map((f) => getFilterName(f))
       .filter((n): n is string => Boolean(n));
     const skills = brain.skills.map((s) => `${s.name}: ${s.description}`);
 
+    const personaFields = profile ? (({ history, ...rest }) => rest)(profile) : {};
+
     const builtPrompt = buildPrompt(
-      profileSummary || "",
+      personaFields,
+      brain.cognition.systemPrompt,
       [],
       brain.behavior.style,
       skills,
@@ -69,14 +71,12 @@ serve(async (req) => {
     );
 
     const systemMessages = [
-      { role: "system", content: brain.cognition.systemPrompt },
+      { role: "system", content: builtPrompt },
     ];
 
     if (brain.cognition.contextPrompt) {
       systemMessages.push({ role: "system", content: brain.cognition.contextPrompt });
     }
-
-    systemMessages.push({ role: "system", content: builtPrompt });
 
     const payload = messages && Array.isArray(messages)
       ? { model: usedModel, messages: [...systemMessages, ...messages] }
