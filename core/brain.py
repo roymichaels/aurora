@@ -18,6 +18,7 @@ from safety.filter import filter_output
 from orchestration.router import ModelRouter, UsageLogger
 from .logger import get_logger
 from .metrics import metrics
+from .prompt import build_prompt
 
 
 class SupportsAgent(Protocol):
@@ -49,9 +50,13 @@ class BrainAgent:
         Optional :class:`CoachingAgent` that always generates a short
         motivational snippet which is appended to the chosen agent's
         response.
-    prompt_template:
-        Format string used to build the master prompt.  ``{persona}`` and
-        ``{memories}`` placeholders will be replaced prior to dispatch.
+    behavior_style:
+        Optional description of the assistant's behavior style to include in
+        the prompt.
+    skills:
+        Optional sequence describing available skills.
+    filters:
+        Optional sequence naming active output filters.
     """
 
     persona_store: Callable[[], str]
@@ -64,6 +69,7 @@ class BrainAgent:
         "{style_instructions}\n"
         "Relevant memories:\n{memories}\n"
     )
+
     router: ModelRouter = field(init=False)
     _current_agent: SupportsAgent | None = field(init=False, default=None)
     _current_message: str = field(init=False, default="")
@@ -130,6 +136,7 @@ class BrainAgent:
             persona=persona,
             memories=memory_text,
             style_instructions=style_prompt,
+
         )
 
         response = None
