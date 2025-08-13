@@ -10,6 +10,8 @@ export interface BrainDatabase extends Database {
   saveToDisk(): Promise<void>;
 }
 
+let cachedDb: BrainDatabase | null = null;
+
 function getEncryptionSettings() {
   if (typeof localStorage === "undefined") {
     return { enabled: false, passphrase: "" };
@@ -106,65 +108,111 @@ async function idbSet(key: string, value: Uint8Array): Promise<void> {
 }
 
 export async function openBrainDb(): Promise<BrainDatabase> {
-  const SQL = await initSqlJs({
-    locateFile: (file: string) =>
-      new URL(`../../node_modules/sql.js/dist/${file}`, import.meta.url).toString(),
-  });
+  if (cachedDb) return cachedDb;
+  try {
+    const SQL = await initSqlJs({
+      locateFile: (file: string) =>
+        new URL(`../../node_modules/sql.js/dist/${file}`, import.meta.url).toString(),
+    });
 
-  const hasOpfs =
-    typeof navigator !== "undefined" &&
-    !!(navigator as any).storage?.getDirectory;
+    let opfsHandle: FileSystemFileHandle | null = null;
+    if (
+      typeof navigator !== "undefined" &&
+      (navigator as any).storage?.getDirectory
+    ) {
+      try {
+        const root = await (navigator as any).storage.getDirectory();
+        opfsHandle = await root.getFileHandle(DB_FILE, { create: true });
+      } catch {
+        opfsHandle = null;
+      }
+    }
 
-  if (hasOpfs) {
-    const root = await (navigator as any).storage.getDirectory();
-    const handle = await root.getFileHandle(DB_FILE, { create: true });
     let db: BrainDatabase;
-    try {
-      const file = await handle.getFile();
-      let buffer = new Uint8Array(await file.arrayBuffer());
+    if (opfsHandle) {
+      try {
+        const file = await opfsHandle.getFile();
+        let buffer = new Uint8Array(await file.arrayBuffer());
+        const { passphrase } = getEncryptionSettings();
+        if (passphrase && buffer.byteLength) {
+          try {
+            buffer = await decryptData(buffer, passphrase);
+          } catch {}
+        }
+        db = buffer.byteLength
+          ? (new SQL.Database(buffer) as BrainDatabase)
+          : (new SQL.Database() as BrainDatabase);
+      } catch {
+        db = new SQL.Database() as BrainDatabase;
+      }
+    } else {
+      let bytes = await idbGet(DB_FILE);
       const { passphrase } = getEncryptionSettings();
-      if (passphrase && buffer.byteLength) {
+      if (bytes && passphrase) {
         try {
-          buffer = await decryptData(buffer, passphrase);
+          bytes = await decryptData(bytes, passphrase);
         } catch {}
       }
-      db = buffer.byteLength
-        ? (new SQL.Database(buffer) as BrainDatabase)
+      db = bytes
+        ? (new SQL.Database(bytes) as BrainDatabase)
         : (new SQL.Database() as BrainDatabase);
-    } catch {
-      db = new SQL.Database() as BrainDatabase;
     }
+
     db.saveToDisk = async () => {
       let data = db.export();
       const { enabled, passphrase } = getEncryptionSettings();
       if (enabled && passphrase) {
         data = await encryptData(data, passphrase);
       }
-      const writable = await handle.createWritable();
-      await writable.write(data);
-      await writable.close();
+      if (opfsHandle) {
+        try {
+          const writable = await opfsHandle.createWritable();
+          await writable.write(data);
+          await writable.close();
+        } catch {
+          // fall back to IndexedDB if OPFS write fails
+          await idbSet(DB_FILE, data);
+        }
+      } else {
+        await idbSet(DB_FILE, data);
+        // try to sync to OPFS if it becomes available later
+        if (
+          typeof navigator !== "undefined" &&
+          (navigator as any).storage?.getDirectory
+        ) {
+          try {
+            const root = await (navigator as any).storage.getDirectory();
+            opfsHandle = await root.getFileHandle(DB_FILE, { create: true });
+            const writable = await opfsHandle.createWritable();
+            await writable.write(data);
+            await writable.close();
+          } catch {
+            // ignore sync errors
+          }
+        }
+      }
     };
-    return db;
-  }
 
-  let bytes = await idbGet(DB_FILE);
-  const { passphrase } = getEncryptionSettings();
-  if (bytes && passphrase) {
-    try {
-      bytes = await decryptData(bytes, passphrase);
-    } catch {}
+    cachedDb = db;
+    return db;
+  } catch (e) {
+    console.error("Failed to open brain database", e);
+    throw e;
   }
-  const db = bytes
-    ? (new SQL.Database(bytes) as BrainDatabase)
-    : (new SQL.Database() as BrainDatabase);
-  db.saveToDisk = async () => {
-    let data = db.export();
-    const { enabled, passphrase } = getEncryptionSettings();
-    if (enabled && passphrase) {
-      data = await encryptData(data, passphrase);
-    }
-    await idbSet(DB_FILE, data);
-  };
-  return db;
+}
+
+export async function closeBrainDb(): Promise<void> {
+  if (!cachedDb) return;
+  try {
+    await cachedDb.saveToDisk();
+  } catch (e) {
+    console.error("Failed to save brain database", e);
+  }
+  try {
+    cachedDb.close();
+  } catch (e) {
+    console.error("Failed to close brain database", e);
+  }
+  cachedDb = null;
 }
 
