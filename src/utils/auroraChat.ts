@@ -1,51 +1,32 @@
-import { loadProfile, UserProfile, summarizeProfile } from '@/data/profile';
+import { loadProfile, UserProfile } from '@/data/profile';
 import brain from '@/brain/Brain';
 import { getFilterName } from '@/brain/filters';
 import { routeChat } from '@/agent/router';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 import { useModelPreference } from '@/state/modelPreference';
+import { buildPrompt } from '../../core/prompt.ts';
 
 function buildSystemMessages(profile: UserProfile | null): ChatMessage[] {
-  const systemMessages: ChatMessage[] = [
-    { role: 'system', content: brain.cognition.systemPrompt },
-  ];
-
-  if (brain.cognition.contextPrompt) {
-    systemMessages.push({ role: 'system', content: brain.cognition.contextPrompt });
-  }
-
-  systemMessages.push({
-    role: 'system',
-    content: `Behavior style: ${brain.behavior.style}`,
-  });
-
-  const skillPrompt = brain.skills
-    .map((s) => `${s.name}: ${s.description}`)
-    .join('; ');
-  if (skillPrompt) {
-    systemMessages.push({
-      role: 'system',
-      content: `Available skills: ${skillPrompt}`,
-    });
-  }
-
-  const profileSummary = summarizeProfile(profile);
-  if (profileSummary) {
-    systemMessages.unshift({
-      role: 'system',
-      content: `User profile: ${profileSummary}`,
-    });
-  }
-
   const filterNames = brain.filters
     .map((f) => getFilterName(f))
     .filter((n): n is string => Boolean(n));
-  if (filterNames.length > 0) {
-    systemMessages.push({
-      role: 'system',
-      content: `Applied filters: ${filterNames.join(', ')}`,
-    });
+  const skills = brain.skills.map((s) => `${s.name}: ${s.description}`);
+  const personaFields = profile ? (({ history, ...rest }) => rest)(profile) : {};
+
+  const builtPrompt = buildPrompt(
+    personaFields,
+    brain.cognition.systemPrompt,
+    [],
+    brain.behavior.style,
+    skills,
+    filterNames,
+  );
+
+  const systemMessages: ChatMessage[] = [{ role: 'system', content: builtPrompt }];
+
+  if (brain.cognition.contextPrompt) {
+    systemMessages.push({ role: 'system', content: brain.cognition.contextPrompt });
   }
 
   return systemMessages;
