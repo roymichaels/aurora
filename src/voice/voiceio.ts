@@ -1,6 +1,8 @@
 import { useVoiceStore } from "@/state/voice";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarStore } from "@/state/avatar";
+import { playClonedVoice } from "./voiceClone";
+import { toast } from "@/hooks/use-toast";
 
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
@@ -26,7 +28,8 @@ export class VoiceIO {
       return;
     }
     this.recognition = new SR();
-    this.recognition.lang = useVoiceStore.getState().locale;
+    const { locale } = useVoiceStore.getState();
+    this.recognition.lang = locale;
     this.recognition.interimResults = true;
     this.recognition.maxAlternatives = 1;
 
@@ -61,28 +64,53 @@ export class VoiceIO {
   }
 
   async speak(text: string) {
-    const { voiceId, speed, pitch, expression, emotion, mode, locale } =
-      useVoiceStore.getState();
-    if (mode === "off") return;
-    try {
-      if (mode !== "browser-tts") {
+    const state = useVoiceStore.getState();
+    let { voiceId, mode, locale, speed, pitch, expression, emotion } = state;
+    let success = false;
+
+    const onStart = () => {
+
+      useVoiceStore.getState().setSpeaking(true);
+      this.callbacks.onSpeakingChange?.(true);
+    };
+    const onEnd = () => {
+      useVoiceStore.getState().setSpeaking(false);
+      this.callbacks.onSpeakingChange?.(false);
+      useAvatarStore.getState().setAudio(null);
+      useAvatarStore.getState().setSentiment(0);
+    };
+
+    const tryCloned = async () => {
+      if (!voiceId) return false;
+      const audio = await playClonedVoice(text, voiceId, {
+        emotion,
+        speed,
+        pitch,
+        expression,
+        onStart,
+        onEnd,
+      });
+      if (audio) {
+        this.audio = audio;
+        useAvatarStore.getState().setAudio(audio);
+        return true;
+      }
+      return false;
+    };
+
+    const tryEleven = async () => {
+      try {
         const { data, error } = await supabase.functions.invoke("tts-generate", {
-          body: { text, voiceId: mode === "cloned" ? voiceId : undefined, emotion, speed, pitch, expression },
+          body: { text, emotion, speed, pitch, expression },
         });
         if (!error && data?.audioBase64) {
           const src = `data:${data.contentType};base64,${data.audioBase64}`;
           const audio = new Audio(src);
           this.audio = audio;
           useAvatarStore.getState().setAudio(audio);
-          audio.onplay = () => {
-            useVoiceStore.getState().setSpeaking(true);
-            this.callbacks.onSpeakingChange?.(true);
-          };
+          audio.onplay = onStart;
           const end = () => {
-            useVoiceStore.getState().setSpeaking(false);
-            this.callbacks.onSpeakingChange?.(false);
-            useAvatarStore.getState().setAudio(null);
-            useAvatarStore.getState().setSentiment(0);
+            onEnd();
           };
           audio.onended = end;
           audio.onerror = (e) => {
@@ -90,30 +118,65 @@ export class VoiceIO {
             this.callbacks.onError?.(e);
           };
           await audio.play();
-          return;
+          return true;
+        }
+      } catch (e) {
+        this.callbacks.onError?.(e);
+      }
+      return false;
+    };
+
+    const tryBrowser = () => {
+      if (!("speechSynthesis" in window)) return false;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = locale;
+      u.rate = speed;
+      u.pitch = pitch;
+      u.onstart = onStart;
+      const end = () => {
+        onEnd();
+      };
+      u.onend = end;
+      u.onerror = (e) => {
+        end();
+        this.callbacks.onError?.(e);
+      };
+      speechSynthesis.speak(u);
+      this.utter = u;
+      return true;
+    };
+
+    let currentMode = mode;
+
+    if (currentMode === "cloned") {
+      success = await tryCloned();
+      if (!success) {
+        useVoiceStore.getState().setMode("eleven-default");
+        currentMode = "eleven-default";
+        if (voiceId) {
+          toast({
+            title: "Voice clone unavailable",
+            description: "Falling back to ElevenLabs voice.",
+          });
         }
       }
-    } catch (e) {
-      this.callbacks.onError?.(e);
     }
 
-    if (!("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance(text);
-    u.rate = speed;
-    u.pitch = pitch;
-    u.lang = locale;
-    u.onstart = () => {
-      useVoiceStore.getState().setSpeaking(true);
-      this.callbacks.onSpeakingChange?.(true);
-    };
-    const end = () => {
-      useVoiceStore.getState().setSpeaking(false);
-      this.callbacks.onSpeakingChange?.(false);
-    };
-    u.onend = end;
-    u.onerror = end;
-    speechSynthesis.speak(u);
-    this.utter = u;
+    if (!success && currentMode === "eleven-default") {
+      success = await tryEleven();
+      if (!success) {
+        useVoiceStore.getState().setMode("browser-tts");
+        currentMode = "browser-tts";
+        toast({
+          title: "ElevenLabs error",
+          description: "Using browser speech synthesis.",
+        });
+      }
+    }
+
+    if (!success) {
+      tryBrowser();
+    }
   }
 
   stopSpeaking() {

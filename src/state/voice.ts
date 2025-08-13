@@ -26,8 +26,8 @@ type VoiceState = {
   emotion: string;
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
-
-  setMode: (m: VoiceMode, persist?: boolean) => void;
+  setMode: (m: VoiceMode) => void;
+  setLocale: (l: string) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
@@ -47,9 +47,7 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       : "browser-tts",
   locale:
     typeof window !== "undefined"
-      ? window.localStorage.getItem(VOICE_LOCALE_KEY) ||
-        navigator.language ||
-        "en-US"
+      ? window.localStorage.getItem(VOICE_LOCALE_KEY) || navigator.language || "en-US"
       : "en-US",
   speed:
     typeof window !== "undefined"
@@ -86,6 +84,14 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       }
     }
     set({ mode });
+  },
+  setLocale: (locale) => {
+    try {
+      window.localStorage.setItem(VOICE_LOCALE_KEY, locale);
+    } catch {
+      /* ignore */
+    }
+    set({ locale });
   },
   setLocale: (locale) => {
     try {
