@@ -10,6 +10,10 @@ def _reset_metrics() -> None:
     metrics.planner_calls = 0
     metrics.hypnosis_calls = 0
     metrics.coaching_calls = 0
+    metrics.router_local = 0
+    metrics.router_cloud = 0
+    metrics.gemini_calls = 0
+    metrics.chatgpt_calls = 0
 
 def test_planner_calls_are_counted() -> None:
     _reset_metrics()
