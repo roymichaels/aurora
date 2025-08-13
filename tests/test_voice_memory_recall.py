@@ -110,7 +110,7 @@ def test_voice_recall(monkeypatch):
 
     monkeypatch.setattr(vs, "_load_profile", lambda: {})
 
-    def fake_query_memory(message: str, k: int = 5):  # noqa: ARG001
+    def fake_query_memory(message: str, k: int = 5, exclude_ids=None, min_age_days=None):  # noqa: ARG001
         return [{"text": m} for m in stored]
 
     monkeypatch.setattr(vs, "query_memory", fake_query_memory)

@@ -15,7 +15,7 @@ class DummyAgent:
 
 
 def _make_brain() -> BrainAgent:
-    return BrainAgent(persona_store=lambda: "", memory_store=lambda _msg: [], agents=[DummyAgent()])
+    return BrainAgent(persona_store=lambda: "", memory_store=lambda _msg, exclude_ids=None: [], agents=[DummyAgent()])
 
 
 def test_tone_is_applied(monkeypatch):

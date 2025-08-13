@@ -24,7 +24,7 @@ def chat(payload: dict):
     message = payload["message"]
     brain = BrainAgent(
         persona_store=lambda: state["persona"],
-        memory_store=lambda _msg: state["memories"],
+        memory_store=lambda _msg, exclude_ids=None: state["memories"],
     )
     reply = brain.process(message)
     state["memories"].append(message)

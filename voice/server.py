@@ -31,8 +31,8 @@ def load_persona() -> str:
     return " ".join(part for part in parts if part)
 
 
-def fetch_memories(message: str) -> List[str]:
-    return [m["text"] for m in query_memory(message)]
+def fetch_memories(message: str, exclude_ids: List[int] | None = None) -> List[str]:
+    return [m["text"] for m in query_memory(message, exclude_ids=exclude_ids)]
 
 
 brain = BrainAgent(persona_store=load_persona, memory_store=fetch_memories)
