@@ -6,6 +6,7 @@ import json
 import urllib.request
 from typing import Optional
 
+import numpy as np
 import soundfile as sf
 from TTS.api import TTS
 
@@ -34,6 +35,12 @@ def _get_tts(model_path: str | None) -> TTS:
         else:
             _TTS = TTS(model_name="tts_models/en/vctk/vits")
     return _TTS
+
+
+try:
+    _get_tts(CONFIG.model_path)
+except Exception:
+    pass
 
 
 def _api_synthesize(endpoint: str, text: str, voice_clone: Optional[str]) -> bytes:
@@ -78,6 +85,12 @@ def synthesize_reply(text: str, *, voice_clone: Optional[str] = None) -> bytes:
         audio = tts.tts(text, speaker_wav=voice_clone)
     else:
         audio = tts.tts(text)
+
+    audio = np.asarray(audio)
+    rms = np.sqrt(np.mean(np.square(audio)))
+    if rms > 0:
+        audio = audio / rms
+
     buf = io.BytesIO()
     sf.write(buf, audio, samplerate=tts.synthesizer.output_sample_rate, format="WAV")
     return buf.getvalue()
