@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { toast } from "@/hooks/use-toast";
 import { memoryStore, type MemoryBucket, type MemoryEntry } from "@/memory/indexedDbMemory";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ export default function MemoryPanel() {
   const [mood, setMood] = useState("");
   const [context, setContext] = useState("");
   const [confidence, setConfidence] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMemories(memoryStore.list(bucket));
@@ -63,14 +65,44 @@ export default function MemoryPanel() {
   };
 
   const handleExport = () => {
-    const data = memoryStore.exportAll();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'memories.json';
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const data = memoryStore.exportAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'memories.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast({
+        title: 'Backup failed',
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImportClick = () => fileRef.current?.click();
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      memoryStore.importAll(data);
+      setMemories(memoryStore.list(bucket));
+      toast({ title: 'Restore complete', description: 'Memories imported.' });
+    } catch (err) {
+      toast({
+        title: 'Restore failed',
+        description: err instanceof Error ? err.message : String(err),
+        variant: 'destructive',
+      });
+    } finally {
+      e.target.value = '';
+    }
   };
 
   return (
@@ -97,8 +129,18 @@ export default function MemoryPanel() {
           Search
         </Button>
         <Button variant="outline" onClick={handleExport}>
-          Export
+          Backup
         </Button>
+        <Button variant="outline" onClick={handleImportClick}>
+          Restore
+        </Button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImportFile}
+        />
       </div>
       <Table>
         <TableHeader>

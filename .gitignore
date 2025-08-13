@@ -25,3 +25,4 @@ dist-ssr
 *.sw?
 memory/*.db
 memory/chroma_db/
+__pycache__/
