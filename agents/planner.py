@@ -47,14 +47,18 @@ class PlannerAgent:
         goal = goal.strip() or "your goal"
         steps = self.plan(goal)
 
-        external_ids: Dict[str, List[str]] = {}
+        # Map each step to any external task/event IDs for later follow-up.
+        external_ids: Dict[str, Dict[str, str]] = {}
+
         if settings.get("integrations", {}).get("calendar") and self.calendar_api:
-            calendar_ids = [self.calendar_api.create_event(step) for step in steps]
+            calendar_ids = {
+                step: self.calendar_api.create_event(step) for step in steps
+            }
             if calendar_ids:
                 external_ids["calendar"] = calendar_ids
 
         if settings.get("integrations", {}).get("todo") and self.todo_api:
-            todo_ids = [self.todo_api.create_task(step) for step in steps]
+            todo_ids = {step: self.todo_api.create_task(step) for step in steps}
             if todo_ids:
                 external_ids["todo"] = todo_ids
 
