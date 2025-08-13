@@ -1,6 +1,7 @@
 """Persistent memory store backed by SQLite and a vector index."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -86,14 +87,28 @@ conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
 
+HIGH_VALUE_TAGS = {"onboarding", "profile", "plan"}
+
+
+def _hash_text(text: str) -> str:
+    """Return a stable hash for ``text``."""
+    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
 
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     """Persist ``text`` and optional ``metadata`` and index its embedding."""
     metadata = metadata or {}
+    tag = metadata.get("tag")
+    hash_val = None if tag in HIGH_VALUE_TAGS else _hash_text(text)
     with db_lock:
+        if hash_val is not None:
+            cur.execute("SELECT id FROM memories WHERE hash=?", (hash_val,))
+            row = cur.fetchone()
+            if row:
+                return int(row[0])
         cur.execute(
-            "INSERT INTO memories (text, metadata) VALUES (?, ?)",
-            (text, json.dumps(metadata)),
+            "INSERT INTO memories (text, metadata, type, hash) VALUES (?, ?, ?, ?)",
+            (text, json.dumps(metadata), tag, hash_val),
         )
         mem_id = cur.lastrowid
         conn.commit()
@@ -140,10 +155,12 @@ def query_memory(
         threshold are excluded.
     """
 
+    k = min(k, 5)
     exclude_ids_set = set(exclude_ids or [])
 
-    ids = [int(i) for i in vector_store.query(query, k + len(exclude_ids_set))]
-    ids = [i for i in ids if i not in exclude_ids_set]
+    cand = vector_store.query(query, k + len(exclude_ids_set))
+    scores = {int(i): s for i, s in cand if int(i) not in exclude_ids_set}
+    ids = list(scores.keys())
     if not ids:
         return []
 
@@ -153,19 +170,34 @@ def query_memory(
         ids,
     )
     rows = cur.fetchall()
-    output: List[Dict[str, Any]] = []
     now = time.time()
+    results: List[Dict[str, Any]] = []
     for mid, text, meta_json, created_at in rows:
-        if min_age_days is not None and created_at is not None:
-            age_days = (now - float(created_at)) / 86400
-            if age_days < min_age_days:
-                continue
+        age_days = (now - float(created_at)) / 86400 if created_at else None
+        if min_age_days is not None and age_days is not None and age_days < min_age_days:
+            continue
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
-        output.append({"id": mid, "text": text, "metadata": meta, "created_at": created_at})
-    return output
+        importance = float(meta.get("importance", 1.0))
+        recency = 1.0 / (1.0 + (age_days or 0.0))
+        relevance = float(scores.get(mid, 0.0))
+        score = relevance * recency * importance
+        results.append(
+            {
+                "id": mid,
+                "text": text,
+                "metadata": meta,
+                "created_at": created_at,
+                "_score": score,
+            }
+        )
+    results.sort(key=lambda m: m["_score"], reverse=True)
+    trimmed = results[:k]
+    for r in trimmed:
+        r.pop("_score", None)
+    return trimmed
 
 
 def list_memories() -> List[Dict[str, Any]]:
