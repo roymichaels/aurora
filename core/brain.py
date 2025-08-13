@@ -153,7 +153,8 @@ class BrainAgent:
         if response is None:
             self._current_agent = None
             self._current_message = message
-            response = self.router.route(context)
+            combined = f"{context}\nUser message:\n{message}"
+            response = self.router.route(combined)
 
         if self.coach is not None:
             coaching = self.coach.generate(context)
