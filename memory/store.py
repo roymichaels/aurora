@@ -1,4 +1,5 @@
 """Persistent memory store backed by SQLite and a vector index."""
+
 from __future__ import annotations
 
 import json
@@ -7,6 +8,8 @@ import sqlite3
 import threading
 import time
 from typing import Any, Dict, Iterable, List
+
+import numpy as np
 
 from .vector_store import VectorStore
 
@@ -23,29 +26,44 @@ cur.execute(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         text TEXT NOT NULL,
         metadata TEXT,
+        embedding BLOB,
         created_at REAL DEFAULT (strftime('%s','now'))
     )
     """,
 )
 conn.commit()
 
-# Backwards compatibility: older databases might lack ``created_at``
+# Backwards compatibility: older databases might lack columns
 cur.execute("PRAGMA table_info(memories)")
 columns = {row[1] for row in cur.fetchall()}
 if "created_at" not in columns:
     cur.execute("ALTER TABLE memories ADD COLUMN created_at REAL DEFAULT (strftime('%s','now'))")
     conn.commit()
+if "embedding" not in columns:
+    cur.execute("ALTER TABLE memories ADD COLUMN embedding BLOB")
+    conn.commit()
 
 vector_store = VectorStore(CHROMA_PATH)
+
+
+def _to_blob(vec: np.ndarray) -> bytes:
+    return vec.astype(np.float32).tobytes()
+
+
+def _from_blob(blob: bytes | None) -> np.ndarray:
+    if not blob:
+        return np.array([], dtype=np.float32)
+    return np.frombuffer(blob, dtype=np.float32)
 
 
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     """Persist ``text`` and optional ``metadata`` and index its embedding."""
     metadata = metadata or {}
+    emb = vector_store.embed(text)
     with db_lock:
         cur.execute(
-            "INSERT INTO memories (text, metadata) VALUES (?, ?)",
-            (text, json.dumps(metadata)),
+            "INSERT INTO memories (text, metadata, embedding) VALUES (?, ?, ?)",
+            (text, json.dumps(metadata), _to_blob(emb)),
         )
         mem_id = cur.lastrowid
         conn.commit()
@@ -71,6 +89,21 @@ def save_plan(
     return save_memory(text, metadata)
 
 
+def save_onboarding(text: str) -> int:
+    """Convenience wrapper for onboarding memories."""
+    return save_memory(text, {"tag": "onboarding"})
+
+
+def save_profile(text: str) -> int:
+    """Convenience wrapper for profile memories."""
+    return save_memory(text, {"tag": "profile"})
+
+
+def save_insight(text: str) -> int:
+    """Convenience wrapper for insight memories."""
+    return save_memory(text, {"tag": "insight"})
+
+
 def query_memory(
     query: str,
     k: int = 5,
@@ -94,30 +127,29 @@ def query_memory(
 
     exclude_ids_set = set(exclude_ids or [])
 
-    ids = [int(i) for i in vector_store.query(query, k + len(exclude_ids_set))]
-    ids = [i for i in ids if i not in exclude_ids_set]
-    if not ids:
-        return []
-
-    placeholders = ",".join(["?"] * len(ids))
-    cur.execute(
-        f"SELECT id, text, metadata, created_at FROM memories WHERE id IN ({placeholders})",
-        ids,
-    )
+    qvec = vector_store.embed(query)
+    cur.execute("SELECT id, text, metadata, created_at, embedding FROM memories")
     rows = cur.fetchall()
-    output: List[Dict[str, Any]] = []
+    scored: List[tuple[float, Dict[str, Any]]] = []
     now = time.time()
-    for mid, text, meta_json, created_at in rows:
+    for mid, text, meta_json, created_at, emb_blob in rows:
+        if mid in exclude_ids_set:
+            continue
         if min_age_days is not None and created_at is not None:
             age_days = (now - float(created_at)) / 86400
             if age_days < min_age_days:
                 continue
+        emb = _from_blob(emb_blob)
+        score = vector_store._cosine(qvec, emb)
+        if score <= 0:
+            continue
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
-        output.append({"id": mid, "text": text, "metadata": meta, "created_at": created_at})
-    return output
+        scored.append((score, {"id": mid, "text": text, "metadata": meta, "created_at": created_at}))
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [item for _, item in scored[:k]]
 
 
 def list_memories() -> List[Dict[str, Any]]:
@@ -142,9 +174,10 @@ def update_memory(mem_id: int, text: str, metadata: Dict[str, Any] | None = None
         cur.execute("SELECT 1 FROM memories WHERE id=?", (mem_id,))
         if not cur.fetchone():
             return False
+        emb = vector_store.embed(text)
         cur.execute(
-            "UPDATE memories SET text=?, metadata=? WHERE id=?",
-            (text, json.dumps(metadata), mem_id),
+            "UPDATE memories SET text=?, metadata=?, embedding=? WHERE id=?",
+            (text, json.dumps(metadata), _to_blob(emb), mem_id),
         )
         conn.commit()
     vector_store.delete(str(mem_id))
