@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { useAvatarStore, type AvatarMood } from '@/state/avatar';
+import {
+  useAvatarStore,
+  type AvatarMood,
+  type AvatarMilestone,
+} from '@/state/avatar';
 
 interface Props {
   size?: number;
 }
 
 export function AvatarSphere({ size = 96 }: Props) {
-  const { enabled, sentiment, audio, mood } = useAvatarStore();
+  const { enabled, sentiment, audio, mood, milestone, streak } = useAvatarStore();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
@@ -15,6 +19,8 @@ export function AvatarSphere({ size = 96 }: Props) {
   const geomRef = useRef<THREE.IcosahedronGeometry | null>(null);
   const basePositions = useRef<Float32Array | null>(null);
   const moodRef = useRef<AvatarMood>('neutral');
+  const milestoneRef = useRef<AvatarMilestone>('none');
+  const streakRef = useRef<number>(0);
 
   // Setup scene
   useEffect(() => {
@@ -52,7 +58,14 @@ export function AvatarSphere({ size = 96 }: Props) {
         const level = sum / data.length / 128;
         const time = performance.now() * 0.001;
         const mood = moodRef.current;
+        const milestone = milestoneRef.current;
         let scale = 1 + level * 0.3;
+        if (milestone === 'goal') {
+          scale *= 1 + Math.sin(time * 6) * 0.2;
+        } else if (milestone === 'streak') {
+          const streakAmt = Math.min(streakRef.current, 10) / 10;
+          scale *= 1 + Math.sin(time * 2) * 0.1 * streakAmt;
+        }
         if (mood === 'focused') {
           meshRef.current.rotation.y += 0.02;
         } else if (mood === 'relaxed') {
@@ -138,6 +151,29 @@ export function AvatarSphere({ size = 96 }: Props) {
         matRef.current.emissive.set('#000000');
     }
   }, [mood]);
+
+  // React to milestone changes
+  useEffect(() => {
+    milestoneRef.current = milestone;
+    if (!matRef.current) return;
+    switch (milestone) {
+      case 'goal':
+        matRef.current.emissiveIntensity = 0.5;
+        matRef.current.wireframe = false;
+        break;
+      case 'streak':
+        matRef.current.emissiveIntensity = 0.2;
+        matRef.current.wireframe = true;
+        break;
+      default:
+        matRef.current.emissiveIntensity = 0;
+        matRef.current.wireframe = false;
+    }
+  }, [milestone]);
+
+  useEffect(() => {
+    streakRef.current = streak;
+  }, [streak]);
 
   if (!enabled) return null;
   return <div ref={mountRef} style={{ width: size, height: size }} />;

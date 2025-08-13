@@ -9,14 +9,19 @@ type AvatarState = {
   audio: HTMLAudioElement | null;
   sentiment: number;
   mood: AvatarMood;
+  milestone: AvatarMilestone;
+  streak: number;
   setEnabled: (v: boolean) => void;
   setColor: (c: string) => void;
   setAudio: (a: HTMLAudioElement | null) => void;
   setSentiment: (s: number) => void;
   setMood: (m: AvatarMood) => void;
+  setMilestone: (m: AvatarMilestone) => void;
+  setStreak: (s: number) => void;
 };
 
 export type AvatarMood = "neutral" | "focused" | "relaxed";
+export type AvatarMilestone = "none" | "goal" | "streak";
 
 export const useAvatarStore = create<AvatarState>((set) => ({
   enabled:
@@ -30,6 +35,8 @@ export const useAvatarStore = create<AvatarState>((set) => ({
   audio: null,
   sentiment: 0,
   mood: "neutral",
+  milestone: "none",
+  streak: 0,
   setEnabled: (v) => {
     try {
       localStorage.setItem(AVATAR_ENABLE_KEY, String(v));
@@ -49,5 +56,7 @@ export const useAvatarStore = create<AvatarState>((set) => ({
   setAudio: (audio) => set({ audio }),
   setSentiment: (sentiment) => set({ sentiment }),
   setMood: (mood) => set({ mood }),
+  setMilestone: (milestone) => set({ milestone }),
+  setStreak: (streak) => set({ streak }),
 }));
 
