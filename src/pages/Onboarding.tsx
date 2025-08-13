@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,10 +11,14 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
-  const voiceId = useVoiceStore((s) => s.voiceId);
+  const { voiceId, setMode } = useVoiceStore((s) => ({
+    voiceId: s.voiceId,
+    setMode: s.setMode,
+  }));
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [goals, setGoals] = useState("");
+  const [showVoiceSetup, setShowVoiceSetup] = useState(false);
 
   const saveProfile = async () => {
     const data = { name, goals, voiceId };
@@ -43,10 +47,16 @@ export default function Onboarding() {
     }
   };
 
+  useEffect(() => {
+    if (step === 2 && showVoiceSetup && voiceId) {
+      setMode("cloned");
+      next();
+    }
+  }, [voiceId, showVoiceSetup, step]);
+
   const disabled =
     (step === 0 && !name.trim()) ||
-    (step === 1 && !goals.trim()) ||
-    (step === 2 && !voiceId);
+    (step === 1 && !goals.trim());
 
   return (
     <div className="min-h-svh flex flex-col items-center justify-center gap-4 p-4">
@@ -68,13 +78,57 @@ export default function Onboarding() {
       )}
       {step === 2 && (
         <div className="w-full max-w-sm space-y-2">
-          <p className="text-sm">Record a short voice sample.</p>
-          <VoiceSetup />
+          {!showVoiceSetup ? (
+            <>
+              <p className="text-sm">Choose a voice option:</p>
+              <div className="space-y-2">
+                <Button className="w-full" onClick={() => setShowVoiceSetup(true)}>
+                  Use my sample
+                </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setMode("eleven-default");
+                    next();
+                  }}
+                >
+                  Use default voice
+                </Button>
+                <Button
+                  className="w-full"
+                  variant="ghost"
+                  onClick={() => {
+                    const mode = import.meta.env.VITE_ELEVEN_API_KEY
+                      ? "eleven-default"
+                      : "browser-tts";
+                    setMode(mode);
+                    next();
+                  }}
+                >
+                  Skip for now
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">Record a short voice sample.</p>
+              <VoiceSetup />
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => setShowVoiceSetup(false)}
+              >
+                Back
+              </Button>
+            </>
+          )}
         </div>
       )}
-      <Button onClick={next} disabled={disabled}>
-        {step < 2 ? "Next" : "Finish"}
-      </Button>
+      {step < 2 && (
+        <Button onClick={next} disabled={disabled}>
+          Next
+        </Button>
+      )}
     </div>
   );
 }
