@@ -5,6 +5,9 @@ const VOICE_SPEED_KEY = "aurora.voiceSpeed";
 const VOICE_PITCH_KEY = "aurora.voicePitch";
 const VOICE_EXPR_KEY = "aurora.voiceExpression";
 const VOICE_EMOTION_KEY = "aurora.voiceEmotion";
+const VOICE_MODE_KEY = "aurora.voiceMode";
+
+export type VoiceMode = "eleven-clone" | "eleven-default" | "browser-tts";
 
 type VoiceState = {
   isSpeaking: boolean;
@@ -13,12 +16,14 @@ type VoiceState = {
   pitch: number;
   expression: number;
   emotion: string;
+  mode: VoiceMode;
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
   setEmotion: (v: string) => void;
+  setVoiceMode: (m: VoiceMode) => void;
 };
 
 export const useVoiceStore = create<VoiceState>((set) => ({
@@ -43,6 +48,11 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     typeof window !== "undefined"
       ? window.localStorage.getItem(VOICE_EMOTION_KEY) || "neutral"
       : "neutral",
+  mode:
+    typeof window !== "undefined"
+      ? (window.localStorage.getItem(VOICE_MODE_KEY) as VoiceMode) ||
+        (import.meta.env.VITE_ELEVEN_API_KEY ? "eleven-default" : "browser-tts")
+      : "eleven-default",
   setSpeaking: (v) => set({ isSpeaking: v }),
   setVoiceId: (id) => {
     try {
@@ -84,5 +94,13 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       /* ignore */
     }
     set({ emotion });
+  },
+  setVoiceMode: (mode) => {
+    try {
+      window.localStorage.setItem(VOICE_MODE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
+    set({ mode });
   },
 }));

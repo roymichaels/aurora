@@ -61,40 +61,53 @@ export class VoiceIO {
   }
 
   async speak(text: string) {
-    const { voiceId, speed, pitch, expression, emotion } =
+    const { voiceId, speed, pitch, expression, emotion, mode } =
       useVoiceStore.getState();
-    try {
-      const { data, error } = await supabase.functions.invoke("tts-generate", {
-        body: { text, voiceId, emotion, speed, pitch, expression },
-      });
-      if (!error && data?.audioBase64) {
-        const src = `data:${data.contentType};base64,${data.audioBase64}`;
-        const audio = new Audio(src);
-        this.audio = audio;
-        useAvatarStore.getState().setAudio(audio);
-        audio.onplay = () => {
-          useVoiceStore.getState().setSpeaking(true);
-          this.callbacks.onSpeakingChange?.(true);
-        };
-        const end = () => {
-          useVoiceStore.getState().setSpeaking(false);
-          this.callbacks.onSpeakingChange?.(false);
-          useAvatarStore.getState().setAudio(null);
-          useAvatarStore.getState().setSentiment(0);
-        };
-        audio.onended = end;
-        audio.onerror = (e) => {
-          end();
-          this.callbacks.onError?.(e);
-        };
-        await audio.play();
-        return;
+    const useBrowser = mode === "browser-tts";
+    if (!useBrowser) {
+      try {
+        const { data, error } = await supabase.functions.invoke(
+          "tts-generate",
+          {
+            body: {
+              text,
+              voiceId: mode === "eleven-default" ? null : voiceId,
+              emotion,
+              speed,
+              pitch,
+              expression,
+            },
+          },
+        );
+        if (!error && data?.audioBase64) {
+          const src = `data:${data.contentType};base64,${data.audioBase64}`;
+          const audio = new Audio(src);
+          this.audio = audio;
+          useAvatarStore.getState().setAudio(audio);
+          audio.onplay = () => {
+            useVoiceStore.getState().setSpeaking(true);
+            this.callbacks.onSpeakingChange?.(true);
+          };
+          const end = () => {
+            useVoiceStore.getState().setSpeaking(false);
+            this.callbacks.onSpeakingChange?.(false);
+            useAvatarStore.getState().setAudio(null);
+            useAvatarStore.getState().setSentiment(0);
+          };
+          audio.onended = end;
+          audio.onerror = (e) => {
+            end();
+            this.callbacks.onError?.(e);
+          };
+          await audio.play();
+          return;
+        }
+      } catch (e) {
+        this.callbacks.onError?.(e);
       }
-    } catch (e) {
-      this.callbacks.onError?.(e);
     }
 
-    if (!('speechSynthesis' in window)) return;
+    if (!("speechSynthesis" in window)) return;
     const u = new SpeechSynthesisUtterance(text);
     u.rate = speed;
     u.pitch = pitch;
