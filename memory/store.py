@@ -80,6 +80,88 @@ vector_store = VectorStore(CHROMA_PATH)
 
 HIGH_VALUE_TAGS = {"onboarding", "profile", "plan"}
 
+LOW_IMPORTANCE_THRESHOLD = 0.5
+LAST_COMPACT_KEY = "last_daily_compaction"
+
+
+def _refresh_recency_caches() -> None:
+    """Rebuild the vector index from non-compacted memories."""
+    vector_store.clear()
+    with db_lock:
+        cur.execute(
+            "SELECT id, text, metadata FROM memories WHERE compacted=0"
+        )
+        rows = cur.fetchall()
+    for mid, text, meta_json in rows:
+        try:
+            meta = json.loads(meta_json) if meta_json else {}
+        except Exception:
+            meta = {}
+        vector_store.add(str(int(mid)), text, meta)
+
+
+def _daily_compact_low_importance() -> None:
+    """Summarize and compact low-importance memories from prior days."""
+    tm = time.localtime()
+    start_of_today = time.mktime(
+        (tm.tm_year, tm.tm_mon, tm.tm_mday, 0, 0, 0, 0, 0, -1)
+    )
+    with db_lock:
+        cur.execute(
+            "SELECT id, text, metadata FROM memories WHERE compacted=0 AND created_at < ?",
+            (start_of_today,),
+        )
+        rows = cur.fetchall()
+
+    ids: List[int] = []
+    parts: List[str] = []
+    for mid, text, meta_json in rows:
+        try:
+            meta = json.loads(meta_json) if meta_json else {}
+        except Exception:
+            meta = {}
+        importance = float(meta.get("importance", 1.0))
+        if importance <= LOW_IMPORTANCE_THRESHOLD:
+            ids.append(int(mid))
+            parts.append(text)
+
+    if not parts:
+        return
+
+    summary_text = "\n".join(parts)
+    with db_lock:
+        cur.execute(
+            "INSERT INTO summaries(scope, text) VALUES(?, ?)",
+            ("daily", summary_text),
+        )
+        cur.executemany(
+            "UPDATE memories SET compacted=1 WHERE id=?",
+            [(mid,) for mid in ids],
+        )
+        conn.commit()
+
+
+def _maybe_compact_daily() -> None:
+    today = time.strftime("%Y-%m-%d")
+    with db_lock:
+        cur.execute(
+            "SELECT value FROM meta WHERE key=?",
+            (LAST_COMPACT_KEY,),
+        )
+        row = cur.fetchone()
+    if not row or row[0] != today:
+        _daily_compact_low_importance()
+        _refresh_recency_caches()
+        with db_lock:
+            cur.execute(
+                "REPLACE INTO meta(key, value) VALUES(?, ?)",
+                (LAST_COMPACT_KEY, today),
+            )
+            conn.commit()
+
+
+_maybe_compact_daily()
+
 
 def _hash_text(text: str) -> str:
     """Return a stable hash for ``text``."""
@@ -102,37 +184,22 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     """Persist text + metadata, compute embedding, dedupe by hash, keep vector index in sync."""
     metadata = metadata or {}
     tag = metadata.get("tag")
-    hash_val = None if tag in HIGH_VALUE_TAGS else _hash_text(text)
-    with db_lock:
-        if hash_val is not None:
-            cur.execute("SELECT id FROM memories WHERE hash=?", (hash_val,))
-            row = cur.fetchone()
-            if row:
-                return int(row[0])
-        cur.execute(
-            "INSERT INTO memories (text, metadata, type, hash) VALUES (?, ?, ?, ?)",
-            (text, json.dumps(metadata), tag, hash_val),
-        )
-        mem_id = cur.lastrowid
     emb = vector_store.embed(text)
     h = _hash_text(text)
 
     with db_lock:
-        # Deduplicate on exact text hash if already present
-        cur.execute("SELECT id FROM memories WHERE hash = ?", (h,))
-        row = cur.fetchone()
-        if row:
-            mem_id = int(row[0])
-            # Still refresh metadata/ts if you want; here we leave as-is to avoid churn.
-        else:
-            cur.execute(
-                "INSERT INTO memories (text, metadata, embedding, hash) VALUES (?, ?, ?, ?)",
-                (text, json.dumps(metadata), _to_blob(emb), h),
-            )
-            mem_id = cur.lastrowid
+        if tag not in HIGH_VALUE_TAGS:
+            cur.execute("SELECT id FROM memories WHERE hash=?", (h,))
+            row = cur.fetchone()
+            if row:
+                return int(row[0])
+        cur.execute(
+            "INSERT INTO memories (text, metadata, type, embedding, hash) VALUES (?, ?, ?, ?, ?)",
+            (text, json.dumps(metadata), tag, _to_blob(emb), None if tag in HIGH_VALUE_TAGS else h),
+        )
+        mem_id = cur.lastrowid
         conn.commit()
 
-    # Keep auxiliary in-memory/chroma index updated (best-effort)
     vector_store.delete(str(mem_id))
     vector_store.add(str(mem_id), text, metadata)
     return int(mem_id)
@@ -178,45 +245,31 @@ def query_memory(
 
     placeholders = ",".join(["?"] * len(ids))
     cur.execute(
-        f"SELECT id, text, metadata, created_at FROM memories WHERE id IN ({placeholders})",
+        f"SELECT id, text, metadata, created_at, embedding FROM memories WHERE id IN ({placeholders})",
         ids,
     )
     rows = cur.fetchall()
+    qvec = vector_store.embed(query)
     now = time.time()
     results: List[Dict[str, Any]] = []
-    for mid, text, meta_json, created_at in rows:
-        age_days = (now - float(created_at)) / 86400 if created_at else None
-        if min_age_days is not None and age_days is not None and age_days < min_age_days:
-            continue
-    qvec = vector_store.embed(query)
-
-    with db_lock:
-        cur.execute("SELECT id, text, metadata, created_at, embedding FROM memories")
-        rows = cur.fetchall()
-
-    now = time.time()
-    scored: List[tuple[float, Dict[str, Any]]] = []
     for mid, text, meta_json, created_at, emb_blob in rows:
         mid = int(mid)
+        age_days = (now - float(created_at)) / 86400.0 if created_at else 0.0
+        if min_age_days is not None and age_days < float(min_age_days):
+            continue
         if mid in exclude_ids_set:
             continue
-        if min_age_days is not None and created_at is not None:
-            age_days = (now - float(created_at)) / 86400.0
-            if age_days < float(min_age_days):
-                continue
-
         emb = _from_blob(emb_blob)
-        score = vector_store._cosine(qvec, emb)
-        if score <= 0:
+        rel = float(scores.get(mid, 0.0))
+        if rel <= 0:
             continue
         try:
             meta = json.loads(meta_json) if meta_json else {}
         except Exception:
             meta = {}
         importance = float(meta.get("importance", 1.0))
-        recency = 1.0 / (1.0 + (age_days or 0.0))
-        relevance = float(scores.get(mid, 0.0))
-        score = relevance * recency * importance
+        recency = 1.0 / (1.0 + age_days)
+        score = rel * recency * importance
         results.append(
             {
                 "id": mid,
@@ -231,14 +284,6 @@ def query_memory(
     for r in trimmed:
         r.pop("_score", None)
     return trimmed
-
-
-        scored.append(
-            (score, {"id": mid, "text": text, "metadata": meta, "created_at": created_at})
-        )
-
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [item for _, item in scored[: max(0, int(k))]]
 
 def list_memories() -> List[Dict[str, Any]]:
     with db_lock:
