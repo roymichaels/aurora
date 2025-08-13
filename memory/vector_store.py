@@ -7,10 +7,14 @@ store.
 """
 from __future__ import annotations
 
-import os
-import re
-from collections import Counter
 from typing import Any, Dict, List
+
+import numpy as np
+
+try:  # pragma: no cover - optional dependency
+    from sentence_transformers import SentenceTransformer
+except Exception:  # pragma: no cover - sentence-transformers optional
+    SentenceTransformer = None  # type: ignore
 
 try:  # pragma: no cover - optional dependency
     import chromadb
@@ -48,20 +52,27 @@ class VectorStore:
         if not self._use_chroma:
             self._docs: List[str] = []
             self._ids: List[str] = []
-            self._embeddings: List[Counter[str]] = []
+            self._embeddings: List[np.ndarray] = []
+            self._embedder = None
+            if SentenceTransformer is not None:  # pragma: no cover - optional
+                try:  # pragma: no cover - model download
+                    self._embedder = SentenceTransformer("all-MiniLM-L6-v2")
+                except Exception:
+                    self._embedder = None
 
     # ------------------------------------------------------------------
-    def _embed(self, text: str) -> Counter[str]:
-        tokens = re.findall(r"\w+", text.lower())
-        return Counter(tokens)
+    def _embed(self, text: str) -> np.ndarray:
+        if self._embedder is None:
+            raise RuntimeError("sentence-transformers is required for embeddings")
+        return np.array(self._embedder.encode(text))
 
-    def _cosine(self, a: Counter[str], b: Counter[str]) -> float:
-        dot = sum(a[t] * b.get(t, 0) for t in a)
-        if not dot:
+    def _cosine(self, a: np.ndarray, b: np.ndarray) -> float:
+        if not a.size or not b.size:
             return 0.0
-        norm_a = sum(v * v for v in a.values()) ** 0.5
-        norm_b = sum(v * v for v in b.values()) ** 0.5
-        return dot / (norm_a * norm_b)
+        denom = np.linalg.norm(a) * np.linalg.norm(b)
+        if not denom:
+            return 0.0
+        return float(np.dot(a, b) / denom)
 
     # ------------------------------------------------------------------
     def add(self, doc_id: str, document: str, metadata: Dict[str, Any] | None = None) -> None:
