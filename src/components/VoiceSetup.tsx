@@ -16,6 +16,8 @@ export default function VoiceSetup() {
     setPitch,
     expression,
     setExpression,
+    setMode,
+    setLocale,
   } = useVoiceStore();
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
@@ -40,6 +42,8 @@ export default function VoiceSetup() {
       const json = await resp.json();
       if (json?.voice_id) {
         setVoiceId(json.voice_id);
+        setMode("cloned");
+        setLocale(navigator.language || "en-US");
         try {
           const { data: auth } = await supabase.auth.getUser();
           const uid = auth.user?.id;
