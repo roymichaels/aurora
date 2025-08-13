@@ -13,19 +13,38 @@ def load_persona() -> Dict[str, Any]:
         return json.load(fh)
 
 
-def apply_style(text: str) -> str:
-    """Return ``text`` adapted to the saved persona tone and signature phrases."""
+def style_instructions() -> str:
+    """Return prompt instructions describing the persona style.
+
+    The instructions encourage the model to reply using the user's preferred
+    tone and signature phrases instead of modifying the generated text after
+    the fact.
+    """
+
     profile = load_persona()
     tone = profile.get("tone")
     phrases = profile.get("signature_phrases", [])
 
-    result = text
+    parts: list[str] = []
     if tone:
-        result = f"[{tone}] {result}"
-
+        parts.append(f"Respond in a {tone} tone")
     if phrases:
-        prefix = phrases[0]
-        suffix = phrases[-1] if len(phrases) > 1 else phrases[0]
-        result = f"{prefix} {result} {suffix}"
+        joined = ", ".join(phrases)
+        parts.append(f"incorporate phrases such as {joined}")
 
-    return result
+    if not parts:
+        return ""
+
+    return " and ".join(parts) + "."
+
+
+def apply_style(text: str) -> str:
+    """Return ``text`` unchanged.
+
+    This legacy helper previously injected tone and signature phrases directly
+    into the model output.  The modern approach communicates these preferences
+    through prompt instructions, letting the model's own wording carry the
+    style.
+    """
+
+    return text

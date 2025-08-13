@@ -13,7 +13,7 @@ from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
 from memory.store import save_memory
-from persona.style import apply_style
+from persona.style import style_instructions
 from safety.filter import filter_output
 from orchestration.router import ModelRouter, UsageLogger
 from .logger import get_logger
@@ -61,6 +61,7 @@ class BrainAgent:
     prompt_template: str = (
         "You are the idealized version of the user.\n"
         "Persona: {persona}\n"
+        "{style_instructions}\n"
         "Relevant memories:\n{memories}\n"
     )
     router: ModelRouter = field(init=False)
@@ -124,7 +125,12 @@ class BrainAgent:
                     memories.append(str(text))
 
         memory_text = "\n".join(memories)
-        context = self.prompt_template.format(persona=persona, memories=memory_text)
+        style_prompt = style_instructions()
+        context = self.prompt_template.format(
+            persona=persona,
+            memories=memory_text,
+            style_instructions=style_prompt,
+        )
 
         response = None
         for agent in self.agents:
@@ -162,7 +168,6 @@ class BrainAgent:
             metrics.increment_agent(coach_name)
             response = f"{response}\n\n{coaching}".strip()
 
-        response = apply_style(response)
         final = filter_output(response)
         self._save_memory_async(message, "user")
         self._save_memory_async(final, "assistant")
