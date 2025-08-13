@@ -200,6 +200,7 @@ export default function MasterPlanView() {
   }
 
   const displayPlan = versionIndex === -1 ? plan : plan?.plan_versions?.[versionIndex];
+  const habits = displayPlan?.habits ?? [];
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -270,8 +271,12 @@ export default function MasterPlanView() {
               <Button variant="ghost" size="sm" onClick={() => openEdit("habits")}>Edit</Button>
             </div>
             {habits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
-            {habits.map(h => (
-            <h2 className="text-xl font-semibold">Habits</h2>
+            {habits.map((h: any, i: number) => (
+              <div key={i} className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="font-medium">{h.title}</div>
+              </div>
+            ))}
+            {/* TODO: render habits from generated plan */}
             <HabitTracker />
             {dbHabits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
             {dbHabits.map(h => (
