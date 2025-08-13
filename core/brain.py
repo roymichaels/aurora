@@ -18,6 +18,7 @@ from safety.filter import filter_output
 from orchestration.router import ModelRouter, UsageLogger
 from .logger import get_logger
 from .metrics import metrics
+from .prompt import build_prompt
 
 
 class SupportsAgent(Protocol):
@@ -49,20 +50,22 @@ class BrainAgent:
         Optional :class:`CoachingAgent` that always generates a short
         motivational snippet which is appended to the chosen agent's
         response.
-    prompt_template:
-        Format string used to build the master prompt.  ``{persona}`` and
-        ``{memories}`` placeholders will be replaced prior to dispatch.
+    behavior_style:
+        Optional description of the assistant's behavior style to include in
+        the prompt.
+    skills:
+        Optional sequence describing available skills.
+    filters:
+        Optional sequence naming active output filters.
     """
 
     persona_store: Callable[[], str]
     memory_store: Callable[[str], Iterable[str | Mapping[str, Any]]]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
     coach: CoachingAgent | None = None
-    prompt_template: str = (
-        "You are the idealized version of the user.\n"
-        "Persona: {persona}\n"
-        "Relevant memories:\n{memories}\n"
-    )
+    behavior_style: str = ""
+    skills: Sequence[str] = field(default_factory=list)
+    filters: Sequence[str] = field(default_factory=list)
     router: ModelRouter = field(init=False)
     _current_agent: SupportsAgent | None = field(init=False, default=None)
     _current_message: str = field(init=False, default="")
@@ -123,8 +126,13 @@ class BrainAgent:
                 if text:
                     memories.append(str(text))
 
-        memory_text = "\n".join(memories)
-        context = self.prompt_template.format(persona=persona, memories=memory_text)
+        context = build_prompt(
+            persona,
+            memories,
+            behavior_style=self.behavior_style,
+            skills=self.skills,
+            filters=self.filters,
+        )
 
         response = None
         for agent in self.agents:

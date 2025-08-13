@@ -6,6 +6,7 @@ import brain from "../../../src/brain/Brain.ts";
 import { getFilterName } from "../../../src/brain/filters.ts";
 import { summarizeProfile, UserProfile } from "../../../src/data/profile.ts";
 import { analyzeSentiment } from "../../../src/utils/sentiment.ts";
+import { buildPrompt } from "../../../core/prompt.ts";
 
 
 const corsHeaders = {
@@ -53,6 +54,20 @@ serve(async (req) => {
 
     const usedModel = model || "o4-mini-2025-04-16"; // cost-effective default
 
+    const profileSummary = summarizeProfile(profile);
+    const filterNames = brain.filters
+      .map((f) => getFilterName(f))
+      .filter((n): n is string => Boolean(n));
+    const skills = brain.skills.map((s) => `${s.name}: ${s.description}`);
+
+    const builtPrompt = buildPrompt(
+      profileSummary || "",
+      [],
+      brain.behavior.style,
+      skills,
+      filterNames,
+    );
+
     const systemMessages = [
       { role: "system", content: brain.cognition.systemPrompt },
     ];
@@ -61,26 +76,7 @@ serve(async (req) => {
       systemMessages.push({ role: "system", content: brain.cognition.contextPrompt });
     }
 
-    systemMessages.push({ role: "system", content: `Behavior style: ${brain.behavior.style}` });
-
-    const skillPrompt = brain.skills
-      .map((s) => `${s.name}: ${s.description}`)
-      .join("; ");
-    if (skillPrompt) {
-      systemMessages.push({ role: "system", content: `Available skills: ${skillPrompt}` });
-    }
-
-    const profileSummary = summarizeProfile(profile);
-    if (profileSummary) {
-      systemMessages.unshift({ role: "system", content: `User profile: ${profileSummary}` });
-    }
-
-    const filterNames = brain.filters
-      .map((f) => getFilterName(f))
-      .filter((n): n is string => Boolean(n));
-    if (filterNames.length > 0) {
-      systemMessages.push({ role: "system", content: `Applied filters: ${filterNames.join(", ")}` });
-    }
+    systemMessages.push({ role: "system", content: builtPrompt });
 
     const payload = messages && Array.isArray(messages)
       ? { model: usedModel, messages: [...systemMessages, ...messages] }
