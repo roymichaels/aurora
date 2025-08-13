@@ -1,4 +1,5 @@
 import { auroraChat } from '@/utils/auroraChat';
+import { toast } from '@/hooks/use-toast';
 // Removed Node crypto usage for browser compatibility
 
 export type MemoryBucket = 'semantic' | 'episodic' | 'procedural';
@@ -113,7 +114,12 @@ export class IndexedDbMemory {
         episodic: data.episodic ?? [],
         procedural: data.procedural ?? [],
       };
-    } catch {
+    } catch (err) {
+      toast({
+        title: 'Storage error',
+        description: 'Failed to load memories',
+        variant: 'destructive',
+      });
       return { semantic: [], episodic: [], procedural: [] };
     }
   }
@@ -122,8 +128,12 @@ export class IndexedDbMemory {
     try {
       const data = JSON.stringify(this.memories);
       memoryStorage.setItem(STORAGE_KEY, encrypt(data));
-    } catch {
-      // ignore
+    } catch (err) {
+      toast({
+        title: 'Storage error',
+        description: 'Failed to save memories',
+        variant: 'destructive',
+      });
     }
   }
 
