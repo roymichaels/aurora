@@ -1,3 +1,8 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -59,3 +64,23 @@ def test_conversation_flow():
     res = client.get("/memory")
     assert res.status_code == 200
     assert "I love unit tests" in res.json()["memories"]
+
+
+def test_conversation_flow_understands_implied_deadline():
+    client = TestClient(app)
+
+    res = client.post("/onboard", json={"persona": "curious coder"})
+    assert res.status_code == 200
+
+    res = client.post(
+        "/chat",
+        json={"message": "Let's finish this by next Friday"},
+    )
+    assert res.status_code == 200
+
+    res = client.post(
+        "/chat",
+        json={"message": "When do we plan to finish?"},
+    )
+    assert res.status_code == 200
+    assert "next Friday" in res.json()["reply"]
