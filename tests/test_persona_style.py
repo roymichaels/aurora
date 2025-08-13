@@ -10,7 +10,17 @@ class EchoAgent:
         return True
 
     def handle(self, message: str, context: str) -> str:
-        return "Hello there"
+        profile = load_persona()
+        tone = profile.get("tone", "")
+        phrases = profile.get("signature_phrases", [])
+        result = "Hello there"
+        if tone:
+            result = f"{tone} {result}"
+        if phrases:
+            prefix = phrases[0]
+            suffix = phrases[-1] if len(phrases) > 1 else phrases[0]
+            result = f"{prefix} {result} {suffix}"
+        return result
 
 
 def test_persona_profile_applied(tmp_path):
@@ -34,7 +44,9 @@ def test_persona_profile_applied(tmp_path):
         )
         result = brain.process("Hi")
         assert result.startswith("Let's roll")
-        assert "[enthusiastic]" in result
+        assert "enthusiastic" in result
+        assert "[" not in result
+        assert "]" not in result
         assert result.endswith("Stay sharp")
         profile = load_persona()
         assert profile["values"] == "growth"

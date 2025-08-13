@@ -11,7 +11,17 @@ class DummyAgent:
         return True
 
     def handle(self, message: str, context: str) -> str:  # pragma: no cover - simple stub
-        return "base response"
+        profile = persona_style.load_persona()
+        tone = profile.get("tone", "")
+        phrases = profile.get("signature_phrases", [])
+        result = "base response"
+        if tone:
+            result = f"{tone} {result}"
+        if phrases:
+            prefix = phrases[0]
+            suffix = phrases[-1] if len(phrases) > 1 else phrases[0]
+            result = f"{prefix} {result} {suffix}"
+        return result
 
 
 def _make_brain() -> BrainAgent:
@@ -30,7 +40,9 @@ def test_tone_is_applied(monkeypatch):
 
     result = brain.process("hello")
 
-    assert result == "[cheerful] base response"
+    assert result == "cheerful base response"
+    assert "[" not in result
+    assert "]" not in result
 
 
 def test_signature_phrases_are_applied(monkeypatch):
@@ -46,4 +58,6 @@ def test_signature_phrases_are_applied(monkeypatch):
     result = brain.process("hello")
 
     assert result == "yo base response buddy"
+    assert "[" not in result
+    assert "]" not in result
 

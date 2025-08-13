@@ -13,7 +13,7 @@ from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
 from agents.coaching import CoachingAgent
 from memory.store import save_memory
-from persona.style import apply_style
+from persona.style import style_instructions
 from safety.filter import filter_output
 from orchestration.router import ModelRouter, UsageLogger
 from .logger import get_logger
@@ -63,9 +63,13 @@ class BrainAgent:
     memory_store: Callable[[str], Iterable[str | Mapping[str, Any]]]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
     coach: CoachingAgent | None = None
-    behavior_style: str = ""
-    skills: Sequence[str] = field(default_factory=list)
-    filters: Sequence[str] = field(default_factory=list)
+    prompt_template: str = (
+        "You are the idealized version of the user.\n"
+        "Persona: {persona}\n"
+        "{style_instructions}\n"
+        "Relevant memories:\n{memories}\n"
+    )
+
     router: ModelRouter = field(init=False)
     _current_agent: SupportsAgent | None = field(init=False, default=None)
     _current_message: str = field(init=False, default="")
@@ -126,12 +130,13 @@ class BrainAgent:
                 if text:
                     memories.append(str(text))
 
-        context = build_prompt(
-            persona,
-            memories,
-            behavior_style=self.behavior_style,
-            skills=self.skills,
-            filters=self.filters,
+        memory_text = "\n".join(memories)
+        style_prompt = style_instructions()
+        context = self.prompt_template.format(
+            persona=persona,
+            memories=memory_text,
+            style_instructions=style_prompt,
+
         )
 
         response = None
@@ -170,7 +175,6 @@ class BrainAgent:
             metrics.increment_agent(coach_name)
             response = f"{response}\n\n{coaching}".strip()
 
-        response = apply_style(response)
         final = filter_output(response)
         self._save_memory_async(message, "user")
         self._save_memory_async(final, "assistant")
