@@ -70,20 +70,39 @@ async def voice_endpoint(request: Request):
             recorder.addTrack(track)
             await recorder.start()
             await track.recv()  # wait for at least one frame
-            await asyncio.sleep(0.1)
-            await recorder.stop()
-            with open(recorder_file.name, "rb") as f:
-                audio_bytes = f.read()
-            text = transcribe_audio(audio_bytes)
-            reply_text = brain.process(text)
-            reply_audio = synthesize_reply(reply_text)
-            message = {
-                "transcript": text,
-                "audio": base64.b64encode(reply_audio).decode(),
-            }
-            channel.send(json.dumps(message))
-            recorder_file.close()
-            os.remove(recorder_file.name)
+
+            stop_event = asyncio.Event()
+            loop = asyncio.get_running_loop()
+            final_text: asyncio.Future[str] = loop.create_future()
+
+            async def transcription_worker() -> None:
+                last_text = ""
+                while not stop_event.is_set():
+                    with open(recorder_file.name, "rb") as f:
+                        audio_bytes = f.read()
+                    text = transcribe_audio(audio_bytes)
+                    if text and text != last_text:
+                        channel.send(json.dumps({"transcript": text}))
+                        last_text = text
+                    await asyncio.sleep(0.3)
+                final_text.set_result(last_text)
+
+            asyncio.create_task(transcription_worker())
+
+            @track.on("ended")
+            async def on_ended() -> None:
+                await recorder.stop()
+                stop_event.set()
+                text = await final_text
+                reply_text = brain.process(text)
+                reply_audio = synthesize_reply(reply_text)
+                message = {
+                    "transcript": text,
+                    "audio": base64.b64encode(reply_audio).decode(),
+                }
+                channel.send(json.dumps(message))
+                recorder_file.close()
+                os.remove(recorder_file.name)
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
