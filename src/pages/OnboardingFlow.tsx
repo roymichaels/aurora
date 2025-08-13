@@ -37,12 +37,48 @@ const MODULES: Module[] = [
 
 const MIN_LENGTH = 10;
 
-function validateAnswer(answer: string, moduleIndex: number, questionIndex: number): string | null {
-  if (answer.length < MIN_LENGTH) return `Please provide at least ${MIN_LENGTH} characters.`;
-  const keyword = MODULES[moduleIndex].questions[questionIndex].keyword;
-  if (keyword && !answer.toLowerCase().includes(keyword)) {
-    return `Please mention the word "${keyword}" in your response.`;
+function validateAnswer(
+  answer: string,
+  moduleIndex: number,
+  questionIndex: number,
+): string | null {
+  if (answer.length < MIN_LENGTH) {
+    return `Could you add a bit more detail (at least ${MIN_LENGTH} characters)?`;
   }
+
+  const keyword = MODULES[moduleIndex].questions[questionIndex].keyword;
+  const lower = answer.toLowerCase();
+
+  switch (keyword) {
+    case "deadline": {
+      const dateRegex = /\b(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*|next\s+(?:week|month|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tomorrow|today|tonight)\b/;
+      if (!dateRegex.test(lower)) {
+        return "A timeframe helps with planning. When would you like it done?";
+      }
+      break;
+    }
+    case "scopes": {
+      if (!/(personal|team|organization|company|group|individual)/.test(lower)) {
+        return "Is this personal, for your team, or for your organization?";
+      }
+      break;
+    }
+    case "priors": {
+      if (answer.trim().split(/\s+/).length < 2) {
+        return "Any prior context I should know about?";
+      }
+      break;
+    }
+    case "headline": {
+      if (answer.trim().split(/\s+/).length < 2) {
+        return "Could you share a short headline?";
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
   return null;
 }
 
