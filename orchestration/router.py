@@ -147,6 +147,7 @@ class ModelRouter:
             response = self.gemini_model(prompt)
             self.logger.log("gemini_offline", tokens, 0.0)
             _metrics().router_local += 1
+            _metrics().increment_agent("gemini")
             return response
 
         use_chatgpt = (
@@ -160,9 +161,11 @@ class ModelRouter:
             response = self.chatgpt_model(sanitized)
             self.logger.log("chatgpt", tokens, chatgpt_cost)
             _metrics().router_cloud += 1
+            _metrics().increment_agent("chatgpt")
             return response
 
         response = self.gemini_model(sanitized)
         self.logger.log("gemini", tokens, gemini_cost)
         _metrics().router_local += 1
+        _metrics().increment_agent("gemini")
         return response
