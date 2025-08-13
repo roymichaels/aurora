@@ -48,6 +48,8 @@ function validateAnswer(answer: string, moduleIndex: number, questionIndex: numb
 
 const MAX_QUESTIONS = Math.max(...MODULES.map((m) => m.questions.length));
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
 const getNextState = (
   moduleIndex: number,
   questionIndex: number,
@@ -85,6 +87,7 @@ export default function OnboardingFlow() {
         questionIndex?: number;
         progressPercent?: number;
         answers?: string[][];
+        questionHistory?: { module: number; question: number }[];
       };
     } catch {
       return {};
@@ -100,6 +103,10 @@ export default function OnboardingFlow() {
   const [progressPercent, setProgressPercent] = useState<number>(initial.progressPercent || 0);
   const [input, setInput] = useState("");
   const [answers, setAnswers] = useState<string[][]>(initial.answers || MODULES.map(() => []));
+  const [questionHistory, setQuestionHistory] = useState<{ module: number; question: number }[]>(
+    initial.questionHistory || [],
+  );
+  const [editing, setEditing] = useState(false);
   const [headline, setHeadline] = useState("");
   const [deadline, setDeadline] = useState("");
   const [priors, setPriors] = useState("");
@@ -133,6 +140,10 @@ export default function OnboardingFlow() {
       });
       const prefix = prev.length ? `Earlier you mentioned ${prev.join("; ")}. ` : "";
       sendPrompt(prefix + prompt);
+      setQuestionHistory((h) => {
+        if (h.some((q) => q.module === mIndex && q.question === qIndex)) return h;
+        return [...h, { module: mIndex, question: qIndex }];
+      });
     },
     [answers, sendPrompt],
   );
@@ -172,10 +183,11 @@ export default function OnboardingFlow() {
           questionIndex,
           progressPercent,
           answers,
+          questionHistory,
         }),
       );
     }
-  }, [messages, phase, currentModule, questionIndex, progressPercent, answers]);
+  }, [messages, phase, currentModule, questionIndex, progressPercent, answers, questionHistory]);
 
   // Compute progress %
   useEffect(() => {
@@ -199,6 +211,15 @@ export default function OnboardingFlow() {
       setTimeout(() => askQuestion(currentModule, questionIndex), 0);
     }
   }, [phase, currentModule, questionIndex, askQuestion, sendPrompt]);
+
+  const handleEdit = (mIndex: number, qIndex: number) => {
+    setPhase("question");
+    setCurrentModule(mIndex);
+    setQuestionIndex(qIndex);
+    setInput(answers[mIndex]?.[qIndex] || "");
+    setEditing(true);
+    setTimeout(() => askQuestion(mIndex, qIndex), 0);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,7 +314,10 @@ export default function OnboardingFlow() {
       }
 
       const next = getNextState(currentModule, questionIndex);
-      if (next.module === null) {
+      if (editing) {
+        setEditing(false);
+        await showSummary();
+      } else if (next.module === null) {
         await showSummary();
       } else {
         setCurrentModule(next.module);
@@ -326,6 +350,7 @@ export default function OnboardingFlow() {
     setQuestionIndex(0);
     setProgressPercent(0);
     setAnswers(MODULES.map(() => []));
+    setQuestionHistory([]);
     setMissionPreview(null);
     setHeadline("");
     setDeadline("");
@@ -411,18 +436,25 @@ export default function OnboardingFlow() {
           <div className="border-t bg-background p-4 space-y-4 text-sm">
             <div className="space-y-1">
               <div className="font-semibold">Mission Brief</div>
-              <div>
-                <strong>Headline:</strong> {headline}
-              </div>
-              <div>
-                <strong>Deadline:</strong> {deadline}
-              </div>
-              <div>
-                <strong>Priors:</strong> {priors}
-              </div>
-              <div>
-                <strong>Scopes:</strong> {scopes.join(", ")}
-              </div>
+              {questionHistory.map(({ module, question }) => {
+                const q = MODULES[module].questions[question];
+                const ans = answers[module]?.[question];
+                if (!ans) return null;
+                return (
+                  <div key={`${module}-${question}`} className="flex justify-between gap-2">
+                    <div className="flex-1">
+                      <strong>{capitalize(q.keyword)}:</strong> {ans}
+                    </div>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => handleEdit(module, question)}
+                    >
+                      Edit
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
             <div className="space-y-1">
               <div className="font-semibold">Targets</div>
