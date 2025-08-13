@@ -77,6 +77,50 @@ def query_memory(query: str, k: int = 5) -> List[Dict[str, Any]]:
     return output
 
 
+def list_memories() -> List[Dict[str, Any]]:
+    """Return all stored memories."""
+    with db_lock:
+        cur.execute("SELECT id, text, metadata FROM memories")
+        rows = cur.fetchall()
+    output: List[Dict[str, Any]] = []
+    for mid, text, meta_json in rows:
+        try:
+            meta = json.loads(meta_json) if meta_json else {}
+        except Exception:
+            meta = {}
+        output.append({"id": mid, "text": text, "metadata": meta})
+    return output
+
+
+def update_memory(mem_id: int, text: str, metadata: Dict[str, Any] | None = None) -> bool:
+    """Update an existing memory and re-index its embedding."""
+    metadata = metadata or {}
+    with db_lock:
+        cur.execute("SELECT 1 FROM memories WHERE id=?", (mem_id,))
+        if not cur.fetchone():
+            return False
+        cur.execute(
+            "UPDATE memories SET text=?, metadata=? WHERE id=?",
+            (text, json.dumps(metadata), mem_id),
+        )
+        conn.commit()
+    vector_store.delete(str(mem_id))
+    vector_store.add(str(mem_id), text, metadata)
+    return True
+
+
+def delete_memory(mem_id: int) -> bool:
+    """Remove a memory and its embedding."""
+    with db_lock:
+        cur.execute("DELETE FROM memories WHERE id=?", (mem_id,))
+        removed = cur.rowcount > 0
+        if removed:
+            conn.commit()
+    if removed:
+        vector_store.delete(str(mem_id))
+    return removed
+
+
 if __name__ == "__main__":  # pragma: no cover - convenience CLI
     import sys
 
