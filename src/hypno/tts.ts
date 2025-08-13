@@ -15,39 +15,47 @@ export async function playHypno(
   onEnd: () => void,
   onError?: (err: unknown) => void
 ): Promise<PlaybackHandle | null> {
-  // Try ElevenLabs via Supabase function
-  try {
-    const voiceId = useVoiceStore.getState().voiceId;
-    const { data, error } = await supabase.functions.invoke("tts-generate", {
-      body: { text, voiceId },
-    });
-    if (!error && data?.audioBase64) {
-      const src = `data:${data.contentType};base64,${data.audioBase64}`;
-      const audio = new Audio(src);
-      audio.onended = onEnd;
-
-      const stop = () => {
-        audio.pause();
-        audio.currentTime = 0;
-      };
-
-      const playPromise = audio.play();
-      playPromise.catch((err) => {
-        console.error("[hypno] playback failed", err);
-        stop();
-        onError?.(err);
-        toast({ title: "Playback failed", description: "Unable to start hypnosis audio." });
-        onEnd();
+  const { voiceId, mode } = useVoiceStore.getState();
+  if (mode !== "browser-tts") {
+    try {
+      const { data, error } = await supabase.functions.invoke("tts-generate", {
+        body: { text, voiceId: mode === "eleven-default" ? null : voiceId },
       });
-      return { stop };
+      if (!error && data?.audioBase64) {
+        const src = `data:${data.contentType};base64,${data.audioBase64}`;
+        const audio = new Audio(src);
+        audio.onended = onEnd;
+
+        const stop = () => {
+          audio.pause();
+          audio.currentTime = 0;
+        };
+
+        const playPromise = audio.play();
+        playPromise.catch((err) => {
+          console.error("[hypno] playback failed", err);
+          stop();
+          onError?.(err);
+          toast({
+            title: "Playback failed",
+            description: "Unable to start hypnosis audio.",
+          });
+          onEnd();
+        });
+        return { stop };
+      }
+    } catch (e) {
+      console.error("[hypno] tts-generate failed", e);
     }
-  } catch (e) {
-    console.error("[hypno] tts-generate failed", e);
   }
 
   // Fallback to Web Speech API
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      /* ignore */
+    }
     const utter = new SpeechSynthesisUtterance(text);
     utter.rate = 0.95;
     utter.pitch = 1.0;
@@ -55,7 +63,11 @@ export async function playHypno(
     window.speechSynthesis.speak(utter);
     return {
       stop: () => {
-        try { window.speechSynthesis.cancel(); } catch { /* ignore */ }
+        try {
+          window.speechSynthesis.cancel();
+        } catch {
+          /* ignore */
+        }
       },
     };
   }

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,31 @@ export default function VoiceSetup() {
     setPitch,
     expression,
     setExpression,
+    setVoiceMode,
   } = useVoiceStore();
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState(false);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [hasApiKey, setHasApiKey] = useState(true);
+
+  useEffect(() => {
+    const key = import.meta.env.VITE_ELEVEN_API_KEY;
+    const hasKey = Boolean(key);
+    setHasApiKey(hasKey);
+    if (!hasKey) setVoiceMode("browser-tts");
+  }, [setVoiceMode]);
 
   const uploadSample = async (file: Blob | File) => {
     setUploading(true);
+    let status: number | undefined;
     try {
       const form = new FormData();
       form.append("name", "user-voice");
-      const f = file instanceof File ? file : new File([file], "sample.webm", { type: file.type || "audio/webm" });
+      const f =
+        file instanceof File
+          ? file
+          : new File([file], "sample.webm", { type: file.type || "audio/webm" });
       form.append("files", f);
       const resp = await fetch("https://api.elevenlabs.io/v1/voices/add", {
         method: "POST",
@@ -36,7 +49,11 @@ export default function VoiceSetup() {
         },
         body: form,
       });
-      if (!resp.ok) throw new Error("Voice upload failed");
+      status = resp.status;
+      if (!resp.ok) {
+        if (resp.status === 401) throw new Error("Unauthorized");
+        throw new Error("Voice upload failed");
+      }
       const json = await resp.json();
       if (json?.voice_id) {
         setVoiceId(json.voice_id);
@@ -64,11 +81,17 @@ export default function VoiceSetup() {
       }
     } catch (err) {
       console.error("voice upload", err);
+      if (status === 401 || status === undefined) {
+        setVoiceMode(hasApiKey ? "eleven-default" : "browser-tts");
+        setVoiceId(null);
+        toast({ description: "Couldn't clone right now—using a great default voice." });
+      } else {
         toast({
           title: "Upload failed",
           description: String(err),
           variant: "destructive" as const,
         });
+      }
     } finally {
       setUploading(false);
     }
@@ -107,31 +130,45 @@ export default function VoiceSetup() {
     setRecording(false);
   };
 
+  const useDefaultVoice = () => {
+    setVoiceMode(hasApiKey ? "eleven-default" : "browser-tts");
+    setVoiceId(null);
+  };
+
   return (
     <div className="glass-panel rounded-xl p-4">
       <p className="text-sm mb-2">
-        {voiceId
-          ? "Custom voice configured. Upload or record again to replace."
-          : "Record or upload a short sample to clone your voice."}
+        {!hasApiKey
+          ? "No ElevenLabs API key found. A default voice will be used."
+          : voiceId
+              ? "Custom voice configured. Upload or record again to replace."
+              : "Record or upload a short sample to clone your voice."}
       </p>
-      <div className="flex items-center gap-2 mb-2">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={recording ? stopRecording : startRecording}
-          disabled={uploading}
-          className="gap-2"
-        >
-          {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          {recording ? "Stop" : "Record"}
+      {hasApiKey && (
+        <div className="flex items-center gap-2 mb-2">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={recording ? stopRecording : startRecording}
+            disabled={uploading}
+            className="gap-2"
+          >
+            {recording ? <Square className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            {recording ? "Stop" : "Record"}
+          </Button>
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={onFileChange}
+            disabled={uploading}
+          />
+        </div>
+      )}
+      <div className="mb-2">
+        <Button type="button" variant="outline" size="sm" onClick={useDefaultVoice}>
+          Use default voice
         </Button>
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={onFileChange}
-          disabled={uploading}
-        />
       </div>
       {voiceId && (
         <div className="text-xs text-muted-foreground break-all">Voice ID: {voiceId}</div>
