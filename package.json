@@ -74,7 +74,8 @@
     "vaul": "1.1.2",
     "vite-plugin-pwa": "^0.20.5",
     "zod": "^3.25.76",
-    "zustand": "^4.5.7"
+    "zustand": "^4.5.7",
+    "sql.js": "^1.13.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
