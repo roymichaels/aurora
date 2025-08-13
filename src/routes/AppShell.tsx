@@ -12,6 +12,7 @@ import { useSwipeNav } from "@/hooks/useSwipeNav";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { supabase } from "@/integrations/supabase/client";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
+import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
 import ControlView from "@/views/ControlView";
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
@@ -47,6 +48,7 @@ export default function AppShell() {
   useXPChime();
   const swipe = useSwipeNav();
   useDailyCheckIn();
+  useWeeklyBrainBackup();
 
   useEffect(() => {
     const off = bus.on('nav:view', ({ id, params }: { id: ViewId; params?: Record<string, string> }) => open(id, params));

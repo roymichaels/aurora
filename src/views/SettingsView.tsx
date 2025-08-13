@@ -18,6 +18,7 @@ import TriggersPanel from "@/components/settings/TriggersPanel";
 import ModelPanel from "@/components/settings/ModelPanel";
 import DataSourcesPanel from "@/components/settings/DataSourcesPanel";
 import MemoryPanel from "@/components/settings/MemoryPanel";
+import BrainBackupPanel from "@/components/settings/BrainBackupPanel";
 import ApiCallLogPanel from "@/components/settings/ApiCallLogPanel";
 import FeatureFlagsPanel from "@/components/settings/FeatureFlagsPanel";
 import DeviceManagerPanel from "@/components/settings/DeviceManagerPanel";
@@ -114,6 +115,7 @@ export default function SettingsView() {
             <DataSourcesPanel />
             <TriggersPanel />
             <ModelPanel />
+            <BrainBackupPanel />
             <MemoryPanel />
             <DeviceManagerPanel />
             <ApiCallLogPanel />
