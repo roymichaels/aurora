@@ -8,7 +8,12 @@ const VOICE_EMOTION_KEY = "aurora.voiceEmotion";
 const VOICE_MODE_KEY = "aurora.voiceMode";
 const VOICE_LOCALE_KEY = "aurora.voiceLocale";
 
-type VoiceMode = "cloned" | "eleven-default" | "browser-tts";
+type VoiceMode =
+  | "cloned"
+  | "eleven-default"
+  | "browser-tts"
+  | "local-tts"
+  | "off";
 
 type VoiceState = {
   isSpeaking: boolean;
@@ -70,13 +75,23 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     }
     set({ voiceId: id });
   },
-  setMode: (mode) => {
+  setMode: (mode, persist = true) => {
+    if (persist) {
+      try {
+        window.localStorage.setItem(VOICE_MODE_KEY, mode);
+      } catch {
+        /* ignore */
+      }
+    }
+    set({ mode });
+  },
+  setLocale: (locale) => {
     try {
-      window.localStorage.setItem(VOICE_MODE_KEY, mode);
+      window.localStorage.setItem(VOICE_LOCALE_KEY, locale);
     } catch {
       /* ignore */
     }
-    set({ mode });
+    set({ locale });
   },
   setLocale: (locale) => {
     try {

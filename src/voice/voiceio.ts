@@ -69,6 +69,7 @@ export class VoiceIO {
     let success = false;
 
     const onStart = () => {
+
       useVoiceStore.getState().setSpeaking(true);
       this.callbacks.onSpeakingChange?.(true);
     };

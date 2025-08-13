@@ -33,7 +33,9 @@ function blobToBase64(blob: Blob): Promise<string> {
  * Try to synthesize speech using the user's cloned voice via Supabase edge function.
  * Supports emotion, speed, pitch and expression parameters. Audio is cached for
  * offline reuse and the voice model is cached locally the first time it is used.
- * Returns the HTMLAudioElement if playback was started, otherwise null.
+ * Returns an object with the HTMLAudioElement if playback was started. If the
+ * request fails, `audio` will be null and `error` will contain any error
+ * returned by the Supabase function.
  */
 export async function playClonedVoice(
   text: string,
@@ -46,7 +48,7 @@ export async function playClonedVoice(
     onStart?: () => void;
     onEnd?: () => void;
   } = {},
-): Promise<HTMLAudioElement | null> {
+  ): Promise<{ audio: HTMLAudioElement | null; error?: unknown }> {
   const { emotion, speed, pitch, expression, onStart, onEnd } = options;
 
   const cacheKey = `aurora_voice_cache:${voiceId}:${emotion || "neutral"}:${
@@ -66,7 +68,7 @@ export async function playClonedVoice(
         audio.onerror = onEnd;
       }
       await audio.play();
-      return audio;
+      return { audio };
     }
 
     const { data, error } = await supabase.functions.invoke("tts-generate", {
@@ -88,10 +90,14 @@ export async function playClonedVoice(
         audio.onerror = onEnd;
       }
       await audio.play();
-      return audio;
+      return { audio };
+    }
+    if (error) {
+      return { audio: null, error };
     }
   } catch (e) {
     console.error("[voiceClone] tts-generate failed", e);
+    return { audio: null, error: e };
   }
-  return null;
+  return { audio: null };
 }

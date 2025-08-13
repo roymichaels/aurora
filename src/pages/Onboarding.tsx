@@ -11,14 +11,19 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 export default function Onboarding() {
   const navigate = useNavigate();
   const { user } = useSupabaseAuth();
-  const { voiceId, setMode } = useVoiceStore((s) => ({
+  const { voiceId, setMode, setLocale } = useVoiceStore((s) => ({
     voiceId: s.voiceId,
     setMode: s.setMode,
+    setLocale: s.setLocale,
   }));
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [goals, setGoals] = useState("");
   const [showVoiceSetup, setShowVoiceSetup] = useState(false);
+
+  useEffect(() => {
+    setLocale(navigator.language || "en-US");
+  }, [setLocale]);
 
   const saveProfile = async () => {
     const data = { name, goals, voiceId };
