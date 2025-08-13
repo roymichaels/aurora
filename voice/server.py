@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import os
 import tempfile
 from typing import List
 
@@ -81,6 +82,8 @@ async def voice_endpoint(request: Request):
                 "audio": base64.b64encode(reply_audio).decode(),
             }
             channel.send(json.dumps(message))
+            recorder_file.close()
+            os.remove(recorder_file.name)
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
