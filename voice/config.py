@@ -3,7 +3,8 @@ from __future__ import annotations
 """Configuration for voice synthesis backends."""
 
 from dataclasses import dataclass
-import os
+
+from core.config import CONFIG as CORE_CONFIG
 
 
 @dataclass
@@ -22,10 +23,11 @@ class VoiceConfig:
 
 
 def load_config() -> VoiceConfig:
-    """Load configuration from environment variables."""
+    """Load configuration from the central app config."""
+    models = CORE_CONFIG.models
     return VoiceConfig(
-        model_path=os.getenv("VOICE_MODEL_PATH"),
-        api_endpoint=os.getenv("VOICE_API_ENDPOINT"),
+        model_path=models.voice_model_path,
+        api_endpoint=models.voice_api_endpoint,
     )
 
 
