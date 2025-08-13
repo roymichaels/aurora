@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -9,13 +10,16 @@ export function useTextToSpeech() {
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const { voiceId, speed, pitch, expression, emotion } = useVoiceStore((s) => ({
-    voiceId: s.voiceId,
-    speed: s.speed,
-    pitch: s.pitch,
-    expression: s.expression,
-    emotion: s.emotion,
-  }));
+  const { voiceId, speed, pitch, expression, emotion, mode, locale } =
+    useVoiceStore((s) => ({
+      voiceId: s.voiceId,
+      speed: s.speed,
+      pitch: s.pitch,
+      expression: s.expression,
+      emotion: s.emotion,
+      mode: s.mode,
+      locale: s.locale,
+    }));
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
   useEffect(() => {
@@ -39,9 +43,9 @@ export function useTextToSpeech() {
 
   const speak = useCallback(
     async (text: string) => {
-      if (!enabled || !text?.trim()) return; // <- gate prevents NotAllowedError
-      // Try cloned voice via Supabase when a voiceId is configured
-      if (voiceId) {
+      if (!enabled || !text?.trim() || mode === "off") return; // <- gate prevents NotAllowedError
+      // Try cloned voice via Supabase when selected
+      if (mode === "cloned" && voiceId) {
         const audio = await playClonedVoice(text, voiceId, {
           emotion,
           speed,
@@ -56,6 +60,27 @@ export function useTextToSpeech() {
         }
       }
 
+      if (mode !== "browser-tts") {
+        try {
+          const { data, error } = await supabase.functions.invoke("tts-generate", {
+            body: { text, voiceId: mode === "cloned" ? voiceId : undefined, emotion, speed, pitch, expression },
+          });
+          if (!error && data?.audioBase64) {
+            const src = `data:${data.contentType};base64,${data.audioBase64}`;
+            const audio = new Audio(src);
+            audioRef.current = audio;
+            audio.onplay = () => setIsSpeaking(true);
+            const end = () => setIsSpeaking(false);
+            audio.onended = end;
+            audio.onerror = end;
+            await audio.play();
+            return;
+          }
+        } catch (e) {
+          console.error("[tts] tts-generate failed", e);
+        }
+      }
+
       // Fallback to Web Speech API
       try {
         window.speechSynthesis.cancel();
@@ -63,6 +88,7 @@ export function useTextToSpeech() {
         utterRef.current = u;
         u.rate = speed;
         u.pitch = pitch;
+        u.lang = locale;
         u.onstart = () => setIsSpeaking(true);
         u.onend = () => setIsSpeaking(false);
         u.onerror = () => setIsSpeaking(false);
@@ -71,7 +97,7 @@ export function useTextToSpeech() {
         setIsSpeaking(false);
       }
     },
-    [enabled, voiceId, speed, pitch, expression, emotion],
+    [enabled, voiceId, speed, pitch, expression, emotion, mode, locale],
   );
 
   const cancel = useCallback(() => {
