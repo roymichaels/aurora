@@ -9,6 +9,8 @@ const corsHeaders = {
 };
 
 const ELEVEN_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
+const ELEVEN_DEFAULT_VOICE_ID =
+  Deno.env.get("ELEVENLABS_DEFAULT_VOICE_ID") ?? "21m00Tcm4TlvDq8ikWAM"; // Rachel (stock voice)
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -25,7 +27,12 @@ serve(async (req) => {
   try {
     const { searchParams } = new URL(req.url);
     const queryVoiceId = searchParams.get("voiceId") ?? undefined;
-    const body = (await req.json().catch(() => ({}))) as any;
+    const body = (await req.json().catch(() => ({}))) as {
+      text?: string;
+      voiceId?: string;
+      modelId?: string;
+      outputFormat?: string;
+    };
     const {
       text,
       voiceId: bodyVoiceId,
@@ -34,7 +41,7 @@ serve(async (req) => {
     } = body;
     const voiceId = [bodyVoiceId, queryVoiceId].find(
       (v): v is string => typeof v === "string" && v.length > 0,
-    ) ?? "9BWtsMINqrJLrRacOk9x"; // Aria (default voice)
+    ) ?? ELEVEN_DEFAULT_VOICE_ID;
 
     if (!text || typeof text !== "string") {
       return new Response(JSON.stringify({ error: "Missing text" }), {
