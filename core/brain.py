@@ -95,6 +95,37 @@ class BrainAgent:
         mem_id = save_memory(text, {"role": role})
         self._recent_memory_ids.append(mem_id)
 
+    def _retrieve_memories(self, message: str) -> list[str]:
+        """Fetch relevant memories and track those shown to the user.
+
+        The helper consults :attr:`memory_store` while ensuring that any
+        previously saved or displayed memories are excluded.  Returned
+        memories are limited to five items and any provided ``id`` values are
+        added to ``_recent_memory_ids`` so they won't be surfaced again in
+        the current session.
+        """
+
+        try:
+            raw = list(self.memory_store(message, exclude_ids=self._recent_memory_ids))
+        except Exception:
+            raise
+
+        memories: list[str] = []
+        for mem in raw[:5]:
+            if isinstance(mem, Mapping):
+                text = mem.get("text")
+                mid = mem.get("id")
+                if mid is not None:
+                    try:
+                        self._recent_memory_ids.append(int(mid))
+                    except Exception:
+                        pass
+                if text:
+                    memories.append(str(text))
+            else:
+                memories.append(str(mem))
+        return memories
+
     def process(self, message: str, request_id: str | None = None) -> str:
         """Process a user ``message`` by delegating to a sub-agent.
 
@@ -114,27 +145,16 @@ class BrainAgent:
         persona = self.persona_store() or ""
 
         try:
-            raw_memories = list(
-                self.memory_store(message, exclude_ids=self._recent_memory_ids)
-            )
+            memories = self._retrieve_memories(message)
         except Exception:
             metrics.errors += 1
             logger.exception(
                 "memory store error",
                 extra={"request_id": request_id, "agent": "memory_store"},
             )
-            raw_memories = []
+            memories = []
         else:
             metrics.memory_queries += 1
-
-        memories = []
-        for mem in raw_memories:
-            if isinstance(mem, str):
-                memories.append(mem)
-            elif isinstance(mem, Mapping):
-                text = mem.get("text")
-                if text:
-                    memories.append(str(text))
 
         memory_text = "\n".join(memories)
         style_prompt = style_instructions()

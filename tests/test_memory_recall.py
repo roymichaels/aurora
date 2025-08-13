@@ -65,3 +65,29 @@ def test_brain_avoids_recent_message_echos(monkeypatch):
     brain.process("I love unit tests")
     reply = brain.process("What did I just say?")
     assert "I love unit tests" not in reply
+
+
+def test_brain_avoids_repeating_displayed_memories(monkeypatch):
+    """Previously surfaced memories should be excluded from later recalls."""
+
+    mem.cur.execute("DELETE FROM memories")
+    mem.conn.commit()
+    mem.vector_store.clear()
+
+    mid = mem.save_memory("remember this fact")
+
+    brain = BrainAgent(
+        persona_store=lambda: "",
+        memory_store=lambda msg, exclude_ids=None: mem.query_memory(msg, exclude_ids=exclude_ids),
+        agents=[EchoAgent()],
+    )
+
+    # Avoid saving messages during the test to keep _recent_memory_ids clean
+    monkeypatch.setattr(brain, "_save_memory_async", lambda text, role: None)
+
+    first = brain.process("remember?")
+    assert "remember this fact" in first
+
+    # After being displayed once, the memory ID should now be excluded
+    second = brain.process("remember again?")
+    assert "remember this fact" not in second

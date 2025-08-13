@@ -31,8 +31,17 @@ def load_persona() -> str:
     return " ".join(part for part in parts if part)
 
 
-def fetch_memories(message: str, exclude_ids: List[int] | None = None) -> List[str]:
-    return [m["text"] for m in query_memory(message, exclude_ids=exclude_ids)]
+def fetch_memories(
+    message: str, exclude_ids: List[int] | None = None
+) -> List[dict]:
+    """Retrieve relevant memories for ``message``.
+
+    The raw records from :func:`memory.store.query_memory` are returned so the
+    :class:`BrainAgent` can track which memory IDs have been shown to the
+    user.  Only the ``id`` and ``text`` fields are required by the agent.
+    """
+
+    return query_memory(message, exclude_ids=exclude_ids)
 
 
 brain = BrainAgent(persona_store=load_persona, memory_store=fetch_memories)

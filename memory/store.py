@@ -246,6 +246,12 @@ def save_insight(text: str) -> int:
     return save_memory(text, {"tag": "insight"})
 
 # -- Reads ---------------------------------------------------------------
+
+def score_memory(relevance: float, age_days: float, importance: float) -> float:
+    """Return a combined score for a memory candidate."""
+    recency = 1.0 / (1.0 + float(age_days))
+    return float(relevance) * recency * float(importance)
+
 def query_memory(
     query: str,
     k: int = 5,
@@ -289,8 +295,7 @@ def query_memory(
         except Exception:
             meta = {}
         importance = float(meta.get("importance", 1.0))
-        recency = 1.0 / (1.0 + age_days)
-        score = rel * recency * importance
+        score = score_memory(rel, age_days, importance)
         results.append(
             {
                 "id": mid,
