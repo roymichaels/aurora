@@ -117,10 +117,6 @@ export default function AppShell() {
     return <Navigate to="/auth" replace />;
   }
 
-  if (onboarded === false) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
   return (
     <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
       <div className="os-bg" />

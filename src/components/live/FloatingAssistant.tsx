@@ -14,6 +14,8 @@ import type { Task } from '@/state/task';
 import { validateAnswer } from '@/utils/validation';
 import { auroraChat } from '@/utils/auroraChat';
 import { useAvatarStore } from '@/state/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 type ChatMessage = {
   id: string;
@@ -36,11 +38,21 @@ export function FloatingAssistant({
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Hi! How can I help you with your current focus?',
+      content:
+        'Hi! How can I help you with your current focus? Type "quick start" to set up your profile.',
     },
   ]);
   const [listening, setListening] = useState(false);
   const [speak, setSpeak] = useState(false);
+
+  const { user } = useSupabaseAuth();
+  const QUICK_START = [
+    { key: 'name', prompt: "What's your name?" },
+    { key: 'goals', prompt: 'What are your goals?' },
+  ] as const;
+  const [qsActive, setQsActive] = useState(false);
+  const [qsIndex, setQsIndex] = useState(0);
+  const [persona, setPersona] = useState<Record<string, string>>({});
 
   const endRef = useRef<HTMLDivElement | null>(null);
   // Speech recognition may not be available in all browsers
@@ -73,14 +85,63 @@ export function FloatingAssistant({
   const handleSend = async (override?: string) => {
     const text = (override ?? input).trim();
     if (!text || sending) return;
+
+    if (!qsActive && text.toLowerCase() === 'quick start') {
+      const userMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content: text,
+      };
+      setMessages((m) => [
+        ...m,
+        userMsg,
+        { id: crypto.randomUUID(), role: 'assistant', content: QUICK_START[0].prompt },
+      ]);
+      setInput('');
+      setQsActive(true);
+      setQsIndex(0);
+      return;
+    }
+
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
       content: text,
     };
-    const isValid = validateAnswer(text);
     setMessages((m) => [...m, userMsg]);
     setInput('');
+
+    if (qsActive) {
+      const current = QUICK_START[qsIndex];
+      const updated = { ...persona, [current.key]: text };
+      setPersona(updated);
+      if (user) {
+        await supabase.from('profiles').update({ persona: updated }).eq('id', user.id);
+      }
+      const next = qsIndex + 1;
+      if (next < QUICK_START.length) {
+        setQsIndex(next);
+        setMessages((m) => [
+          ...m,
+          { id: crypto.randomUUID(), role: 'assistant', content: QUICK_START[next].prompt },
+        ]);
+      } else {
+        if (user) {
+          await supabase
+            .from('profiles')
+            .update({ onboarded_at: new Date().toISOString() })
+            .eq('id', user.id);
+        }
+        setQsActive(false);
+        setMessages((m) => [
+          ...m,
+          { id: crypto.randomUUID(), role: 'assistant', content: "Thanks! You're all set." },
+        ]);
+      }
+      return;
+    }
+
+    const isValid = validateAnswer(text);
     setSending(true);
 
     try {
@@ -98,13 +159,17 @@ export function FloatingAssistant({
       if (userSummary) {
         systemMessages.push({
           role: 'system',
-          content: `Summary of user statements: ${userSummary}. Refer back to these when replying, e.g., "Earlier you mentioned..."`,
+          content: `Summary of user statements: ${userSummary}. Refer back to these when replying, e.g., "Earlier you mentioned.."`,
         });
       }
       if (task) {
         systemMessages.push({
           role: 'system',
-          content: `Task: ${JSON.stringify({ id: task.id, title: task.title, description: task.description })}`,
+          content: `Task: ${JSON.stringify({
+            id: task.id,
+            title: task.title,
+            description: task.description,
+          })}`,
         });
       }
       if (!isValid) {

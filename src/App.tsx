@@ -12,7 +12,6 @@ import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
-import Onboarding from "./pages/Onboarding";
 import PersonaSetup from "./pages/PersonaSetup";
 const queryClient = new QueryClient();
 
@@ -28,7 +27,6 @@ const App = () => (
           <Route path="/world" element={<MindWorldDashboard />} />
           <Route path="/home" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/browser" element={<Navigate to="/app/browser" replace />} />
           <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
