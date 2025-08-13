@@ -5,7 +5,8 @@ import { playClonedVoice } from "./voiceClone";
 import { supabase } from "@/integrations/supabase/client";
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
-  import.meta.env.VITE_ELEVEN_DEFAULT_VOICE_ID || "9BWtsMINqrJLrRacOk9x";
+  import.meta.env.VITE_ELEVENLABS_DEFAULT_VOICE_ID ||
+  "21m00Tcm4TlvDq8ikWAM"; // Rachel (stock voice)
 
 export function useTextToSpeech() {
   const [isSpeaking, setIsSpeaking] = useState(false);
