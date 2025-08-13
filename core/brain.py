@@ -4,6 +4,7 @@ This module defines :class:`BrainAgent`, the primary coordinator of the
 personal AI Brain system.  It retrieves persona and memory context before
 dispatching a user message to a suitable sub-agent.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -58,13 +59,15 @@ class BrainAgent:
     """
 
     persona_store: Callable[[], str]
-    memory_store: Callable[[str, Iterable[int] | None], Iterable[str | Mapping[str, Any]]]
+    memory_store: Callable[
+        [str, Iterable[int] | None], Iterable[str | Mapping[str, Any]]
+    ]
     agents: Sequence[SupportsAgent] = field(default_factory=list)
     coach: CoachingAgent | None = None
     prompt_template: str = (
         "You are the idealized version of the user.\n"
         "Persona: {persona}\n"
-        "{style_instructions}\n"
+        "{style_instructions}"
         "Relevant memories:\n{memories}\n"
     )
 
@@ -74,7 +77,9 @@ class BrainAgent:
     _recent_memory_ids: list[int] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
-        self.router = ModelRouter(self._local_model, self._cloud_model, logger=UsageLogger())
+        self.router = ModelRouter(
+            self._local_model, self._cloud_model, logger=UsageLogger()
+        )
 
     def _local_model(self, prompt: str) -> str:
         if self._current_agent is not None:
@@ -101,15 +106,23 @@ class BrainAgent:
 
         logger = get_logger(__name__)
         metrics.conversations += 1
-        logger.info("processing message", extra={"request_id": request_id, "agent": "BrainAgent"})
+        logger.info(
+            "processing message",
+            extra={"request_id": request_id, "agent": "BrainAgent"},
+        )
 
         persona = self.persona_store() or ""
 
         try:
-            raw_memories = list(self.memory_store(message, exclude_ids=self._recent_memory_ids))
+            raw_memories = list(
+                self.memory_store(message, exclude_ids=self._recent_memory_ids)
+            )
         except Exception:
             metrics.errors += 1
-            logger.exception("memory store error", extra={"request_id": request_id, "agent": "memory_store"})
+            logger.exception(
+                "memory store error",
+                extra={"request_id": request_id, "agent": "memory_store"},
+            )
             raw_memories = []
         else:
             metrics.memory_queries += 1
@@ -128,11 +141,11 @@ class BrainAgent:
         context = self.prompt_template.format(
             persona=persona,
             memories=memory_text,
-            style_instructions=style_prompt,
-
+            style_instructions=(style_prompt + "\n") if style_prompt else "",
         )
 
-        response = None
+        responses: list[str] = []
+        exclusive_response: str | None = None
         for agent in self.agents:
             try:
                 if agent.can_handle(message):
@@ -143,11 +156,13 @@ class BrainAgent:
                             "agent": type(agent).__name__,
                         },
                     )
-                    response = agent.handle(message, context)
                     agent_name = type(agent).__name__.replace("Agent", "").lower()
                     metrics.increment_agent(agent_name)
-
-                    break
+                    reply = agent.handle(message, context)
+                    if getattr(agent, "exclusive", False):
+                        exclusive_response = reply
+                        break
+                    responses.append(reply)
             except Exception:
                 metrics.errors += 1
                 logger.exception(
@@ -156,7 +171,11 @@ class BrainAgent:
                 )
                 continue
 
-        if response is None:
+        if exclusive_response is not None:
+            response = exclusive_response
+        elif responses:
+            response = "\n\n".join(responses)
+        else:
             self._current_agent = None
             self._current_message = message
             combined = f"{context}\nUser message:\n{message}"
