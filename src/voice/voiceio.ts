@@ -4,6 +4,10 @@ import { useAvatarStore } from "@/state/avatar";
 import { playClonedVoice } from "./voiceClone";
 import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 
+function fire(type: string, detail: boolean) {
+  window.dispatchEvent(new CustomEvent(type, { detail }));
+}
+
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
   onFinal?: (text: string) => void;
@@ -42,17 +46,24 @@ export class VoiceIO {
         else interim += res[0].transcript;
       }
       if (interim) this.callbacks.onPartial?.(interim);
-      if (finalText) this.callbacks.onFinal?.(finalText.trim());
+      if (finalText) {
+        fire('voice-processing', false);
+        this.callbacks.onFinal?.(finalText.trim());
+      }
     };
 
     this.recognition.onerror = (e: any) => this.callbacks.onError?.(e);
     this.recognition.onend = () => {
       this.callbacks.onSpeakingChange?.(false);
+      fire('voice-listening', false);
+      fire('voice-processing', true);
       this.recognition = null;
     };
 
     try {
       this.recognition.start();
+      fire('voice-listening', true);
+      fire('voice-processing', false);
     } catch (e) {
       // starting while already started throws
     }
@@ -60,6 +71,7 @@ export class VoiceIO {
 
   stopListening() {
     try { this.recognition?.stop(); } catch {}
+    fire('voice-listening', false);
     this.recognition = null;
   }
 

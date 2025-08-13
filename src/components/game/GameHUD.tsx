@@ -3,7 +3,8 @@ import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { quickSlots } from "@/game/hud/hud.data";
 import { AvatarSphere } from "@/components/avatar/AvatarSphere";
-import { Mic, ChevronDown, ChevronUp } from "lucide-react";
+import { Mic, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import { useAvatarStore } from "@/state/avatar";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
@@ -17,6 +18,9 @@ export function GameHUD() {
   const { run } = useHUDActions();
   const avatarEnabled = useAvatarStore((s) => s.enabled);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { enabled, enable } = useTextToSpeech();
+  const [listening, setListening] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -26,6 +30,17 @@ export function GameHUD() {
     const h = expanded ? (isMobile ? 148 : 132) : (isMobile ? 92 : 88);
     document.documentElement.style.setProperty('--hud-h', `${h}px`);
   }, [expanded, isMobile]);
+
+  useEffect(() => {
+    const onListen = (e: any) => setListening(Boolean(e.detail));
+    const onProcess = (e: any) => setProcessing(Boolean(e.detail));
+    window.addEventListener('voice-listening', onListen);
+    window.addEventListener('voice-processing', onProcess);
+    return () => {
+      window.removeEventListener('voice-listening', onListen);
+      window.removeEventListener('voice-processing', onProcess);
+    };
+  }, []);
 
   const showMetrics = !isMobile || expanded;
 
@@ -93,6 +108,36 @@ export function GameHUD() {
                 </button>
               </li>
             ))}
+            {!enabled && (
+              <li className="snap-start">
+                <button
+                  type="button"
+                  className="action-chip"
+                  aria-label="Enable voice"
+                  title="Enable voice"
+                  onClick={enable}
+                >
+                  <Mic className="w-4 h-4" />
+                  <span className="hidden sm:inline text-sm">Enable Voice</span>
+                </button>
+              </li>
+            )}
+            {listening && (
+              <li className="snap-start">
+                <div className="action-chip pointer-events-none">
+                  <Mic className="w-4 h-4 animate-pulse" />
+                  <span className="hidden sm:inline text-sm">Listening</span>
+                </div>
+              </li>
+            )}
+            {processing && (
+              <li className="snap-start">
+                <div className="action-chip pointer-events-none">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="hidden sm:inline text-sm">Processing</span>
+                </div>
+              </li>
+            )}
             <li className="snap-start">
               <button
                 type="button"
