@@ -11,6 +11,7 @@ import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
+import PersonaSetup from "./pages/PersonaSetup";
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -8,7 +8,7 @@ import os
 import sqlite3
 import threading
 import time
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Callable
 
 import numpy as np
 
@@ -18,63 +18,75 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "memory.db")
 CHROMA_PATH = os.path.join(os.path.dirname(__file__), "chroma_db")
 
 conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+conn.execute("PRAGMA journal_mode=WAL")
+conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 cur = conn.cursor()
 db_lock = threading.Lock()
 
-# -- Schema setup ---------------------------------------------------------
-cur.executescript(
-    """
-    CREATE TABLE IF NOT EXISTS memories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        text TEXT NOT NULL,
-        metadata TEXT,
-        embedding BLOB,
-        created_at REAL DEFAULT (strftime('%s','now')),
-        ts REAL DEFAULT (strftime('%s','now')),
-        type TEXT,
-        hash TEXT,
-        compacted INTEGER DEFAULT 0
-    );
+SCHEMA_VERSION = 1
 
-    CREATE TABLE IF NOT EXISTS summaries (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ts REAL DEFAULT (strftime('%s','now')),
-        scope TEXT,
-        text TEXT
-    );
+def _run_migrations() -> None:
+    """Run pending schema migrations based on meta.schema_version."""
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)"
+    )
+    conn.commit()
+    cur.execute("SELECT value FROM meta WHERE key='schema_version'")
+    row = cur.fetchone()
+    version = int(row[0]) if row else 0
 
-    CREATE TABLE IF NOT EXISTS meta (
-        key TEXT PRIMARY KEY,
-        value TEXT
-    );
-    """
-)
-conn.commit()
+    if version < 1:
+        cur.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS memories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                metadata TEXT,
+                embedding BLOB,
+                created_at REAL DEFAULT (strftime('%s','now')),
+                ts REAL DEFAULT (strftime('%s','now')),
+                type TEXT,
+                hash TEXT,
+                compacted INTEGER DEFAULT 0
+            );
 
-# Backwards-compat: add missing columns/indexes if upgrading
-cur.execute("PRAGMA table_info(memories)")
-columns = {row[1] for row in cur.fetchall()}
-def _add_col(name: str, ddl: str) -> None:
-    if name not in columns:
-        cur.execute(f"ALTER TABLE memories ADD COLUMN {ddl}")
+            CREATE TABLE IF NOT EXISTS summaries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts REAL DEFAULT (strftime('%s','now')),
+                scope TEXT,
+                text TEXT
+            );
+            """
+        )
+        conn.commit()
 
-_add_col("embedding", "embedding BLOB")
-_add_col("created_at", "created_at REAL DEFAULT (strftime('%s','now'))")
-_add_col("ts", "ts REAL DEFAULT (strftime('%s','now'))")
-_add_col("type", "type TEXT")
-_add_col("hash", "hash TEXT")
-_add_col("compacted", "compacted INTEGER DEFAULT 0")
-conn.commit()
+        cur.execute("PRAGMA table_info(memories)")
+        columns = {row[1] for row in cur.fetchall()}
 
-cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_ts ON memories(ts DESC)")
-cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)")
-cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_hash ON memories(hash)")
-conn.commit()
+        def _add_col(name: str, ddl: str) -> None:
+            if name not in columns:
+                cur.execute(f"ALTER TABLE memories ADD COLUMN {ddl}")
 
-cur.execute(
-    "INSERT OR IGNORE INTO meta(key, value) VALUES ('schema_version', '1')"
-)
-conn.commit()
+        _add_col("embedding", "embedding BLOB")
+        _add_col("created_at", "created_at REAL DEFAULT (strftime('%s','now'))")
+        _add_col("ts", "ts REAL DEFAULT (strftime('%s','now'))")
+        _add_col("type", "type TEXT")
+        _add_col("hash", "hash TEXT")
+        _add_col("compacted", "compacted INTEGER DEFAULT 0")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_ts ON memories(ts DESC)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_memories_type ON memories(type)")
+        cur.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_memories_hash ON memories(hash)"
+        )
+        version = 1
+
+    cur.execute(
+        "REPLACE INTO meta(key, value) VALUES('schema_version', ?)",
+        (version,),
+    )
+    conn.commit()
+
+_run_migrations()
 
 vector_store = VectorStore(CHROMA_PATH)
 
@@ -83,6 +95,18 @@ HIGH_VALUE_TAGS = {"onboarding", "profile", "plan"}
 LOW_IMPORTANCE_THRESHOLD = 0.5
 LAST_COMPACT_KEY = "last_daily_compaction"
 
+def _write_with_retry(op: Callable[[], Any], retries: int = 1) -> Any:
+    for attempt in range(retries + 1):
+        try:
+            with db_lock:
+                result = op()
+                conn.commit()
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+            return result
+        except sqlite3.Error:
+            if attempt == retries:
+                raise
+            time.sleep(0.05)
 
 def _refresh_recency_caches() -> None:
     """Rebuild the vector index from non-compacted memories."""
@@ -98,7 +122,6 @@ def _refresh_recency_caches() -> None:
         except Exception:
             meta = {}
         vector_store.add(str(int(mid)), text, meta)
-
 
 def _daily_compact_low_importance() -> None:
     """Summarize and compact low-importance memories from prior days."""
@@ -129,7 +152,8 @@ def _daily_compact_low_importance() -> None:
         return
 
     summary_text = "\n".join(parts)
-    with db_lock:
+
+    def _op() -> None:
         cur.execute(
             "INSERT INTO summaries(scope, text) VALUES(?, ?)",
             ("daily", summary_text),
@@ -138,8 +162,8 @@ def _daily_compact_low_importance() -> None:
             "UPDATE memories SET compacted=1 WHERE id=?",
             [(mid,) for mid in ids],
         )
-        conn.commit()
 
+    _write_with_retry(_op)
 
 def _maybe_compact_daily() -> None:
     today = time.strftime("%Y-%m-%d")
@@ -152,20 +176,20 @@ def _maybe_compact_daily() -> None:
     if not row or row[0] != today:
         _daily_compact_low_importance()
         _refresh_recency_caches()
-        with db_lock:
+
+        def _op() -> None:
             cur.execute(
                 "REPLACE INTO meta(key, value) VALUES(?, ?)",
                 (LAST_COMPACT_KEY, today),
             )
-            conn.commit()
 
+        _write_with_retry(_op)
 
 _maybe_compact_daily()
 
-
 def _hash_text(text: str) -> str:
     """Return a stable hash for ``text``."""
-    return hashlib.sha1(text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 # -- Helpers --------------------------------------------------------------
 def _to_blob(vec: np.ndarray) -> bytes:
@@ -176,9 +200,6 @@ def _from_blob(blob: bytes | None) -> np.ndarray:
         return np.array([], dtype=np.float32)
     return np.frombuffer(blob, dtype=np.float32)
 
-def _hash_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
 # -- Writes ---------------------------------------------------------------
 def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     """Persist text + metadata, compute embedding, dedupe by hash, keep vector index in sync."""
@@ -187,7 +208,7 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
     emb = vector_store.embed(text)
     h = _hash_text(text)
 
-    with db_lock:
+    def _op() -> int:
         if tag not in HIGH_VALUE_TAGS:
             cur.execute("SELECT id FROM memories WHERE hash=?", (h,))
             row = cur.fetchone()
@@ -197,9 +218,9 @@ def save_memory(text: str, metadata: Dict[str, Any] | None = None) -> int:
             "INSERT INTO memories (text, metadata, type, embedding, hash) VALUES (?, ?, ?, ?, ?)",
             (text, json.dumps(metadata), tag, _to_blob(emb), None if tag in HIGH_VALUE_TAGS else h),
         )
-        mem_id = cur.lastrowid
-        conn.commit()
+        return int(cur.lastrowid)
 
+    mem_id = _write_with_retry(_op)
     vector_store.delete(str(mem_id))
     vector_store.add(str(mem_id), text, metadata)
     return int(mem_id)
@@ -302,7 +323,8 @@ def update_memory(mem_id: int, text: str, metadata: Dict[str, Any] | None = None
     """Update an existing memory, recompute embedding, and refresh vector index."""
     metadata = metadata or {}
     emb = vector_store.embed(text)
-    with db_lock:
+
+    def _op() -> bool:
         cur.execute("SELECT 1 FROM memories WHERE id=?", (mem_id,))
         if not cur.fetchone():
             return False
@@ -310,21 +332,25 @@ def update_memory(mem_id: int, text: str, metadata: Dict[str, Any] | None = None
             "UPDATE memories SET text=?, metadata=?, embedding=?, ts=(strftime('%s','now')) WHERE id=?",
             (text, json.dumps(metadata), _to_blob(emb), mem_id),
         )
-        conn.commit()
+        return True
+
+    updated = _write_with_retry(_op)
+    if not updated:
+        return False
 
     vector_store.delete(str(mem_id))
     vector_store.add(str(mem_id), text, metadata)
     return True
 
 def delete_memory(mem_id: int) -> bool:
-    with db_lock:
+    def _op() -> bool:
         cur.execute("DELETE FROM memories WHERE id=?", (mem_id,))
-        removed = cur.rowcount > 0
-        if removed:
-            conn.commit()
+        return cur.rowcount > 0
+
+    removed = _write_with_retry(_op)
     if removed:
         vector_store.delete(str(mem_id))
-    return removed
+    return bool(removed)
 
 if __name__ == "__main__":  # pragma: no cover - convenience CLI
     import sys
