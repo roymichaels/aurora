@@ -2,7 +2,7 @@ import { useVoiceStore } from "@/state/voice";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarStore } from "@/state/avatar";
 import { playClonedVoice } from "./voiceClone";
-import { toast } from "@/hooks/use-toast";
+import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
@@ -153,12 +153,7 @@ export class VoiceIO {
       if (!success) {
         useVoiceStore.getState().setMode("eleven-default");
         currentMode = "eleven-default";
-        if (voiceId) {
-          toast({
-            title: "Voice clone unavailable",
-            description: "Falling back to ElevenLabs voice.",
-          });
-        }
+        if (voiceId) ttsFallbackToast();
       }
     }
 
@@ -167,10 +162,7 @@ export class VoiceIO {
       if (!success) {
         useVoiceStore.getState().setMode("browser-tts");
         currentMode = "browser-tts";
-        toast({
-          title: "ElevenLabs error",
-          description: "Using browser speech synthesis.",
-        });
+        ttsFallbackToast();
       }
     }
 

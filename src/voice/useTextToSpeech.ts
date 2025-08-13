@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
-import { supabase } from "@/integrations/supabase/client";
+import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
   import.meta.env.VITE_ELEVEN_DEFAULT_VOICE_ID || "9BWtsMINqrJLrRacOk9x";
@@ -14,7 +13,6 @@ export function useTextToSpeech() {
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const downgradeToast = useRef(false);
   const { voiceId, speed, pitch, expression, emotion, mode, setMode } =
 
     useVoiceStore((s) => ({
@@ -76,13 +74,7 @@ export function useTextToSpeech() {
             return;
           }
           const status = (error as { status?: number } | undefined)?.status;
-          if ((status === 401 || status === 429) && !downgradeToast.current) {
-            toast({
-              title: "Cloned voice unavailable",
-              description: "Using default voice",
-            });
-            downgradeToast.current = true;
-          }
+          if (status === 401 || status === 429) ttsFallbackToast();
           current = "eleven-default";
           setMode("eleven-default", false);
           continue;
@@ -106,6 +98,7 @@ export function useTextToSpeech() {
           }
           current = "browser-tts";
           setMode("browser-tts", false);
+          ttsFallbackToast();
           continue;
         }
         if (current === "browser-tts") {
