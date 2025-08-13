@@ -7,6 +7,7 @@ import { Mic, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import { useAvatarStore } from "@/state/avatar";
+import { useVoiceStore } from "@/state/voice";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
 
 function fire(type: string, payload?: any) {
@@ -21,6 +22,7 @@ export function GameHUD() {
   const { enabled, enable } = useTextToSpeech();
   const [listening, setListening] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const isSpeaking = useVoiceStore((s) => s.isSpeaking);
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -78,7 +80,12 @@ export function GameHUD() {
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
             {avatarEnabled && (
-              <AvatarSphere size={44} />
+              <AvatarSphere
+                size={44}
+                isThinking={processing}
+                isSpeaking={isSpeaking}
+                progressPercent={stats.xp}
+              />
             )}
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">

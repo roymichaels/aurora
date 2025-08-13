@@ -8,9 +8,17 @@ import {
 
 interface Props {
   size?: number;
+  isThinking?: boolean;
+  isSpeaking?: boolean;
+  progressPercent?: number;
 }
 
-export function AvatarSphere({ size = 96 }: Props) {
+export function AvatarSphere({
+  size = 96,
+  isThinking = false,
+  isSpeaking = false,
+  progressPercent = 0,
+}: Props) {
   const { enabled, sentiment, audio, mood, milestone, streak } = useAvatarStore();
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -21,6 +29,26 @@ export function AvatarSphere({ size = 96 }: Props) {
   const moodRef = useRef<AvatarMood>('neutral');
   const milestoneRef = useRef<AvatarMilestone>('none');
   const streakRef = useRef<number>(0);
+  const thinkingRef = useRef(isThinking);
+  const speakingRef = useRef(isSpeaking);
+  const progressRef = useRef(progressPercent);
+  const reduceMotion = useRef(false);
+
+  useEffect(() => {
+    thinkingRef.current = isThinking;
+  }, [isThinking]);
+
+  useEffect(() => {
+    speakingRef.current = isSpeaking;
+  }, [isSpeaking]);
+
+  useEffect(() => {
+    progressRef.current = progressPercent;
+  }, [progressPercent]);
+
+  useEffect(() => {
+    reduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
 
   // Setup scene
   useEffect(() => {
@@ -51,15 +79,35 @@ export function AvatarSphere({ size = 96 }: Props) {
     let frame: number;
     const animate = () => {
       frame = requestAnimationFrame(animate);
-      if (analyserRef.current && meshRef.current) {
+      const mesh = meshRef.current;
+      const material = matRef.current;
+      if (!mesh || !material) {
+        renderer.render(scene, camera);
+        return;
+      }
+
+      let level = 0;
+      if (analyserRef.current) {
         analyserRef.current.getByteTimeDomainData(data);
         let sum = 0;
         for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
-        const level = sum / data.length / 128;
-        const time = performance.now() * 0.001;
-        const mood = moodRef.current;
-        const milestone = milestoneRef.current;
-        let scale = 1 + level * 0.3;
+        level = sum / data.length / 128;
+      }
+
+      const time = performance.now() * 0.001;
+      let scale = 1 + level * 0.3;
+      let emissive = speakingRef.current ? 0.4 : 0;
+      const rm = reduceMotion.current;
+      const mood = moodRef.current;
+      const milestone = milestoneRef.current;
+
+      if (milestone === 'goal') {
+        emissive = Math.max(emissive, 0.5);
+      } else if (milestone === 'streak') {
+        emissive = Math.max(emissive, 0.2);
+      }
+
+      if (!rm) {
         if (milestone === 'goal') {
           scale *= 1 + Math.sin(time * 6) * 0.2;
         } else if (milestone === 'streak') {
@@ -67,13 +115,23 @@ export function AvatarSphere({ size = 96 }: Props) {
           scale *= 1 + Math.sin(time * 2) * 0.1 * streakAmt;
         }
         if (mood === 'focused') {
-          meshRef.current.rotation.y += 0.02;
+          mesh.rotation.y += 0.02;
         } else if (mood === 'relaxed') {
-          meshRef.current.rotation.y += 0.005;
+          mesh.rotation.y += 0.005;
           scale *= 1 + Math.sin(time) * 0.05;
         }
-        meshRef.current.scale.setScalar(scale);
+        if (thinkingRef.current) {
+          scale *= 1 + Math.sin(time * 2) * 0.05;
+        }
+        if (speakingRef.current) {
+          const pulse = Math.sin(time * 8) * 0.1;
+          scale *= 1 + pulse;
+          emissive += 0.2 * Math.sin(time * 8);
+        }
       }
+
+      mesh.scale.setScalar(scale);
+      material.emissiveIntensity = emissive;
       renderer.render(scene, camera);
     };
     animate();
@@ -105,15 +163,18 @@ export function AvatarSphere({ size = 96 }: Props) {
     };
   }, [audio]);
 
-  // Update color based on sentiment
+  // Update color based on sentiment and progress
   useEffect(() => {
     if (!matRef.current) return;
     const neg = new THREE.Color('#ff4d4d');
     const pos = new THREE.Color('#4dff4d');
     const t = (sentiment + 1) / 2; // -1..1 -> 0..1
-    const color = new THREE.Color().lerpColors(neg, pos, t);
-    matRef.current.color.copy(color);
-  }, [sentiment]);
+    const base = new THREE.Color().lerpColors(neg, pos, t);
+    const p = Math.max(0, Math.min(progressRef.current, 100)) / 100;
+    const tint = new THREE.Color().setHSL(p * 0.4, 0.7, 0.5);
+    base.lerp(tint, 0.25);
+    matRef.current.color.copy(base);
+  }, [sentiment, progressPercent]);
 
   // Distort geometry based on sentiment
   useEffect(() => {
@@ -158,15 +219,12 @@ export function AvatarSphere({ size = 96 }: Props) {
     if (!matRef.current) return;
     switch (milestone) {
       case 'goal':
-        matRef.current.emissiveIntensity = 0.5;
         matRef.current.wireframe = false;
         break;
       case 'streak':
-        matRef.current.emissiveIntensity = 0.2;
         matRef.current.wireframe = true;
         break;
       default:
-        matRef.current.emissiveIntensity = 0;
         matRef.current.wireframe = false;
     }
   }, [milestone]);
