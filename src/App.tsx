@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
 import MindWorldDashboard from "@/components/mindworld/MindWorldDashboard";
@@ -12,8 +11,6 @@ import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
-import Onboarding from "./pages/Onboarding";
-import PersonaSetup from "./pages/PersonaSetup";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -26,14 +23,11 @@ const App = () => (
           <Route path="/" element={<Navigate to="/app" replace />} />
           <Route path="/app/*" element={<AppShell />} />
           <Route path="/world" element={<MindWorldDashboard />} />
-          <Route path="/home" element={<Index />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/browser" element={<Navigate to="/app/browser" replace />} />
           <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
           <Route path="/stack" element={<StackPage />} />
-          <Route path="/persona-setup" element={<PersonaSetup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -28,7 +28,7 @@ export function FloatingAssistant({
   task: Task | null;
   onUpdated: (desc: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -171,18 +171,20 @@ export function FloatingAssistant({
 
   return (
     <>
-      <button
-        aria-label="Open assistant chat"
-        onClick={() => setOpen(true)}
-        className="fixed z-[var(--z-toast)] w-14 h-14 rounded-full glass-panel elev grid place-items-center hover-scale smooth"
-        style={{
-          right: 'calc(env(safe-area-inset-right) + 12px)',
-          bottom:
-            'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px) + 12px)',
-        }}
-      >
-        <MessageSquare className="w-6 h-6" />
-      </button>
+      {!open && (
+        <button
+          aria-label="Open assistant chat"
+          onClick={() => setOpen(true)}
+          className="fixed z-[var(--z-toast)] w-14 h-14 rounded-full glass-panel elev grid place-items-center hover-scale smooth"
+          style={{
+            right: 'calc(env(safe-area-inset-right) + 12px)',
+            bottom:
+              'calc(env(safe-area-inset-bottom) + var(--hud-h, 96px) + var(--hud-gap, 12px) + 12px)',
+          }}
+        >
+          <MessageSquare className="w-6 h-6" />
+        </button>
+      )}
 
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
         <DrawerContent
@@ -190,7 +192,7 @@ export function FloatingAssistant({
           style={{
             zIndex: 'var(--z-modal)',
             bottom:
-              'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom) + 12px)',
+              'calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom))',
             paddingBottom: 'env(safe-area-inset-bottom)',
           }}
         >
