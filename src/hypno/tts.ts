@@ -15,13 +15,17 @@ export async function playHypno(
   onEnd: () => void,
   onError?: (err: unknown) => void
 ): Promise<PlaybackHandle | null> {
+  const { voiceId, mode, locale } = useVoiceStore.getState();
+  if (mode === "off") {
+    onEnd();
+    return null;
+  }
   // Try ElevenLabs via Supabase function
   try {
-    const voiceId = useVoiceStore.getState().voiceId;
     const { data, error } = await supabase.functions.invoke("tts-generate", {
-      body: { text, voiceId },
+      body: { text, voiceId: mode === "cloned" ? voiceId : undefined },
     });
-    if (!error && data?.audioBase64) {
+    if (mode !== "browser-tts" && !error && data?.audioBase64) {
       const src = `data:${data.contentType};base64,${data.audioBase64}`;
       const audio = new Audio(src);
       audio.onended = onEnd;
@@ -51,6 +55,7 @@ export async function playHypno(
     const utter = new SpeechSynthesisUtterance(text);
     utter.rate = 0.95;
     utter.pitch = 1.0;
+    utter.lang = locale;
     utter.onend = onEnd;
     window.speechSynthesis.speak(utter);
     return {

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 import { playClonedVoice } from "./voiceClone";
+import { supabase } from "@/integrations/supabase/client";
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
   import.meta.env.VITE_ELEVEN_DEFAULT_VOICE_ID || "9BWtsMINqrJLrRacOk9x";
@@ -15,6 +16,7 @@ export function useTextToSpeech() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const downgradeToast = useRef(false);
   const { voiceId, speed, pitch, expression, emotion, mode, setMode } =
+
     useVoiceStore((s) => ({
       voiceId: s.voiceId,
       speed: s.speed,
@@ -23,6 +25,7 @@ export function useTextToSpeech() {
       emotion: s.emotion,
       mode: s.mode,
       setMode: s.setMode,
+
     }));
 
   // Allow enabling via first user gesture (click/keydown) OR explicit call
@@ -147,6 +150,7 @@ export function useTextToSpeech() {
       }
     },
     [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode],
+
   );
 
   const cancel = useCallback(() => {
