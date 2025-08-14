@@ -6,6 +6,7 @@ import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
+import { bus } from "@/utils/bus";
 
 export function AnchoredChatBar() {
   const { send, sending, messages, recall } = useChatStore();
@@ -51,6 +52,7 @@ export function AnchoredChatBar() {
     const rec = recognitionRef.current;
     if (!rec || listening) return;
     setListening(true);
+    bus.emit('voice/listen:start', {});
     rec.start();
   };
 
@@ -58,6 +60,7 @@ export function AnchoredChatBar() {
     const rec = recognitionRef.current;
     if (!rec) return;
     rec.stop();
+    bus.emit('voice/listen:stop', {});
     setListening(false);
   };
 
