@@ -1,12 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ToolImpl } from './tool-impl';
 import { toast } from '@/components/ui/use-toast';
+import { scheduleTrigger } from '@/lib/triggers';
 
 jest.mock('@/components/ui/use-toast', () => ({ toast: jest.fn() }));
+jest.mock('@/lib/triggers', () => ({ scheduleTrigger: jest.fn() }));
 
 // minimal DOM stubs
 const dispatchEvent = jest.fn();
 const confirm = jest.fn(() => true);
-(global as any).window = { dispatchEvent, confirm };
+(global as any).window = { dispatchEvent, confirm, location: { href: '' } };
 class CustomEventMock<T> {
   type: string;
   detail: T;
@@ -63,5 +66,32 @@ describe('ToolImpl.start_hypnosis', () => {
     const res = await ToolImpl.start_hypnosis({ mode: 'focus' });
     expect(res).toEqual({ ok: false });
     expect(toast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Hypnosis cancelled' }));
+  });
+});
+
+describe('Pro feature interceptions', () => {
+  beforeEach(() => {
+    (toast as jest.Mock).mockClear();
+    (scheduleTrigger as jest.Mock).mockClear();
+    (window as any).location.href = '';
+  });
+
+  it('upsells and schedules reminder for calendar events', async () => {
+    const time = new Date().toISOString();
+    const res = await ToolImpl.schedule_calendar_event({ title: 'Meet', time });
+    expect(res).toEqual({ ok: true });
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Calendar requires Pro' })
+    );
+    expect(scheduleTrigger).toHaveBeenCalled();
+  });
+
+  it('upsells and opens mail client for send_email', async () => {
+    const res = await ToolImpl.send_email({ to: 'a@b.com', subject: 'Hi', body: 'Test' });
+    expect(res).toEqual({ ok: true });
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Email requires Pro' })
+    );
+    expect((window as any).location.href).toContain('mailto:');
   });
 });
