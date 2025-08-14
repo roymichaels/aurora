@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useMemo } from "react";
-import { Route, Routes, useLocation, Navigate } from "react-router-dom";
+import { useLocation, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
 import { GameHUD } from "@/components/game/GameHUD";
@@ -15,7 +15,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import HomeView from "@/views/HomeView";
+
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
   const loc = useLocation();
@@ -42,7 +42,6 @@ export default function AppShell() {
   }, [open]);
 
   useEffect(() => {
-
     const onMos = (e: Event) => {
       const t = (e as CustomEvent).detail?.type as string | undefined;
       if (t === 'openBrowser') {
@@ -100,7 +99,7 @@ export default function AppShell() {
     );
   }
 
-  if (!user) {
+  if (!user && loc.pathname !== '/auth') {
     return <Navigate to="/auth" replace />;
   }
 
@@ -109,37 +108,26 @@ export default function AppShell() {
       <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
         <div className="os-bg" />
         <AnimatePresence mode="wait">
-          <Routes location={loc} key={loc.pathname + loc.search}>
-          <Route index element={<HomeView />} />
-          {views.filter((v) => v.id !== "home").map((v) => (
-            <Route
-              key={v.id}
-              path={v.path || undefined}
-              index={v.path === "" ? true : undefined}
-              element={
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.18 }}
-                  className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset)+env(safe-area-inset-bottom))]"
-                >
-                  <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
-                    <v.component />
-                  </Suspense>
-                </motion.div>
-              }
-            />
-          ))}
-          <Route path="*" element={<Navigate to="/app" replace />} />
-        </Routes>
-      </AnimatePresence>
+          <motion.div
+            key={loc.pathname + loc.search}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.18 }}
+            className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset)+env(safe-area-inset-bottom))]"
+          >
+            <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
+              <Outlet />
+            </Suspense>
+          </motion.div>
+        </AnimatePresence>
 
-      <GameHUD />
-      <BottomDock />
-      <AnchoredChatBar />
-      <TimerHudChip />
-    </div>
+        <GameHUD />
+        <BottomDock />
+        <AnchoredChatBar />
+        <TimerHudChip />
+      </div>
     </ChatProvider>
   );
 }
+
