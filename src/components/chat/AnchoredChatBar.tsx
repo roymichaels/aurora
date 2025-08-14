@@ -119,13 +119,21 @@ export function AnchoredChatBar() {
   };
 
   return (
-    <div
-      className="fixed left-3 right-3 relative"
-      style={{
-        bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--kb-offset) + env(safe-area-inset-bottom))`,
-        zIndex: "var(--z-hud)",
-      }}
-    >
+    <>
+      <div
+        className="sr-only"
+        aria-live="polite"
+        key={lastAssistant?.id ?? messages.length}
+      >
+        {lastAssistant?.content}
+      </div>
+      <div
+        className="fixed left-3 right-3 relative"
+        style={{
+          bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--kb-offset) + env(safe-area-inset-bottom))`,
+          zIndex: "var(--z-hud)",
+        }}
+      >
       <div className="pointer-events-auto glass-panel rounded-2xl p-2 elev flex items-center gap-2">
         <Button
           size="icon"
@@ -225,5 +233,6 @@ export function AnchoredChatBar() {
         </button>
       </div>
     </div>
+    </>
   );
 }
