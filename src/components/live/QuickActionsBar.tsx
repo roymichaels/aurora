@@ -169,7 +169,10 @@ type Track = {
   }, [mode]);
 
   return (
-    <div className="glass-panel rounded-xl p-3 elev flex flex-wrap items-center gap-2 sm:gap-3">
+    <div
+      className="glass-panel rounded-xl p-3 elev flex flex-wrap items-center gap-2 sm:gap-3 pb-safe"
+      style={{ height: `calc(100% + env(safe-area-inset-bottom))` }}
+    >
       {/* Hypnosis quick-play */}
       <Button size="sm" onClick={() => setPreOpen(true)}>Start Hypnosis</Button>
 
