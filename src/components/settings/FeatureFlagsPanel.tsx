@@ -3,7 +3,7 @@ import { Switch } from '@/components/ui/switch';
 import { useFeatureFlags } from '@/state/featureFlags';
 
 export default function FeatureFlagsPanel() {
-  const { hypnosisScripts, cloudRouting, voiceStorage, toggle } = useFeatureFlags();
+  const { hypnosisScripts, cloudRouting, voiceStorage, appShell, toggle } = useFeatureFlags();
   return (
     <div className="space-y-2">
       <h2 className="text-lg font-semibold">Feature Toggles</h2>
@@ -18,6 +18,10 @@ export default function FeatureFlagsPanel() {
       <div className="flex items-center justify-between max-w-sm">
         <Label htmlFor="flag-voice">Voice Storage</Label>
         <Switch id="flag-voice" checked={voiceStorage} onCheckedChange={() => toggle('voiceStorage')} />
+      </div>
+      <div className="flex items-center justify-between max-w-sm">
+        <Label htmlFor="flag-appshell">App Shell</Label>
+        <Switch id="flag-appshell" checked={appShell} onCheckedChange={() => toggle('appShell')} />
       </div>
     </div>
   );
