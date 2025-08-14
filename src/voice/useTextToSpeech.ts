@@ -5,13 +5,7 @@ import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 import { ttsAutoplayToast } from "@/voice/ttsAutoplayToast";
 import { useSubscription } from "@/modules/payments/hooks/useSubscription";
 import { guardPremiumAction } from "@/modules/payments/guard";
-
-function fire(type: string, detail: boolean) {
-  window.dispatchEvent(new CustomEvent(type, { detail }));
-  const store = useVoiceStore.getState();
-  if (type === "voice-listening") store.setListening(detail);
-  if (type === "voice-processing") store.setThinking(detail);
-}
+import { bus } from "@/utils/bus";
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
   import.meta.env.VITE_ELEVENLABS_DEFAULT_VOICE_ID ||
@@ -85,7 +79,8 @@ export function useTextToSpeech() {
         window.addEventListener("keydown", resume, { once: true });
         return;
       }
-      fire('voice-processing', true);
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
 
       let current = mode;
       const locale = navigator.language;
@@ -99,7 +94,8 @@ export function useTextToSpeech() {
             "use the default voice instead",
           );
           if (result === null) {
-            fire('voice-processing', false);
+            bus.emit('sphere/state:set', { state: 'thinking' });
+            bus.emit('voice/state:set', { state: 'thinking' });
             return;
           }
           if (result === 'free') {
@@ -112,21 +108,27 @@ export function useTextToSpeech() {
             setMode("eleven-default", false);
             continue;
           }
-          const { audio, error } = await playClonedVoice(text, voiceId, {
-            emotion,
-            speed,
-            pitch,
-            expression,
-            onStart: () => {
-              fire('voice-processing', false);
-              setIsSpeaking(true);
-            },
-            onEnd: () => setIsSpeaking(false),
-          });
+            const { audio, error } = await playClonedVoice(text, voiceId, {
+              emotion,
+              speed,
+              pitch,
+              expression,
+              onStart: () => {
+                bus.emit('sphere/state:set', { state: 'speaking' });
+                bus.emit('voice/state:set', { state: 'speaking' });
+                setIsSpeaking(true);
+              },
+              onEnd: () => {
+                bus.emit('sphere/state:set', { state: 'thinking' });
+                bus.emit('voice/state:set', { state: 'thinking' });
+                setIsSpeaking(false);
+              },
+            });
           if (audio) {
             audioRef.current = audio;
             if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
-              fire('voice-processing', false);
+              bus.emit('sphere/state:set', { state: 'thinking' });
+              bus.emit('voice/state:set', { state: 'thinking' });
               ttsAutoplayToast();
               setBlocked(() => () => {
                 audio.play().catch(() => {});
@@ -150,16 +152,22 @@ export function useTextToSpeech() {
               pitch,
               expression,
               onStart: () => {
-                fire('voice-processing', false);
+                bus.emit('sphere/state:set', { state: 'speaking' });
+                bus.emit('voice/state:set', { state: 'speaking' });
                 setIsSpeaking(true);
               },
-              onEnd: () => setIsSpeaking(false),
+              onEnd: () => {
+                bus.emit('sphere/state:set', { state: 'thinking' });
+                bus.emit('voice/state:set', { state: 'thinking' });
+                setIsSpeaking(false);
+              },
             },
           );
           if (audio) {
             audioRef.current = audio;
             if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
-              fire('voice-processing', false);
+              bus.emit('sphere/state:set', { state: 'thinking' });
+              bus.emit('voice/state:set', { state: 'thinking' });
               ttsAutoplayToast();
               setBlocked(() => () => {
                 audio.play().catch(() => {});
@@ -196,15 +204,25 @@ export function useTextToSpeech() {
             u.rate = speed;
             u.pitch = pitch;
             u.onstart = () => {
-              fire('voice-processing', false);
+              bus.emit('sphere/state:set', { state: 'speaking' });
+              bus.emit('voice/state:set', { state: 'speaking' });
               setIsSpeaking(true);
             };
-            u.onend = () => setIsSpeaking(false);
-            u.onerror = () => setIsSpeaking(false);
+            u.onend = () => {
+              bus.emit('sphere/state:set', { state: 'thinking' });
+              bus.emit('voice/state:set', { state: 'thinking' });
+              setIsSpeaking(false);
+            };
+            u.onerror = () => {
+              bus.emit('sphere/state:set', { state: 'thinking' });
+              bus.emit('voice/state:set', { state: 'thinking' });
+              setIsSpeaking(false);
+            };
             try {
               window.speechSynthesis.speak(u);
             } catch (err) {
-              fire('voice-processing', false);
+              bus.emit('sphere/state:set', { state: 'thinking' });
+              bus.emit('voice/state:set', { state: 'thinking' });
               if ((err as { name?: string } | undefined)?.name === "NotAllowedError") {
                 ttsAutoplayToast();
                 setBlocked(() => () => {
@@ -226,7 +244,8 @@ export function useTextToSpeech() {
           continue;
         }
       }
-      fire('voice-processing', false);
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
     },
     [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode, enable, canAccessFeature],
 

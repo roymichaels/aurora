@@ -1,12 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import { useVoiceStore } from '@/state/voice'
-
-function fire(type: string, detail: boolean) {
-  window.dispatchEvent(new CustomEvent(type, { detail }))
-  const store = useVoiceStore.getState()
-  if (type === 'voice-listening') store.setListening(detail)
-  if (type === 'voice-processing') store.setThinking(detail)
-}
+import { bus } from '@/utils/bus'
 
 export function useVoiceInput() {
   const [isRecording, setIsRecording] = useState(false)
@@ -25,10 +19,10 @@ export function useVoiceInput() {
       e.channel.onmessage = ev => {
         try {
           const msg = JSON.parse(ev.data)
-          if (msg.transcript) {
-            setTranscript(msg.transcript)
-            fire('voice-processing', false)
-          }
+            if (msg.transcript) {
+              setTranscript(msg.transcript)
+              useVoiceStore.getState().setThinking(false)
+            }
           if (msg.audio) {
             const audio = new Audio('data:audio/wav;base64,' + msg.audio)
             audio.play()
@@ -57,19 +51,21 @@ export function useVoiceInput() {
     })
     const answer = await res.json()
     await pc.setRemoteDescription(answer)
-    setIsRecording(true)
-    fire('voice-listening', true)
-    fire('voice-processing', false)
+      setIsRecording(true)
+      useVoiceStore.getState().setListening(true)
+      useVoiceStore.getState().setThinking(false)
   }, [isRecording])
 
   const stop = useCallback(() => {
-    channelRef.current?.close()
-    pcRef.current?.getSenders().forEach(s => s.track?.stop())
-    pcRef.current?.close()
-    pcRef.current = null
-    setIsRecording(false)
-    fire('voice-listening', false)
-    fire('voice-processing', true)
+      channelRef.current?.close()
+      pcRef.current?.getSenders().forEach(s => s.track?.stop())
+      pcRef.current?.close()
+      pcRef.current = null
+      setIsRecording(false)
+      useVoiceStore.getState().setListening(false)
+      useVoiceStore.getState().setThinking(true)
+      bus.emit('sphere/state:set', { state: 'thinking' })
+      bus.emit('voice/state:set', { state: 'thinking' })
   }, [])
 
   return { startRecording: start, stopRecording: stop, transcript, setTranscript, isRecording, audioRef }
