@@ -1,6 +1,12 @@
 export type QuickActionKey =
-  | 'startFocus' | 'startHypnosis' | 'voiceNote' | 'addNote'
-  | 'openMap' | 'openBrowser' | 'openBrain';
+  | 'startFocus'
+  | 'startHypnosis'
+  | 'voiceNote'
+  | 'addNote'
+  | 'openMap'
+  | 'openBrowser'
+  | 'openBrain'
+  | (string & {});
 
 export const character = {
   name: 'Dean',
@@ -12,7 +18,9 @@ export const character = {
   avatarColor: '#4fb0ff',
 };
 
-export const quickSlots: { id:number; key:string; action:QuickActionKey; label:string; icon?:string }[] = [
+export type QuickSlot = { id:number; key:string; action:QuickActionKey; label:string; icon?:string };
+
+const baseQuickSlots: QuickSlot[] = [
   { id:1, key:'1', action:'startFocus',    label:'Focus',   icon:'focus' },
   { id:2, key:'2', action:'startHypnosis', label:'Hypno',   icon:'hypno' },
   { id:3, key:'3', action:'voiceNote',     label:'Voice',   icon:'mic'   },
@@ -20,3 +28,9 @@ export const quickSlots: { id:number; key:string; action:QuickActionKey; label:s
   { id:5, key:'5', action:'openBrowser',   label:'Browse',  icon:'portal'},
   { id:6, key:'6', action:'openBrain',     label:'Brain',   icon:'brain' },
 ];
+
+export const quickSlots: QuickSlot[] = [...baseQuickSlots];
+
+export function registerHUDQuickAction(slot: QuickSlot) {
+  quickSlots.push(slot);
+}

@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { registerQuickAction } from "@/components/live/QuickActionsBar";
 
 interface QuickActionModalsState {
   tasksOpen: boolean;
@@ -31,4 +32,25 @@ export const useQuickActionModals = create<QuickActionModalsState>((set) => ({
   setSettingsOpen: (open) => set({ settingsOpen: open }),
   openSettings: () => set({ settingsOpen: true }),
 }));
+
+registerQuickAction({
+  id: "tasks",
+  label: "Tasks",
+  onTrigger: () => useQuickActionModals.getState().openTasks(),
+});
+registerQuickAction({
+  id: "goals",
+  label: "Goals",
+  onTrigger: () => useQuickActionModals.getState().openGoals(),
+});
+registerQuickAction({
+  id: "analytics",
+  label: "Analytics",
+  onTrigger: () => useQuickActionModals.getState().openAnalytics(),
+});
+registerQuickAction({
+  id: "settings",
+  label: "Settings",
+  onTrigger: () => useQuickActionModals.getState().openSettings(),
+});
 

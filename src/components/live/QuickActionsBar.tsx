@@ -10,6 +10,18 @@ import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import { useEffect, useRef, useState } from "react";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
+export type RegisteredQuickAction = {
+  id: string;
+  label: string;
+  onTrigger: () => void;
+};
+
+const registeredQuickActions: RegisteredQuickAction[] = [];
+
+export function registerQuickAction(action: RegisteredQuickAction) {
+  registeredQuickActions.push(action);
+}
+
 type Task = {
   id: string;
 };
@@ -25,6 +37,7 @@ type Track = {
 export function QuickActionsBar({ currentTask }: { currentTask: Task | null }) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
+  const [extras, setExtras] = useState<RegisteredQuickAction[]>([]);
   const focusChatInput = useChatInputFocus();
   useEffect(() => {
     let mounted = true;
@@ -43,6 +56,10 @@ export function QuickActionsBar({ currentTask }: { currentTask: Task | null }) {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    setExtras([...registeredQuickActions]);
   }, []);
 
   // Notes
@@ -177,6 +194,12 @@ export function QuickActionsBar({ currentTask }: { currentTask: Task | null }) {
     >
       {/* Hypnosis quick-play */}
       <Button size="sm" onClick={() => setPreOpen(true)}>Start Hypnosis</Button>
+
+      {extras.map((a) => (
+        <Button key={a.id} size="sm" variant="ghost" onClick={a.onTrigger}>
+          {a.label}
+        </Button>
+      ))}
 
       {/* Pre-roll dialog */}
       <Dialog
