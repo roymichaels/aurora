@@ -2,7 +2,8 @@
 :root {
   --compass-size: 72px;
   --chatbar-h: 56px; /* chat bar */
+  --dock-h: 56px; /* bottom dock */
   --fab-size: 56px;    /* new task */
   --gap: 12px;
-  --compass-bottom: calc(var(--hud-h) + var(--hud-gap) + var(--chatbar-h) + var(--gap));
+  --compass-bottom: calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--chatbar-h) + var(--gap));
 }
