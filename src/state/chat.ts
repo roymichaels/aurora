@@ -89,8 +89,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       useAvatarStore.getState().setSentiment(sentiment);
       bus.emit('chat/stream:end', { id: responseId });
-      bus.emit('sphere/state:set', { state: 'thinking' });
-      bus.emit('voice/state:set', { state: 'thinking' });
       set({ sending: false });
       voice?.speak(fullText);
       memoryStore.add("episodic", "assistant", fullText).catch(() => {});

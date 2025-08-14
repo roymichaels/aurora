@@ -3,13 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAvatarStore } from "@/state/avatar";
 import { playClonedVoice } from "./voiceClone";
 import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
-
-function fire(type: string, detail: boolean) {
-  window.dispatchEvent(new CustomEvent(type, { detail }));
-  const store = useVoiceStore.getState();
-  if (type === "voice-listening") store.setListening(detail);
-  if (type === "voice-processing") store.setThinking(detail);
-}
+import { bus } from "@/utils/bus";
 
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
@@ -50,7 +44,7 @@ export class VoiceIO {
       }
       if (interim) this.callbacks.onPartial?.(interim);
       if (finalText) {
-        fire('voice-processing', false);
+        useVoiceStore.getState().setThinking(false);
         this.callbacks.onFinal?.(finalText.trim());
       }
     };
@@ -58,15 +52,16 @@ export class VoiceIO {
     this.recognition.onerror = (e: any) => this.callbacks.onError?.(e);
     this.recognition.onend = () => {
       this.callbacks.onSpeakingChange?.(false);
-      fire('voice-listening', false);
-      fire('voice-processing', true);
+      useVoiceStore.getState().setListening(false);
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
       this.recognition = null;
     };
 
     try {
       this.recognition.start();
-      fire('voice-listening', true);
-      fire('voice-processing', false);
+      useVoiceStore.getState().setListening(true);
+      useVoiceStore.getState().setThinking(false);
     } catch (e) {
       // starting while already started throws
     }
@@ -74,7 +69,7 @@ export class VoiceIO {
 
   stopListening() {
     try { this.recognition?.stop(); } catch {}
-    fire('voice-listening', false);
+    useVoiceStore.getState().setListening(false);
     this.recognition = null;
   }
 
@@ -84,11 +79,14 @@ export class VoiceIO {
     let success = false;
 
     const onStart = () => {
-
+      bus.emit('sphere/state:set', { state: 'speaking' });
+      bus.emit('voice/state:set', { state: 'speaking' });
       useVoiceStore.getState().setSpeaking(true);
       this.callbacks.onSpeakingChange?.(true);
     };
     const onEnd = () => {
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
       useVoiceStore.getState().setSpeaking(false);
       this.callbacks.onSpeakingChange?.(false);
       useAvatarStore.getState().setAudio(null);
@@ -192,6 +190,8 @@ export class VoiceIO {
     useAvatarStore.getState().setAudio(null);
     useAvatarStore.getState().setSentiment(0);
     try { window.speechSynthesis.cancel(); } catch {}
+    bus.emit('sphere/state:set', { state: 'thinking' });
+    bus.emit('voice/state:set', { state: 'thinking' });
     useVoiceStore.getState().setSpeaking(false);
     this.callbacks.onSpeakingChange?.(false);
     this.utter = null;

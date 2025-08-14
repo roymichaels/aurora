@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { bus } from "@/utils/bus";
 
 const VOICE_ID_KEY = "aurora.voiceId";
 const VOICE_SPEED_KEY = "aurora.voiceSpeed";
@@ -38,7 +39,11 @@ type VoiceState = {
   setEmotion: (v: string) => void;
 };
 
-export const useVoiceStore = create<VoiceState>((set) => ({
+export const useVoiceStore = create<VoiceState>((set) => {
+  bus.on('voice/state:set', ({ state }) => {
+    set({ isThinking: state === 'thinking', isSpeaking: state === 'speaking' });
+  });
+  return {
   isListening: false,
   isThinking: false,
   isSpeaking: false,
