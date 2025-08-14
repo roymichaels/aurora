@@ -146,31 +146,39 @@ export function AnchoredChatBar() {
           )
         )}
       </div>
-      {recall && (
-        <div className={`absolute ${showChips ? '-top-16' : '-top-8'} left-2`}>
-          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+      <div
+        className={`absolute left-2 transition-all duration-200 ${
+          showChips ? "-top-16" : "-top-8"
+        } ${recall ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+      >
+        {recall && (
+          <span className="text-xs bg-muted px-2 py-0.5 rounded-full transition-all duration-200">
             {recall}
           </span>
-        </div>
-      )}
-      {showChips && (
-        <div className="flex gap-2 absolute -top-8 left-2">
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="action-chip px-3 py-1 text-xs"
-          >
-            Confirm
-          </button>
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="action-chip px-3 py-1 text-xs"
-          >
-            Edit
-          </button>
-        </div>
-      )}
+        )}
+      </div>
+      <div
+        className={`flex gap-2 absolute left-2 transition-all duration-200 ${
+          showChips
+            ? "-top-8 opacity-100"
+            : "-top-6 opacity-0 pointer-events-none"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={handleConfirm}
+          className="action-chip px-3 py-1 text-xs transition-all duration-200"
+        >
+          Confirm
+        </button>
+        <button
+          type="button"
+          onClick={handleEdit}
+          className="action-chip px-3 py-1 text-xs transition-all duration-200"
+        >
+          Edit
+        </button>
+      </div>
     </div>
   );
 }
