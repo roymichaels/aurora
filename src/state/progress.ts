@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-type Note = { text: string; ts: number };
+type Note = { text: string; ts: number; mood?: string };
 
 type ProgressState = {
   xp: number;
@@ -32,7 +32,15 @@ export const useProgressStore = create<ProgressState>()(
       }),
       complete: (id) => set((s) => ({ completed: { ...s.completed, [id]: true } })),
       unlock: (id) => set((s) => ({ unlocked: new Set<string>([...s.unlocked, id]) })),
-      addNote: (note) => set((s) => ({ notes: [...s.notes, note] })),
+      addNote: (note) =>
+        set((s) => {
+          const last = s.notes[s.notes.length - 1];
+          let streak = s.streak;
+          const lastDay = last ? new Date(last.ts).toDateString() : null;
+          const today = new Date().toDateString();
+          if (lastDay !== today) streak += 1;
+          return { notes: [...s.notes, note], streak };
+        }),
     }),
     {
       name: "aurora-progress",
