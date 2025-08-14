@@ -412,7 +412,7 @@ export default function OnboardingFlow() {
           </div>
         </div>
         <ScrollArea className="flex-1 px-4">
-          <div className="space-y-3 text-sm">
+          <div className="space-y-3 text-sm" role="log" aria-live="polite">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "assistant" && (
@@ -430,6 +430,9 @@ export default function OnboardingFlow() {
               </div>
             ))}
             <div ref={messagesEndRef} />
+          </div>
+          <div aria-live="polite" className="sr-only">
+            {messages.length > 0 ? messages[messages.length - 1].content : ""}
           </div>
         </ScrollArea>
 

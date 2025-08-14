@@ -71,13 +71,16 @@ export default function AgentPanel() {
         <div className="glass-panel rounded-xl p-3 text-sm text-muted-foreground">{partial}</div>
       )}
 
-      <div className="grid gap-2">
+      <div className="grid gap-2" role="log" aria-live="polite">
         {messages.map((m, i) => (
           <div key={i} className={`glass-panel rounded-xl p-3 ${m.role === 'assistant' ? '' : ''}`}>
             <div className="text-[11px] text-muted-foreground mb-1">{m.role}</div>
             <div className="text-sm whitespace-pre-wrap">{m.text}</div>
           </div>
         ))}
+      </div>
+      <div aria-live="polite" className="sr-only">
+        {messages.length > 0 ? messages[messages.length - 1].text : ""}
       </div>
     </div>
   );
