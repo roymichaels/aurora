@@ -95,7 +95,7 @@ export function AnchoredChatBar() {
               void handleSend();
             }
           }}
-          placeholder="Ask anything…"
+          placeholder="Need a nudge?"
           aria-label="Message input"
           className="flex-1"
         />
