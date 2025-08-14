@@ -120,6 +120,7 @@ export function AnchoredChatBar() {
 
   return (
     <>
+      {/* Visually hidden live region for screen reader announcements */}
       <div
         className="sr-only"
         aria-live="polite"
