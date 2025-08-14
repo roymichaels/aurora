@@ -19,6 +19,7 @@ import {
 import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
 import { formatDistanceToNow } from 'date-fns';
+import { useFeatureFlags } from '@/state/featureFlags';
 
 export function SubscriptionManager() {
   return <SubscriptionManagerUI />;
@@ -28,6 +29,7 @@ function SubscriptionManagerUI() {
   const { subscription, usage, isLoading, isOnTrial, trialDaysLeft, cancelSubscription, refetch } = useSubscription();
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
+  const isPro = useFeatureFlags((s) => s.isPro);
 
   const handleCancelSubscription = async (cancelAtPeriodEnd: boolean) => {
     try {
@@ -201,7 +203,7 @@ function SubscriptionManagerUI() {
                 />
               </div>
 
-              {subscription.planId === 'pro' && (
+              {isPro && (
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">

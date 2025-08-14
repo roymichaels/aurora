@@ -31,7 +31,7 @@ export function PricingPage() {
   return null;
 }
 
-const PRICING_TIERS: PricingTier[] = [
+export const PRICING_TIERS: PricingTier[] = [
   {
     id: 'freemium',
     name: 'Freemium',
