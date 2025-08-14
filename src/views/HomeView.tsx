@@ -10,6 +10,7 @@ import {
   Pencil,
   type LucideIcon,
 } from "lucide-react";
+import { AvatarSphere } from "@/components/avatar/AvatarSphere";
 import { useGameStore } from "@/game/store";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import type { QuickActionKey } from "@/game/hud/hud.data";
@@ -61,6 +62,9 @@ export default function HomeView() {
   return (
     <>
       <div className="min-h-svh bg-slate-950 text-foreground px-4 py-6 space-y-6">
+        <div className="flex justify-center">
+          <AvatarSphere />
+        </div>
         {/* Mission card */}
         <div className="glass-panel rounded-xl p-6 flex items-start justify-between gap-4">
           <div className="flex-1">
