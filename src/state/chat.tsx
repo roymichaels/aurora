@@ -26,68 +26,71 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [recall, setRecall] = useState<string | null>(null);
   const { speak } = useTextToSpeech();
 
-  const send = async (content: string) => {
+  const send = (content: string) => {
     const text = content.trim();
-    if (!text) return;
+    if (!text) return Promise.resolve();
     const history: ChatMessage[] = messages.map(m => ({ role: m.role, content: m.content }));
     const userMsg: ChatEntry = { id: crypto.randomUUID(), role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
     window.dispatchEvent(new CustomEvent('voice-processing', { detail: true }));
     setSending(true);
-    try {
-      await memoryStore.add("episodic", "user", text);
-      await saveMemory(text, { role: "user" });
-      const [memories, longTerm] = await Promise.all([
-        retrieveRelevantMemories(text),
-        queryMemory(text, 5),
-      ]);
-      const top = [
-        ...memories.map(m => m.content),
-        ...longTerm.map(m => m.text),
-      ];
-      if (import.meta.env.DEV) {
-        console.debug("Brain retrieval", top.slice(0, 5));
+    void (async () => {
+      try {
+        memoryStore.add("episodic", "user", text).catch(() => {});
+        saveMemory(text, { role: "user" }).catch(() => {});
+        const [memories, longTerm] = await Promise.all([
+          retrieveRelevantMemories(text),
+          queryMemory(text, 5),
+        ]);
+        const top = [
+          ...memories.map(m => m.content),
+          ...longTerm.map(m => m.text),
+        ];
+        if (import.meta.env.DEV) {
+          console.debug("Brain retrieval", top.slice(0, 5));
+        }
+        setRecall(top.length ? "Why I recalled this" : null);
+        if (top.length) {
+          setTimeout(() => setRecall(null), 5000);
+        }
+        const memoryContext = [
+          ...memories.map(m => `${m.role}: ${m.content}`),
+          ...longTerm.map(m => `${m.metadata?.role ?? 'memory'}: ${m.text}`),
+        ].join("\n");
+        const confidence = memories.length + longTerm.length > 2 ? 0.9 : 0.5;
+        const payload: ChatMessage[] = [
+          ...history,
+          ...(memoryContext
+            ? [{ role: "system", content: `Relevant memories:\n${memoryContext}` }]
+            : []),
+          { role: "user", content: text },
+        ];
+        const { content: replyText, sentiment } = await auroraChat(payload, {
+          confidence,
+        });
+        useAvatarStore.getState().setSentiment(sentiment);
+        const reply: ChatEntry = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: replyText,
+        };
+        setMessages(prev => [...prev, reply]);
+        void speak(replyText);
+        memoryStore.add("episodic", "assistant", replyText).catch(() => {});
+        saveMemory(replyText, { role: "assistant" }).catch(() => {});
+      } catch {
+        const err: ChatEntry = {
+          id: crypto.randomUUID(),
+          role: "assistant",
+          content: "Sorry, I couldn't respond.",
+        };
+        setMessages(prev => [...prev, err]);
+      } finally {
+        setSending(false);
+        window.dispatchEvent(new CustomEvent('voice-processing', { detail: false }));
       }
-      setRecall(top.length ? "Why I recalled this" : null);
-      if (top.length) {
-        setTimeout(() => setRecall(null), 5000);
-      }
-      const memoryContext = [
-        ...memories.map(m => `${m.role}: ${m.content}`),
-        ...longTerm.map(m => `${m.metadata?.role ?? 'memory'}: ${m.text}`),
-      ].join("\n");
-      const confidence = memories.length + longTerm.length > 2 ? 0.9 : 0.5;
-      const payload: ChatMessage[] = [
-        ...history,
-        ...(memoryContext
-          ? [{ role: "system", content: `Relevant memories:\n${memoryContext}` }]
-          : []),
-        { role: "user", content: text },
-      ];
-      const { content: replyText, sentiment } = await auroraChat(payload, {
-        confidence,
-      });
-      useAvatarStore.getState().setSentiment(sentiment);
-      const reply: ChatEntry = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: replyText,
-      };
-      setMessages(prev => [...prev, reply]);
-      speak(replyText);
-      memoryStore.add("episodic", "assistant", replyText).catch(() => {});
-      saveMemory(replyText, { role: "assistant" }).catch(() => {});
-    } catch {
-      const err: ChatEntry = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "Sorry, I couldn't respond.",
-      };
-      setMessages(prev => [...prev, err]);
-    } finally {
-      setSending(false);
-      window.dispatchEvent(new CustomEvent('voice-processing', { detail: false }));
-    }
+    })();
+    return Promise.resolve();
   };
 
   return (
