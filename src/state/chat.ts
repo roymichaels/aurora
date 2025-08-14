@@ -8,6 +8,7 @@ import {
   retrieveRelevantMemories,
 } from "@/memory/indexedDbMemory";
 import { saveMemory, queryMemory } from "@/memory/store";
+import { mergeAndExplainMemories, formatMemoryContext } from "@/memory/relevance";
 import { bus } from "@/utils/bus";
 
 export type ChatEntry = ChatMessage & { id: string };
@@ -48,22 +49,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         retrieveRelevantMemories(text),
         queryMemory(text, 5),
       ]);
-      const top = [
-        ...memories.map(m => m.content),
-        ...longTerm.map(m => m.text),
-      ];
+      const { annotated, recall } = mergeAndExplainMemories(text, memories, longTerm);
       if (import.meta.env.DEV) {
-        console.debug("Brain retrieval", top.slice(0, 5));
+        console.debug("Brain retrieval", annotated.slice(0, 5));
       }
-      set({ recall: top.length ? "Why I recalled this" : null });
-      if (top.length) {
+      set({ recall });
+      if (recall) {
         setTimeout(() => set({ recall: null }), 5000);
       }
-      const memoryContext = [
-        ...memories.map(m => `${m.role}: ${m.content}`),
-        ...longTerm.map(m => `${m.metadata?.role ?? 'memory'}: ${m.text}`),
-      ].join("\n");
-      const confidence = memories.length + longTerm.length > 2 ? 0.9 : 0.5;
+      const memoryContext = formatMemoryContext(annotated);
+      const confidence = annotated.length > 2 ? 0.9 : 0.5;
       const payload: ChatMessage[] = [
         ...history,
         ...(memoryContext

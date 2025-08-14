@@ -7,6 +7,7 @@ import {
   retrieveRelevantMemories,
 } from "@/memory/indexedDbMemory";
 import { saveMemory, queryMemory } from "@/memory/store";
+import { mergeAndExplainMemories, formatMemoryContext } from "@/memory/relevance";
 import brain from "@/brain/Brain";
 import { filterRegistry } from "@/brain/filters";
 import { scanResponse, explainIssues } from "@/agent/safety";
@@ -61,12 +62,10 @@ export class AuroraAgent {
       retrieveRelevantMemories(text),
       queryMemory(text, 5),
     ]);
-    const memoryContext = [
-      ...memories.map((m) => `${m.role}: ${m.content}`),
-      ...longTerm.map((m) => `${m.metadata?.role ?? 'memory'}: ${m.text}`),
-    ].join('\n');
+    const { annotated } = mergeAndExplainMemories(text, memories, longTerm);
+    const memoryContext = formatMemoryContext(annotated);
 
-    const confidence = memories.length + longTerm.length > 2 ? 0.9 : 0.5;
+    const confidence = annotated.length > 2 ? 0.9 : 0.5;
 
     const userSummary = this.history
       .filter((m) => m.role === 'user')
