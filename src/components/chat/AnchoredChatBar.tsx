@@ -41,6 +41,10 @@ export function AnchoredChatBar() {
     };
     rec.onend = () => setListening(false);
     recognitionRef.current = rec;
+    return () => {
+      rec.stop();
+      recognitionRef.current = null;
+    };
   }, []);
 
   const toggleListening = () => {
