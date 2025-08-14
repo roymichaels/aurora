@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
 import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
-import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
+import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 import { bus } from "@/utils/bus";
 
@@ -24,6 +24,10 @@ export function AnchoredChatBar() {
     setChatInputRef(ref);
     ref?.focus();
     return () => setChatInputRef(null);
+  }, []);
+
+  useEffect(() => {
+    bus.emit('sphere/state:set', { state: 'idle' });
   }, []);
 
   useEffect(() => {
@@ -53,6 +57,7 @@ export function AnchoredChatBar() {
     if (!rec || listening) return;
     setListening(true);
     bus.emit('voice/listen:start', {});
+    bus.emit('sphere/state:set', { state: 'listening' });
     rec.start();
   };
 
@@ -61,6 +66,7 @@ export function AnchoredChatBar() {
     if (!rec) return;
     rec.stop();
     bus.emit('voice/listen:stop', {});
+    bus.emit('sphere/state:set', { state: 'thinking' });
     setListening(false);
   };
 
@@ -173,7 +179,7 @@ export function AnchoredChatBar() {
         >
           <Send className="w-4 h-4" />
         </Button>
-        {sending && <EvolvingSphere size={24} className="ml-1" />}
+        <ReactiveSphere size={24} className="ml-1" />
         {blocked ? (
           <button
             type="button"
