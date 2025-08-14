@@ -11,7 +11,7 @@ export function useHUDActions() {
       startVoiceNote();
       return;
     }
-    const eventMap: Record<QuickActionKey, string> = {
+    const eventMap: Record<string, string> = {
       startFocus: "startFocus",
       startHypnosis: "startHypnosis",
       voiceNote: "voiceNote",
@@ -20,7 +20,7 @@ export function useHUDActions() {
       openBrowser: "openBrowser",
       openBrain: "openBrain",
     };
-    const name = eventMap[a];
+    const name = eventMap[a] ?? a;
     window.dispatchEvent(new CustomEvent("mos", { detail: { type: name } }));
   };
   return { run };
