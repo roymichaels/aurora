@@ -3,9 +3,8 @@ import { useCallback } from "react";
 let focusChatInput = () => {};
 
 export function setChatInputRef(ref: HTMLInputElement | null) {
-  focusChatInput = () => {
-    ref?.focus({ preventScroll: true });
-  };
+  // Focus chat input without scrolling the viewport.
+  focusChatInput = () => ref?.focus({ preventScroll: true });
 }
 
 export function useChatInputFocus() {
