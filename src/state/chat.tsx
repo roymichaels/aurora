@@ -3,6 +3,7 @@ import { auroraChat } from "@/utils/auroraChat";
 import type { ChatMessage } from "@/types/chat";
 import { useAvatarStore } from "@/state/avatar";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
+import { useVoiceStore } from "@/state/voice";
 import {
   memoryStore,
   retrieveRelevantMemories,
@@ -33,6 +34,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const userMsg: ChatEntry = { id: crypto.randomUUID(), role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
     window.dispatchEvent(new CustomEvent('voice-processing', { detail: true }));
+    useVoiceStore.getState().setThinking(true);
     setSending(true);
     void (async () => {
       try {
@@ -88,6 +90,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       } finally {
         setSending(false);
         window.dispatchEvent(new CustomEvent('voice-processing', { detail: false }));
+        useVoiceStore.getState().setThinking(false);
       }
     })();
     return Promise.resolve();

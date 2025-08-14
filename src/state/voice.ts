@@ -16,6 +16,8 @@ type VoiceMode =
   | "off";
 
 type VoiceState = {
+  isListening: boolean;
+  isThinking: boolean;
   isSpeaking: boolean;
   voiceId: string | null;
   mode: VoiceMode;
@@ -24,6 +26,8 @@ type VoiceState = {
   pitch: number;
   expression: number;
   emotion: string;
+  setListening: (v: boolean) => void;
+  setThinking: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
   setMode: (m: VoiceMode) => void;
@@ -35,6 +39,8 @@ type VoiceState = {
 };
 
 export const useVoiceStore = create<VoiceState>((set) => ({
+  isListening: false,
+  isThinking: false,
   isSpeaking: false,
   voiceId:
     typeof window !== "undefined"
@@ -65,6 +71,8 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     typeof window !== "undefined"
       ? window.localStorage.getItem(VOICE_EMOTION_KEY) || "neutral"
       : "neutral",
+  setListening: (v) => set({ isListening: v }),
+  setThinking: (v) => set({ isThinking: v }),
   setSpeaking: (v) => set({ isSpeaking: v }),
   setVoiceId: (id) => {
     try {
@@ -84,14 +92,6 @@ export const useVoiceStore = create<VoiceState>((set) => ({
       }
     }
     set({ mode });
-  },
-  setLocale: (locale) => {
-    try {
-      window.localStorage.setItem(VOICE_LOCALE_KEY, locale);
-    } catch {
-      /* ignore */
-    }
-    set({ locale });
   },
   setLocale: (locale) => {
     try {

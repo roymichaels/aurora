@@ -8,6 +8,9 @@ import { guardPremiumAction } from "@/modules/payments/guard";
 
 function fire(type: string, detail: boolean) {
   window.dispatchEvent(new CustomEvent(type, { detail }));
+  const store = useVoiceStore.getState();
+  if (type === "voice-listening") store.setListening(detail);
+  if (type === "voice-processing") store.setThinking(detail);
 }
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
