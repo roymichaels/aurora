@@ -1,4 +1,5 @@
 import initSqlJs, { Database } from "sql.js";
+import { toast } from "@/hooks/use-toast";
 
 const DB_FILE = "brain.db";
 const IDB_NAME = "brain-db";
@@ -11,6 +12,15 @@ export interface BrainDatabase extends Database {
 }
 
 let cachedDb: BrainDatabase | null = null;
+let memoryDb: Uint8Array | null = null; // fallback when storage unavailable
+
+export function __setMemoryDb(bytes: Uint8Array | null) {
+  memoryDb = bytes;
+}
+
+export function __getMemoryDb() {
+  return memoryDb;
+}
 
 function getEncryptionSettings() {
   if (typeof localStorage === "undefined") {
@@ -74,6 +84,9 @@ async function decryptData(data: Uint8Array, passphrase: string) {
 }
 
 async function openIndexedDb(): Promise<IDBDatabase> {
+  if (typeof indexedDB === "undefined") {
+    throw new Error("IndexedDB not supported");
+  }
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(IDB_NAME, 1);
     request.onupgradeneeded = () => {
@@ -85,34 +98,68 @@ async function openIndexedDb(): Promise<IDBDatabase> {
 }
 
 async function idbGet(key: string): Promise<Uint8Array | null> {
-  const db = await openIndexedDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readonly");
-    const req = tx.objectStore(IDB_STORE).get(key);
-    req.onsuccess = () => {
-      const result = req.result as ArrayBuffer | undefined;
-      resolve(result ? new Uint8Array(result) : null);
-    };
-    req.onerror = () => reject(req.error);
-  });
+  if (typeof indexedDB === "undefined") {
+    toast({
+      title: "Storage unavailable",
+      description: "IndexedDB not supported; using memory store",
+    });
+    return key === DB_FILE ? memoryDb : null;
+  }
+  try {
+    const db = await openIndexedDb();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readonly");
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => {
+        const result = req.result as ArrayBuffer | undefined;
+        resolve(result ? new Uint8Array(result) : null);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    toast({ title: "Storage error", description: "Failed to read from IndexedDB" });
+    return key === DB_FILE ? memoryDb : null;
+  }
 }
 
 async function idbSet(key: string, value: Uint8Array): Promise<void> {
-  const db = await openIndexedDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(IDB_STORE, "readwrite");
-    const req = tx.objectStore(IDB_STORE).put(value, key);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
+  if (typeof indexedDB === "undefined") {
+    toast({
+      title: "Storage unavailable",
+      description: "IndexedDB not supported; using memory store",
+    });
+    if (key === DB_FILE) memoryDb = value;
+    return;
+  }
+  try {
+    const db = await openIndexedDb();
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, "readwrite");
+      const req = tx.objectStore(IDB_STORE).put(value, key);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) {
+    toast({ title: "Storage error", description: "Failed to write to IndexedDB" });
+    if (key === DB_FILE) memoryDb = value;
+  }
 }
 
 export async function openBrainDb(): Promise<BrainDatabase> {
   if (cachedDb) return cachedDb;
   try {
+    const importMetaUrl = (() => {
+      try {
+        return eval('import.meta.url') as string;
+      } catch {
+        return undefined;
+      }
+    })();
     const SQL = await initSqlJs({
       locateFile: (file: string) =>
-        new URL(`../../node_modules/sql.js/dist/${file}`, import.meta.url).toString(),
+        importMetaUrl
+          ? new URL(`../../node_modules/sql.js/dist/${file}`, importMetaUrl).toString()
+          : `node_modules/sql.js/dist/${file}`,
     });
 
     let opfsHandle: FileSystemFileHandle | null = null;
@@ -143,6 +190,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
           ? (new SQL.Database(buffer) as BrainDatabase)
           : (new SQL.Database() as BrainDatabase);
       } catch {
+        toast({ title: "Storage error", description: "Failed to read OPFS" });
         db = new SQL.Database() as BrainDatabase;
       }
     } else {
@@ -170,6 +218,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
           await writable.write(data);
           await writable.close();
         } catch {
+          toast({ title: "Storage error", description: "OPFS write failed" });
           // fall back to IndexedDB if OPFS write fails
           await idbSet(DB_FILE, data);
         }
@@ -187,6 +236,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
             await writable.write(data);
             await writable.close();
           } catch {
+            toast({ title: "Storage error", description: "OPFS sync failed" });
             // ignore sync errors
           }
         }
@@ -197,6 +247,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
     return db;
   } catch (e) {
     console.error("Failed to open brain database", e);
+    toast({ title: "Database error", description: "Could not open brain" });
     throw e;
   }
 }
