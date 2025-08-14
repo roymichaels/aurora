@@ -1,12 +1,19 @@
-import { create } from 'zustand';
 
-export type ModalId = 'brain' | 'journal' | 'live' | 'analytics' | 'more';
+import { create } from "zustand";
 
-export interface UIState {
+export type ModalId =
+  | "brain"
+  | "journal"
+  | "live"
+  | "analytics"
+  | "more";
+
+type UIState = {
   activeModal: ModalId | null;
   openModal: (id: ModalId) => void;
   closeModal: () => void;
-}
+};
+
 
 export const useUIStore = create<UIState>((set) => ({
   activeModal: null,
