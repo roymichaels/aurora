@@ -50,7 +50,7 @@ export default function HubScene({ children }: PropsWithChildren) {
       <div className="absolute inset-0 world-particles pointer-events-none" aria-hidden />
 
       {/* Content overlay */}
-      <div className="relative z-[var(--z-content)] w-full h-full" style={{ paddingBottom: 'var(--hud-h)' }}>{children}</div>
+      <div className="relative z-[var(--z-content)] w-full h-full" style={{ paddingTop: 'var(--hud-h)' }}>{children}</div>
     </div>
   );
 }

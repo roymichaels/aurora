@@ -107,7 +107,7 @@ export default function GameCanvas({ inputVec, actionTick, overlayId, onEnter }:
       {/* Camera viewport clamped above HUD */}
       <div
         className="absolute inset-x-0 top-0"
-        style={{ bottom: `calc(var(--hud-h) + var(--hud-gap))` }}
+        style={{ top: `calc(var(--hud-h) + var(--hud-gap))` }}
         aria-label="CSS World Canvas"
       >
         <div className="world-canvas smooth" style={{ transform: `scale(${zoom})`, transformOrigin: '50% 85%' }}>

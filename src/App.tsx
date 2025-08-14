@@ -11,7 +11,9 @@ import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AppShell from "@/routes/AppShell";
-import PersonaSetup from "./pages/PersonaSetup";
+import HomeView from "@/views/HomeView";
+import { views } from "@/views/registry";
+import LiveShell from "@/routes/live/LiveShell";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,7 +24,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/app" replace />} />
-          <Route path="/app/*" element={<AppShell />} />
+          <Route path="/app" element={<AppShell />}>
+            <Route index element={<HomeView />} />
+            {views.filter((v) => v.id !== "home").map((v) => (
+              <Route key={v.id} path={v.path || undefined} element={<v.component />} />
+            ))}
+            <Route path="live" element={<LiveShell />} />
+            <Route path="*" element={<Navigate to="/app" replace />} />
+          </Route>
           <Route path="/world" element={<MindWorldDashboard />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/browser" element={<Navigate to="/app/browser" replace />} />
