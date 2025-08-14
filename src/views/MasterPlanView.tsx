@@ -5,6 +5,7 @@ import HabitTracker from "@/components/habits/HabitTracker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +58,7 @@ interface DBHabit {
 }
 
 export default function MasterPlanView() {
+  const focusChatInput = useChatInputFocus();
   const { user } = useSupabaseAuth();
   const [dbPlan, setDbPlan] = useState<MasterPlan | null>(null);
   const { plan: plan, update } = usePlanUpdater(dbPlan as any);
@@ -307,8 +309,22 @@ export default function MasterPlanView() {
         <p className="text-sm text-muted-foreground">No plan generated yet.</p>
       )}
 
-      <Dialog open={!!editField} onOpenChange={(v) => !v && setEditField(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!editField}
+        onOpenChange={(v) => {
+          if (!v) {
+            setEditField(null);
+            focusChatInput();
+          }
+        }}
+      >
+        <DialogContent
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setEditField(null);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit {editField}</DialogTitle>
           </DialogHeader>

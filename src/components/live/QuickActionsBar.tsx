@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import { useEffect, useRef, useState } from "react";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 type Task = {
   id: string;
@@ -21,9 +22,10 @@ type Track = {
   description: string | null;
 };
 
-  export function QuickActionsBar({ currentTask }: { currentTask: Task | null }) {
+export function QuickActionsBar({ currentTask }: { currentTask: Task | null }) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
+  const focusChatInput = useChatInputFocus();
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -174,8 +176,21 @@ type Track = {
       <Button size="sm" onClick={() => setPreOpen(true)}>Start Hypnosis</Button>
 
       {/* Pre-roll dialog */}
-      <Dialog open={preOpen} onOpenChange={setPreOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={preOpen}
+        onOpenChange={(v) => {
+          setPreOpen(v);
+          if (!v) focusChatInput();
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setPreOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Get ready</DialogTitle>
           </DialogHeader>
@@ -195,8 +210,21 @@ type Track = {
       </Dialog>
 
       {/* Library dialog */}
-      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={libraryOpen}
+        onOpenChange={(v) => {
+          setLibraryOpen(v);
+          if (!v) focusChatInput();
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setLibraryOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Hypnosis library</DialogTitle>
           </DialogHeader>
@@ -223,11 +251,24 @@ type Track = {
       </Dialog>
 
       {/* Voice Note */}
-      <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
+      <Dialog
+        open={voiceOpen}
+        onOpenChange={(v) => {
+          setVoiceOpen(v);
+          if (!v) focusChatInput();
+        }}
+      >
         <DialogTrigger asChild>
           <Button size="sm" variant="ghost">Voice Note</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setVoiceOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Record voice note</DialogTitle>
           </DialogHeader>
@@ -248,11 +289,24 @@ type Track = {
       </Dialog>
 
       {/* Notes */}
-      <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
+      <Dialog
+        open={noteOpen}
+        onOpenChange={(v) => {
+          setNoteOpen(v);
+          if (!v) focusChatInput();
+        }}
+      >
         <DialogTrigger asChild>
           <Button size="sm" variant="ghost">Notes</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setNoteOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Quick note</DialogTitle>
           </DialogHeader>

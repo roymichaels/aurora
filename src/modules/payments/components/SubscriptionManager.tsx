@@ -20,6 +20,7 @@ import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
 import { formatDistanceToNow } from 'date-fns';
 import { useFeatureFlags } from '@/state/featureFlags';
+import { useChatInputFocus } from '@/hooks/useChatInputFocus';
 
 export function SubscriptionManager() {
   return <SubscriptionManagerUI />;
@@ -30,6 +31,7 @@ function SubscriptionManagerUI() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [isCanceling, setIsCanceling] = useState(false);
   const isPro = useFeatureFlags((s) => s.isPro);
+  const focusChatInput = useChatInputFocus();
 
   const handleCancelSubscription = async (cancelAtPeriodEnd: boolean) => {
     try {
@@ -256,8 +258,21 @@ function SubscriptionManagerUI() {
       </Card>
 
       {/* Cancel Subscription Dialog */}
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className="bg-white dark:bg-gray-900">
+      <Dialog
+        open={showCancelDialog}
+        onOpenChange={(v) => {
+          setShowCancelDialog(v);
+          if (!v) focusChatInput();
+        }}
+      >
+        <DialogContent
+          className="bg-white dark:bg-gray-900"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setShowCancelDialog(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white">
               Cancel Subscription

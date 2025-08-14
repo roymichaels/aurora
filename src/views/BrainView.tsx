@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { useChatInputFocus } from '@/hooks/useChatInputFocus';
 import {
   Select,
   SelectContent,
@@ -31,6 +32,7 @@ interface Memory {
 }
 
 export default function BrainView() {
+  const focusChatInput = useChatInputFocus();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -327,8 +329,22 @@ export default function BrainView() {
         </div>
       </div>
 
-      <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null);
+            focusChatInput();
+          }
+        }}
+      >
+        <DialogContent
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setEditing(null);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Memory</DialogTitle>
           </DialogHeader>

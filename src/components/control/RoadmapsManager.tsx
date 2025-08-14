@@ -13,6 +13,7 @@ import { ProgressBar } from "@/components/live/ProgressBar";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import QuickAddTaskFAB from "@/components/tasks/QuickAddTaskFAB";
 import { setActiveRoadmap, fetchNextTask } from "@/modules/roadmaps";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
  
 export default function RoadmapsManager() {
   const { user } = useSupabaseAuth();
@@ -21,6 +22,7 @@ export default function RoadmapsManager() {
   const [showAll, setShowAll] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const isMobile = useIsMobile();
+  const focusChatInput = useChatInputFocus();
 
   const fetchRoadmaps = async () => {
     if (!user) { setItems([]); return; }
@@ -95,7 +97,13 @@ export default function RoadmapsManager() {
   if (items.length === 0) {
     const Creator = (
       isMobile ? (
-        <Drawer open={newOpen} onOpenChange={setNewOpen}>
+        <Drawer
+          open={newOpen}
+          onOpenChange={(o) => {
+            setNewOpen(o);
+            if (!o) focusChatInput();
+          }}
+        >
           <DrawerTrigger asChild>
             <Button>New Roadmap</Button>
           </DrawerTrigger>
@@ -109,11 +117,24 @@ export default function RoadmapsManager() {
           </DrawerContent>
         </Drawer>
       ) : (
-        <Dialog open={newOpen} onOpenChange={setNewOpen}>
+        <Dialog
+          open={newOpen}
+          onOpenChange={(o) => {
+            setNewOpen(o);
+            if (!o) focusChatInput();
+          }}
+        >
           <DialogTrigger asChild>
             <Button>New Roadmap</Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent
+            className="sm:max-w-md"
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+              setNewOpen(false);
+              focusChatInput();
+            }}
+          >
             <DialogHeader>
               <DialogTitle>Create roadmap</DialogTitle>
             </DialogHeader>
@@ -135,7 +156,13 @@ export default function RoadmapsManager() {
 
   const CreatorControl = (
     isMobile ? (
-      <Drawer open={newOpen} onOpenChange={setNewOpen}>
+      <Drawer
+        open={newOpen}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) focusChatInput();
+        }}
+      >
         <DrawerTrigger asChild>
           <Button size="sm">New</Button>
         </DrawerTrigger>
@@ -149,11 +176,24 @@ export default function RoadmapsManager() {
         </DrawerContent>
       </Drawer>
     ) : (
-      <Dialog open={newOpen} onOpenChange={setNewOpen}>
+      <Dialog
+        open={newOpen}
+        onOpenChange={(o) => {
+          setNewOpen(o);
+          if (!o) focusChatInput();
+        }}
+      >
         <DialogTrigger asChild>
           <Button size="sm">New</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setNewOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Create roadmap</DialogTitle>
           </DialogHeader>

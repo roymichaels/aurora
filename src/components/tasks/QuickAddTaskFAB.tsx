@@ -7,6 +7,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 interface Props {
   roadmapId: string | null;
@@ -17,6 +18,7 @@ interface Props {
 // Priority is prefixed to the title for now (e.g., "[High] Title") to avoid schema changes.
 export default function QuickAddTaskFAB({ roadmapId, onCreated }: Props) {
   const { user } = useSupabaseAuth();
+  const focusChatInput = useChatInputFocus();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [due, setDue] = useState<string>("");
@@ -99,8 +101,21 @@ export default function QuickAddTaskFAB({ roadmapId, onCreated }: Props) {
         <Plus className="w-6 h-6" />
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={open}
+        onOpenChange={(v) => {
+          setOpen(v);
+          if (!v) focusChatInput();
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setOpen(false);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Quick add task</DialogTitle>
           </DialogHeader>

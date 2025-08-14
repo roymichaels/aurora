@@ -14,8 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 export default function MemoryPanel() {
+  const focusChatInput = useChatInputFocus();
   const [bucket, setBucket] = useState<MemoryBucket>("semantic");
   const [search, setSearch] = useState("");
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
@@ -174,8 +176,22 @@ export default function MemoryPanel() {
         </TableBody>
       </Table>
 
-      <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null);
+            focusChatInput();
+          }
+        }}
+      >
+        <DialogContent
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setEditing(null);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Memory</DialogTitle>
           </DialogHeader>
