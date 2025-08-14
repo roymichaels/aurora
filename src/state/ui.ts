@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 
 export type ModalId =
@@ -12,6 +13,7 @@ type UIState = {
   openModal: (id: ModalId) => void;
   closeModal: () => void;
 };
+
 
 export const useUIStore = create<UIState>((set) => ({
   activeModal: null,
