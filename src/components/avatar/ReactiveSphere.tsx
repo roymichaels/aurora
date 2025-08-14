@@ -11,8 +11,6 @@ interface Props {
   size?: number;
   className?: string;
 }
-
-ain
 export function ReactiveSphere({ size = 48, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -83,7 +81,6 @@ export function ReactiveSphere({ size = 48, className }: Props) {
 
     return () => {
       cancelAnimationFrame(frameRef.current);
-n
       renderer.dispose();
     };
   }, [size, state]);
