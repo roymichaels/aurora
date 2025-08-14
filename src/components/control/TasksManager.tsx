@@ -9,6 +9,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import { scheduleTaskTriggers } from "@/lib/triggers";
+import { requirePro } from "@/state/featureFlags";
 
 export type Task = {
   id: string;
@@ -22,6 +23,14 @@ export type Task = {
 
 export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   const { user } = useSupabaseAuth();
+  if (!requirePro()) {
+    return (
+      <div className="p-4 text-center space-y-2">
+        <p className="text-sm text-muted-foreground">Task management is a Pro feature.</p>
+        <Button onClick={() => (window.location.href = '/plan')}>Upgrade</Button>
+      </div>
+    );
+  }
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 

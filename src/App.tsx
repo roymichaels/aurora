@@ -10,6 +10,7 @@ import MindWorldDashboard from "@/components/mindworld/MindWorldDashboard";
 import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
+import AccountPlanPage from "./pages/AccountPlan";
 import AppShell from "@/routes/AppShell";
 import HomeView from "@/views/HomeView";
 import { views } from "@/views/registry";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/hypno" element={<HypnoShell />} />
           <Route path="/extension" element={<ExtensionPage />} />
           <Route path="/stack" element={<StackPage />} />
+          <Route path="/plan" element={<AccountPlanPage />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

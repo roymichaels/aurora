@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Subscription, UsageStats } from '@/modules/payments/types/subscription'
 import { getSubscription, cancelSubscription, updateSubscription } from '@/modules/payments/api/subscription'
+import { useFeatureFlags } from '@/state/featureFlags'
 
 export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
@@ -13,8 +14,10 @@ export function useSubscription() {
       setIsLoading(true);
       setError(null);
       const response = await getSubscription();
-      setSubscription((response as any).subscription);
+      const sub = (response as any).subscription as Subscription | null;
+      setSubscription(sub);
       setUsage((response as any).usage);
+      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
     } finally {
@@ -29,7 +32,9 @@ export function useSubscription() {
   const cancelSub = useCallback(async (cancelAtPeriodEnd: boolean = true) => {
     try {
       const response = await cancelSubscription(cancelAtPeriodEnd);
-      setSubscription((response as any).subscription);
+      const sub = (response as any).subscription as Subscription | null;
+      setSubscription(sub);
+      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
       return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel subscription');
@@ -40,7 +45,9 @@ export function useSubscription() {
   const updateSub = useCallback(async (priceId: string, billingCycle: 'monthly' | 'yearly') => {
     try {
       const response = await updateSubscription(priceId, billingCycle);
-      setSubscription((response as any).subscription);
+      const sub = (response as any).subscription as Subscription | null;
+      setSubscription(sub);
+      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
       return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update subscription');

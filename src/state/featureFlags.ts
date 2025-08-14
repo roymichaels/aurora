@@ -4,7 +4,9 @@ interface FlagsState {
   hypnosisScripts: boolean;
   cloudRouting: boolean;
   voiceStorage: boolean;
-  toggle: (key: keyof Omit<FlagsState, 'toggle'>) => void;
+  isPro: boolean;
+  toggle: (key: keyof Omit<FlagsState, 'toggle' | 'setPro'>) => void;
+  setPro: (value: boolean) => void;
 }
 
 const STORAGE_KEY = 'featureFlags';
@@ -16,6 +18,7 @@ export const useFeatureFlags = create<FlagsState>((set) => {
     : { hypnosisScripts: false, cloudRouting: false, voiceStorage: false };
   return {
     ...initial,
+    isPro: false,
     toggle: (key) =>
       set((state) => {
         const next = { ...state, [key]: !state[key] } as FlagsState;
@@ -28,5 +31,14 @@ export const useFeatureFlags = create<FlagsState>((set) => {
         } catch {}
         return next;
       }),
+    setPro: (value) => set({ isPro: value }),
   };
 });
+
+export function requirePro() {
+  const { isPro } = useFeatureFlags.getState();
+  if (!isPro) {
+    window.location.href = '/plan';
+  }
+  return isPro;
+}
