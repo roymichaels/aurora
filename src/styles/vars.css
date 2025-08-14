@@ -1,8 +1,8 @@
 /* Floating metrics for the app: right-side stack */
 :root {
   --compass-size: 72px;
-  --bubble-size: 56px; /* chat */
+  --chatbar-h: 56px; /* chat bar */
   --fab-size: 56px;    /* new task */
   --gap: 12px;
-  --compass-bottom: 12px;
+  --compass-bottom: calc(var(--hud-h) + var(--hud-gap) + var(--chatbar-h) + var(--gap));
 }
