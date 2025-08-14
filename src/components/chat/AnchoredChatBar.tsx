@@ -7,7 +7,7 @@ import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 
 export function AnchoredChatBar() {
-  const { send, sending, messages } = useChat();
+  const { send, sending, messages, recall } = useChat();
   const { speak, blocked, resume } = useTextToSpeech();
 
   const [input, setInput] = useState("");
@@ -130,6 +130,13 @@ export function AnchoredChatBar() {
           )
         )}
       </div>
+      {recall && (
+        <div className={`absolute ${showChips ? '-top-16' : '-top-8'} left-2`}>
+          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+            {recall}
+          </span>
+        </div>
+      )}
       {showChips && (
         <div className="flex gap-2 absolute -top-8 left-2">
           <button

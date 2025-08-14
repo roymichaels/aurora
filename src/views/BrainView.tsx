@@ -26,6 +26,7 @@ interface Memory {
   type: string;
   importance: number;
   pinned: number;
+  ts: number;
   why?: string;
 }
 
@@ -48,10 +49,13 @@ export default function BrainView() {
   const load = async () => {
     const db = await openBrainDb();
     db.run(
-      'CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, tags TEXT, type TEXT, importance INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0)'
+      "CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, tags TEXT, type TEXT, importance INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0, ts INTEGER DEFAULT (strftime('%s','now')))"
     );
+    try {
+      db.run("ALTER TABLE memories ADD COLUMN ts INTEGER DEFAULT (strftime('%s','now'))");
+    } catch {}
     const stmt = db.prepare(
-      'SELECT id, content, tags, type, importance, pinned FROM memories ORDER BY pinned DESC, id DESC'
+      'SELECT id, content, tags, type, importance, pinned, ts FROM memories ORDER BY pinned DESC, ts DESC'
     );
     const list: Memory[] = [];
     while (stmt.step()) {
@@ -63,6 +67,7 @@ export default function BrainView() {
         type: String(row.type || 'semantic'),
         importance: Number(row.importance || 0),
         pinned: Number(row.pinned || 0),
+        ts: Number(row.ts || 0),
       });
     }
     stmt.free();
@@ -113,6 +118,16 @@ export default function BrainView() {
       ),
     [memories]
   );
+
+  const groupedByDate = useMemo(() => {
+    const map = new Map<string, Memory[]>();
+    filtered.forEach((m) => {
+      const date = new Date(m.ts * 1000).toLocaleDateString();
+      if (!map.has(date)) map.set(date, []);
+      map.get(date)!.push(m);
+    });
+    return Array.from(map.entries());
+  }, [filtered]);
 
   const startEdit = (m: Memory) => {
     setEditing(m);
@@ -204,57 +219,50 @@ export default function BrainView() {
         </Select>
       </div>
 
-      {uniqueTypes.map((type) => {
-        const items = filtered.filter((m) => m.type === type);
-        if (items.length === 0) return null;
-        return (
-          <div key={type} className="space-y-2">
-            <h2 className="text-lg font-semibold">{type}</h2>
-            <div className="space-y-3">
-              {items.map((m) => (
-                <div
-                  key={m.id}
-                  className="p-3 border rounded-lg relative"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1">
-                      <p>{m.content}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {m.tags
-                          .split(',')
-                          .map((t) => t.trim())
-                          .filter(Boolean)
-                          .map((t) => (
-                            <Badge key={t} variant="secondary">
-                              {t}
-                            </Badge>
-                          ))}
-                        <Badge variant="outline">Imp {m.importance}</Badge>
-                        {m.why && (
-                          <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
-                            Why I recalled this: {m.why}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <Button size="sm" variant="ghost" onClick={() => togglePin(m)}>
-                        {m.pinned ? 'Unpin' : 'Pin'}
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => startEdit(m)}>
-                        Edit
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
-                        Delete
-                      </Button>
+      {groupedByDate.map(([date, items]) => (
+        <div key={date} className="space-y-2">
+          <h2 className="text-lg font-semibold">{date}</h2>
+          <div className="space-y-3">
+            {items.map((m) => (
+              <div key={m.id} className="p-3 border rounded-lg relative">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1">
+                    <p>{m.content}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {m.tags
+                        .split(',')
+                        .map((t) => t.trim())
+                        .filter(Boolean)
+                        .map((t) => (
+                          <Badge key={t} variant="secondary">
+                            {t}
+                          </Badge>
+                        ))}
+                      <Badge variant="outline">Imp {m.importance}</Badge>
+                      {m.why && (
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                          Why I recalled this: {m.why}
+                        </span>
+                      )}
                     </div>
                   </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => togglePin(m)}>
+                      {m.pinned ? 'Unpin' : 'Pin'}
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => startEdit(m)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => remove(m.id)}>
+                      Delete
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ))}
 
       <div className="space-y-2 pt-4 border-t">
         <p className="text-xs text-muted-foreground">
