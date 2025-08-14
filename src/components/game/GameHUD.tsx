@@ -3,7 +3,7 @@ import { useGameStore } from "@/game/store";
 import { AvatarSphere } from "@/components/avatar/AvatarSphere";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAvatarStore } from "@/state/avatar";
-import HUDQuickActions from "@/game/hud/HUDQuickActions";
+import HUDQuickActions from "@/components/hud/HUDQuickActions";
 import ModalHost from "@/components/modals/ModalHost";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
 
