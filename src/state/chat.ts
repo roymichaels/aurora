@@ -30,9 +30,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (!text) return;
     const history: ChatMessage[] = get().messages.map(m => ({ role: m.role, content: m.content }));
     const userMsg: ChatEntry = { id: crypto.randomUUID(), role: "user", content: text };
-    set(state => ({ messages: [...state.messages, userMsg], sending: true }));
+    const responseId = crypto.randomUUID();
+    set(state => ({
+      messages: [...state.messages, userMsg, { id: responseId, role: 'assistant', content: '' }],
+      sending: true,
+    }));
 
-    bus.emit('chat/stream:start', undefined);
+    bus.emit('chat/send', { id: userMsg.id, content: text });
+    bus.emit('chat/stream:start', { id: responseId });
     bus.emit('sphere/state:set', { state: 'thinking' });
     bus.emit('voice/state:set', { state: 'thinking' });
 
@@ -67,17 +72,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         { role: "user", content: text },
       ];
 
-      const id = crypto.randomUUID();
-      set(state => ({ messages: [...state.messages, { id, role: 'assistant', content: '' }] }));
-
       let fullText = '';
       let first = true;
       const { sentiment } = await auroraChatStream(payload, { confidence }, chunk => {
         fullText += chunk;
         set(state => ({
-          messages: state.messages.map(m => m.id === id ? { ...m, content: fullText } : m),
+          messages: state.messages.map(m => m.id === responseId ? { ...m, content: fullText } : m),
         }));
-        bus.emit('chat/stream:chunk', { content: chunk });
+        bus.emit('chat/stream:chunk', { id: responseId, content: chunk });
         if (first) {
           first = false;
           bus.emit('sphere/state:set', { state: 'speaking' });
@@ -86,23 +88,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       });
 
       useAvatarStore.getState().setSentiment(sentiment);
-      bus.emit('chat/stream:end', undefined);
-      bus.emit('sphere/state:set', { state: 'idle' });
-      bus.emit('voice/state:set', { state: 'idle' });
+      bus.emit('chat/stream:end', { id: responseId });
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
       set({ sending: false });
       voice?.speak(fullText);
       memoryStore.add("episodic", "assistant", fullText).catch(() => {});
       saveMemory(fullText, { role: "assistant" }).catch(() => {});
     } catch (error) {
-      const err: ChatEntry = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: "Sorry, I couldn't respond.",
-      };
-      set(state => ({ messages: [...state.messages, err], sending: false }));
-      bus.emit('chat/stream:error', { error });
-      bus.emit('sphere/state:set', { state: 'idle' });
-      bus.emit('voice/state:set', { state: 'idle' });
+      set(state => ({
+        messages: state.messages.map(m =>
+          m.id === responseId
+            ? { ...m, content: "Sorry, I couldn't respond." }
+            : m
+        ),
+        sending: false,
+      }));
+      bus.emit('chat/stream:error', { id: responseId, error });
+      bus.emit('sphere/state:set', { state: 'thinking' });
+      bus.emit('voice/state:set', { state: 'thinking' });
     }
   },
 }));
