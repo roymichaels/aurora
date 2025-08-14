@@ -13,7 +13,7 @@ export function AnchoredChatBar() {
 
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
-  const [showChips, setShowChips] = useState(false);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const pressStartRef = useRef<number | null>(null);
@@ -36,8 +36,7 @@ export function AnchoredChatBar() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const transcript = (e.results as any)?.[0]?.[0]?.transcript as string;
       if (transcript) {
-        setInput(transcript);
-        setShowChips(true);
+        setSuggestion(transcript);
       }
     };
     rec.onend = () => setListening(false);
@@ -90,16 +89,22 @@ export function AnchoredChatBar() {
     if (!text) return;
     void send(text);
     setInput("");
-    setShowChips(false);
+    setSuggestion(null);
     inputRef.current?.focus();
   };
 
   const handleConfirm = () => {
-    void handleSend();
+    if (suggestion) {
+      void handleSend(suggestion);
+      setSuggestion(null);
+    }
     inputRef.current?.focus();
   };
   const handleEdit = () => {
-    setShowChips(false);
+    if (suggestion) {
+      setInput(suggestion);
+      setSuggestion(null);
+    }
     inputRef.current?.focus();
   };
 
@@ -137,7 +142,7 @@ export function AnchoredChatBar() {
           ref={inputRef}
           onChange={(e) => {
             setInput(e.target.value);
-            if (showChips) setShowChips(false);
+            if (suggestion) setSuggestion(null);
           }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -145,7 +150,7 @@ export function AnchoredChatBar() {
               void handleSend();
             }
           }}
-          placeholder="Need a nudge?"
+          placeholder={suggestion ?? "Need a nudge?"}
           aria-label="Message input"
           className="flex-1"
         />
@@ -185,7 +190,7 @@ export function AnchoredChatBar() {
       </div>
       <div
         className={`absolute left-2 transition-all duration-200 ${
-          showChips ? "-top-16" : "-top-8"
+          suggestion ? "-top-16" : "-top-8"
         } ${recall ? "opacity-100" : "opacity-0 pointer-events-none"}`}
       >
         {recall && (
@@ -196,7 +201,7 @@ export function AnchoredChatBar() {
       </div>
       <div
         className={`flex gap-2 absolute left-2 transition-all duration-200 ${
-          showChips
+          suggestion
             ? "-top-8 opacity-100"
             : "-top-6 opacity-0 pointer-events-none"
         }`}
