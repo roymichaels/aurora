@@ -5,5 +5,6 @@
   --dock-h: 56px; /* bottom dock */
   --fab-size: 56px;    /* new task */
   --gap: 12px;
+  --kb-offset: 0px; /* keyboard height offset */
   --compass-bottom: calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--chatbar-h) + var(--gap));
 }
