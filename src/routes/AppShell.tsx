@@ -6,7 +6,6 @@ import { GameHUD } from "@/components/game/GameHUD";
 import { AnchoredChatBar } from "@/components/chat/AnchoredChatBar";
 import BottomDock from "@/components/navigation/BottomDock";
 import { TimerHudChip } from "@/components/navigation/TimerHudChip";
-import { ChatProvider } from "@/state/chat";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
@@ -104,8 +103,7 @@ export default function AppShell() {
   }
 
   return (
-    <ChatProvider>
-      <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
+    <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
         <div className="os-bg" />
         <AnimatePresence mode="wait">
           <motion.div
@@ -127,7 +125,6 @@ export default function AppShell() {
         <AnchoredChatBar />
         <TimerHudChip />
       </div>
-    </ChatProvider>
   );
 }
 

@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
-import { useChat } from "@/state/chat";
+import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 
 export function AnchoredChatBar() {
-  const { send, sending, messages, recall } = useChat();
+  const { send, sending, messages, recall } = useChatStore();
   const { speak, blocked, resume } = useTextToSpeech();
 
   const [input, setInput] = useState("");

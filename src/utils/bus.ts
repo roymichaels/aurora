@@ -1,5 +1,11 @@
 export type EventMap = {
   'nav:view': { id: string; params?: Record<string, string> };
+  'chat/stream:start': void;
+  'chat/stream:chunk': { content: string };
+  'chat/stream:end': void;
+  'chat/stream:error': { error: unknown };
+  'sphere/state:set': { state: 'thinking' | 'speaking' | 'idle' };
+  'voice/state:set': { state: 'thinking' | 'speaking' | 'idle' };
 };
 
 const listeners: { [K in keyof EventMap]?: ((p: EventMap[K]) => void)[] } = {};
