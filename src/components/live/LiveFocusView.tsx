@@ -3,19 +3,9 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { CurrentFocusCard } from './CurrentFocusCard';
-import { QuickActionsBar } from './QuickActionsBar';
-import HeroCard from './HeroCard';
-import { MoodCarousel } from './MoodCarousel';
-import ActionDock from './ActionDock';
-import PreviewCards from './PreviewCards';
-
-import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
-import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
-import QuickAddTaskFAB from '@/components/tasks/QuickAddTaskFAB';
-import { StreakBadge } from '@/components/live/StreakBadge';
-import { setActiveRoadmap, fetchNextTask } from '@/modules/roadmaps';
 import { useCurrentTask, type Task } from '@/state/task';
+import { FocusTimer } from './FocusTimer';
+import { useViewNav } from '@/state/view';
 
 type Roadmap = {
   id: string;
@@ -26,20 +16,12 @@ type Roadmap = {
 };
 
 
-export default function LiveFocusView({
-  onManageRoadmaps,
-}: {
-  onManageRoadmaps?: () => void;
-}) {
+export default function LiveFocusView() {
   const { user, initializing } = useSupabaseAuth();
   const [activeRoadmap, setActiveRoadmap] = useState<Roadmap | null>(null);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const { percent, refresh: refreshProgress } = useRoadmapProgress(
-    user?.id ?? null,
-    activeRoadmap?.id ?? null
-  );
   const [reloadKey, setReloadKey] = useState(0);
   const setCurrentTaskStore = useCurrentTask((s) => s.setCurrentTask);
 
@@ -186,130 +168,16 @@ export default function LiveFocusView({
     };
   }, [user]);
 
-  const switchActive = async (roadmapId: string) => {
-    if (!user) {
-      toast({
-        title: 'Sign in required',
-        description: 'Connect Supabase to manage roadmaps.',
-      });
-      return;
-    }
-    try {
-      await setActiveRoadmap(user.id, roadmapId);
-    } catch (e) {
-      console.error(e);
-      toast({ title: 'Error', description: 'Could not activate roadmap.' });
-      return;
-    }
-    toast({ title: 'Activated', description: 'Roadmap set as live.' });
-    // Reload minimal state
-    const newActive = roadmaps.find((r) => r.id === roadmapId) ?? null;
-    if (newActive) newActive.status = 'active';
-    setActiveRoadmap(newActive);
-    // Force pick next task for new roadmap
-    if (newActive) {
-      const nextTask = await fetchNextTask(user.id, newActive.id);
-      setTask(nextTask);
-      await supabase.from('current_focus').upsert({
-        user_id: user.id,
-        task_id: nextTask ? nextTask.id : null,
-        started_at: new Date().toISOString(),
-      });
-    }
-  };
-
-  const handleAdvance = async () => {
-    if (!user || !activeRoadmap) { setTask(null); return; }
-    const nextTask = await fetchNextTask(user.id, activeRoadmap.id);
-    setTask(nextTask);
-    await supabase.from('current_focus').upsert({
-      user_id: user.id,
-      task_id: nextTask ? nextTask.id : null,
-      started_at: new Date().toISOString(),
-    });
-    toast({
-      title: nextTask ? 'Great job!' : 'Well done',
-      description: nextTask ? `Next up: ${nextTask.title}` : 'No more tasks in this roadmap.',
-    });
-    refreshProgress();
-  };
-
+  const open = useViewNav();
   return (
-    <section className="w-full h-full flex flex-col">
-      <PanelHeaderUnified
-        title="Live"
-        subtitle="Focus on one thing, right now."
-        actions={
-          <>
-            <StreakBadge />
-            <select
-              className="text-sm bg-background border border-border rounded px-3 py-2"
-              value={activeRoadmap?.id ?? ''}
-              onChange={(e) => switchActive(e.target.value)}
-            >
-              <option value="" disabled>
-                Select roadmap…
-              </option>
-              {roadmaps.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.title} {r.status === 'active' ? '•' : ''}
-                </option>
-              ))}
-            </select>
-            <Button
-              variant="secondary"
-              onClick={() => {
-                if (onManageRoadmaps) onManageRoadmaps();
-                else
-                  toast({
-                    title: 'Roadmaps',
-                    description:
-                      'Manage your roadmaps and tasks in the Control panel for now.',
-                  });
-              }}
-            >
-              Manage
-            </Button>
-          </>
-        }
-      />
-
-      <main className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-4 p-6 max-w-3xl mx-auto w-full">
-        {!user && !initializing && (
-          <div className="glass-panel rounded-xl p-6 text-center">
-            <div className="text-sm text-muted-foreground">
-              Sign in to enable Live Focus, background sound, and quick capture.
-            </div>
-          </div>
-        )}
-
-        <HeroCard taskTitle={task?.title ?? null} />
-
-        <div
-          key={task?.id ?? 'none'}
-          className="animate-in fade-in-50 duration-300"
-        >
-          <CurrentFocusCard
-            activeRoadmap={activeRoadmap}
-            task={task}
-            progressPercent={percent}
-            onAdvance={handleAdvance}
-          />
-        </div>
-
-        <QuickActionsBar currentTask={task} />
-
-        <MoodCarousel />
-        <PreviewCards progressPercent={percent} />
-      </main>
-      <ActionDock
-        onStart={() =>
-          toast({
-            title: 'Focus Session',
-            description: 'Starting focus mode soon.',
-          })
-        }
-      />
+    <section className="w-full h-full flex flex-col items-center justify-center p-6 gap-6">
+      <Button variant="ghost" className="self-start" onClick={() => open('home')}>
+        Back
+      </Button>
+      <h2 className="text-xl font-semibold">
+        {task ? task.title : 'No task selected'}
+      </h2>
+      <FocusTimer />
     </section>
   );
 }

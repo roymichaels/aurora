@@ -5,6 +5,7 @@ import { views, type ViewId } from "@/views/registry";
 import { GameHUD } from "@/components/game/GameHUD";
 import { AnchoredChatBar } from "@/components/chat/AnchoredChatBar";
 import BottomDock from "@/components/navigation/BottomDock";
+import { TimerHudChip } from "@/components/navigation/TimerHudChip";
 import { ChatProvider } from "@/state/chat";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
@@ -137,6 +138,7 @@ export default function AppShell() {
       <GameHUD />
       <BottomDock />
       <AnchoredChatBar />
+      <TimerHudChip />
     </div>
     </ChatProvider>
   );
