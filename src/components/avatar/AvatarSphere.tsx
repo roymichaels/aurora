@@ -10,6 +10,7 @@ interface Props {
   size?: number;
   isThinking?: boolean;
   isSpeaking?: boolean;
+  isListening?: boolean;
   progressPercent?: number;
 }
 
@@ -17,6 +18,7 @@ export function AvatarSphere({
   size = 96,
   isThinking = false,
   isSpeaking = false,
+  isListening = false,
   progressPercent = 0,
 }: Props) {
   const { enabled, sentiment, audio, mood, milestone, streak } = useAvatarStore();
@@ -31,6 +33,7 @@ export function AvatarSphere({
   const streakRef = useRef<number>(0);
   const thinkingRef = useRef(isThinking);
   const speakingRef = useRef(isSpeaking);
+  const listeningRef = useRef(isListening);
   const progressRef = useRef(progressPercent);
   const reduceMotion = useRef(false);
 
@@ -41,6 +44,10 @@ export function AvatarSphere({
   useEffect(() => {
     speakingRef.current = isSpeaking;
   }, [isSpeaking]);
+
+  useEffect(() => {
+    listeningRef.current = isListening;
+  }, [isListening]);
 
   useEffect(() => {
     progressRef.current = progressPercent;
@@ -120,6 +127,10 @@ export function AvatarSphere({
           mesh.rotation.y += 0.005;
           scale *= 1 + Math.sin(time) * 0.05;
         }
+        if (listeningRef.current) {
+          scale *= 1 + Math.sin(time * 4) * 0.03;
+          emissive = Math.max(emissive, 0.05);
+        }
         if (thinkingRef.current) {
           scale *= 1 + Math.sin(time * 2) * 0.05;
         }
@@ -149,7 +160,10 @@ export function AvatarSphere({
       analyserRef.current = null;
       return;
     }
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const AudioCtx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const ctx = new AudioCtx();
     const src = ctx.createMediaElementSource(audio);
     const analyser = ctx.createAnalyser();
     analyser.fftSize = 2048;
@@ -157,8 +171,8 @@ export function AvatarSphere({
     analyser.connect(ctx.destination);
     analyserRef.current = analyser;
     return () => {
-      try { src.disconnect(); } catch {}
-      try { analyser.disconnect(); } catch {}
+      try { src.disconnect(); } catch {/* ignore */}
+      try { analyser.disconnect(); } catch {/* ignore */}
       analyserRef.current = null;
     };
   }, [audio]);
