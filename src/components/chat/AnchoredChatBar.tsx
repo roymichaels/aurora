@@ -27,7 +27,9 @@ export function AnchoredChatBar() {
   }, []);
 
   useEffect(() => {
+
     bus.emit('sphere/state:set', { state: 'idle' } as any);
+
   }, []);
 
   useEffect(() => {
@@ -57,7 +59,9 @@ export function AnchoredChatBar() {
     if (!rec || listening) return;
     setListening(true);
     bus.emit('voice/listen:start', {});
+
     bus.emit('sphere/state:set', { state: 'listening' } as any);
+
     rec.start();
   };
 
@@ -66,7 +70,9 @@ export function AnchoredChatBar() {
     if (!rec) return;
     rec.stop();
     bus.emit('voice/listen:stop', {});
+
     bus.emit('sphere/state:set', { state: 'thinking' } as any);
+
     setListening(false);
   };
 
