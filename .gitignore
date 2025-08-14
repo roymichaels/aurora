@@ -26,3 +26,4 @@ dist-ssr
 memory/*.db
 memory/chroma_db/
 __pycache__/
+*.env
