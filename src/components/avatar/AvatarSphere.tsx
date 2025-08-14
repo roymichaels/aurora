@@ -1,10 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import {
   useAvatarStore,
   type AvatarMood,
   type AvatarMilestone,
 } from '@/state/avatar';
+import { useVoiceStore } from '@/state/voice';
+import { useGameStore } from '@/game/store';
 
 interface Props {
   size?: number;
@@ -16,12 +18,20 @@ interface Props {
 
 export function AvatarSphere({
   size = 96,
-  isThinking = false,
-  isSpeaking = false,
-  isListening = false,
-  progressPercent = 0,
+  isThinking,
+  isSpeaking,
+  isListening,
+  progressPercent,
 }: Props) {
   const { enabled, sentiment, audio, mood, milestone, streak } = useAvatarStore();
+  const storeSpeaking = useVoiceStore((s) => s.isSpeaking);
+  const progressStore = useGameStore((s) => s.stats.xp);
+
+  const [listening, setListening] = useState(isListening ?? false);
+  const [thinking, setThinking] = useState(isThinking ?? false);
+  const speaking = isSpeaking ?? storeSpeaking;
+  const progressPct = progressPercent ?? progressStore;
+
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
@@ -31,27 +41,45 @@ export function AvatarSphere({
   const moodRef = useRef<AvatarMood>('neutral');
   const milestoneRef = useRef<AvatarMilestone>('none');
   const streakRef = useRef<number>(0);
-  const thinkingRef = useRef(isThinking);
-  const speakingRef = useRef(isSpeaking);
-  const listeningRef = useRef(isListening);
-  const progressRef = useRef(progressPercent);
+  const thinkingRef = useRef(thinking);
+  const speakingRef = useRef(speaking);
+  const listeningRef = useRef(listening);
+  const progressRef = useRef(progressPct);
   const reduceMotion = useRef(false);
 
   useEffect(() => {
-    thinkingRef.current = isThinking;
-  }, [isThinking]);
-
-  useEffect(() => {
-    speakingRef.current = isSpeaking;
-  }, [isSpeaking]);
-
-  useEffect(() => {
-    listeningRef.current = isListening;
+    if (isListening === undefined) {
+      const onListen = (e: Event) => setListening(Boolean((e as CustomEvent).detail));
+      window.addEventListener('voice-listening', onListen);
+      return () => window.removeEventListener('voice-listening', onListen);
+    }
+    setListening(isListening ?? false);
   }, [isListening]);
 
   useEffect(() => {
-    progressRef.current = progressPercent;
-  }, [progressPercent]);
+    if (isThinking === undefined) {
+      const onProcess = (e: Event) => setThinking(Boolean((e as CustomEvent).detail));
+      window.addEventListener('voice-processing', onProcess);
+      return () => window.removeEventListener('voice-processing', onProcess);
+    }
+    setThinking(isThinking ?? false);
+  }, [isThinking]);
+
+  useEffect(() => {
+    thinkingRef.current = thinking;
+  }, [thinking]);
+
+  useEffect(() => {
+    speakingRef.current = speaking;
+  }, [speaking]);
+
+  useEffect(() => {
+    listeningRef.current = listening;
+  }, [listening]);
+
+  useEffect(() => {
+    progressRef.current = progressPct;
+  }, [progressPct]);
 
   useEffect(() => {
     reduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -188,7 +216,7 @@ export function AvatarSphere({
     const tint = new THREE.Color().setHSL(p * 0.4, 0.7, 0.5);
     base.lerp(tint, 0.25);
     matRef.current.color.copy(base);
-  }, [sentiment, progressPercent]);
+  }, [sentiment, progressPct]);
 
   // Distort geometry based on sentiment
   useEffect(() => {
