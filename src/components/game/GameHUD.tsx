@@ -1,26 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
-import { quickSlots } from "@/game/hud/hud.data";
 import { AvatarSphere } from "@/components/avatar/AvatarSphere";
-import { Mic, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
-import { useTextToSpeech } from "@/voice/useTextToSpeech";
-import { useHUDActions } from "@/game/hud/useHUDActions";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAvatarStore } from "@/state/avatar";
+import HUDQuickActions from "@/game/hud/HUDQuickActions";
+import ModalHost from "@/components/modals/ModalHost";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
-
-function fire<T>(type: string, payload?: T) {
-  window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
-}
 
 export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
-  const { run } = useHUDActions();
   const avatarEnabled = useAvatarStore((s) => s.enabled);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { enabled, enable } = useTextToSpeech();
-  const [listening, setListening] = useState(false);
-  const [processing, setProcessing] = useState(false);
 
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
@@ -31,36 +21,11 @@ export function GameHUD() {
     document.documentElement.style.setProperty('--hud-h', `${h}px`);
   }, [expanded, isMobile]);
 
-  useEffect(() => {
-    const onListen = (e: Event) => setListening(Boolean((e as CustomEvent).detail));
-    const onProcess = (e: Event) => setProcessing(Boolean((e as CustomEvent).detail));
-    window.addEventListener('voice-listening', onListen);
-    window.addEventListener('voice-processing', onProcess);
-    return () => {
-      window.removeEventListener('voice-listening', onListen);
-      window.removeEventListener('voice-processing', onProcess);
-    };
-  }, []);
-
   const showMetrics = !isMobile || expanded;
-
-  // Desktop hotkeys 1..6 (preserved from legacy HUD)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && target.closest('input, textarea, [contenteditable="true"]')) return;
-      const n = Number(e.key);
-      if (n >= 1 && n <= 6) {
-        const slot = quickSlots[n - 1];
-        if (slot) run(slot.action);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [run]);
 
   return (
     <>
+      <ModalHost />
       <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <div
         className="fixed left-3 right-3"
@@ -86,80 +51,8 @@ export function GameHUD() {
             </div>
           </div>
 
-          {/* Actions (scroll on small, wrap/justify on desktop) */}
-          <ul className="hud-actions flex gap-2 ml-auto overflow-x-auto flex-nowrap scroll-smooth snap-x snap-mandatory md:overflow-visible md:flex-wrap md:justify-end md:ml-auto">
-            {quickSlots.map((a) => (
-              <li key={a.id} className="snap-start">
-                <button
-                  type="button"
-                  className="action-chip"
-                  aria-label={a.label}
-                  title={a.label}
-                  onClick={() => run(a.action)}
-                >
-                  {a.icon ? (
-                    <i className={cn('hud-glyph', a.icon)} />
-                  ) : (
-                    <span className="text-sm font-medium">{a.key}</span>
-                  )}
-                  <span className="hidden sm:inline text-sm">{a.label}</span>
-                </button>
-              </li>
-            ))}
-            {!enabled && (
-              <li className="snap-start">
-                <button
-                  type="button"
-                  className="action-chip"
-                  aria-label="Enable voice"
-                  title="Enable voice"
-                  onClick={enable}
-                >
-                  <Mic className="w-4 h-4" />
-                  <span className="hidden sm:inline text-sm">Enable Voice</span>
-                </button>
-              </li>
-            )}
-            {listening && (
-              <li className="snap-start">
-                <div className="action-chip pointer-events-none">
-                  <Mic className="w-4 h-4 animate-pulse" />
-                  <span className="hidden sm:inline text-sm">Listening</span>
-                </div>
-              </li>
-            )}
-            {processing && (
-              <li className="snap-start">
-                <div className="action-chip pointer-events-none">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="hidden sm:inline text-sm">Processing</span>
-                </div>
-              </li>
-            )}
-            <li className="snap-start">
-              <button
-                type="button"
-                className="action-chip mic"
-                aria-label="Open Aurora Agent"
-                title="Aurora Agent"
-                onClick={() => fire('openAgent')}
-              >
-                <Mic className="w-4 h-4" />
-                <span className="hidden sm:inline text-sm">Agent</span>
-              </button>
-            </li>
-            <li className="snap-start">
-              <button
-                type="button"
-                className="action-chip"
-                aria-label="Open Settings"
-                title="Settings"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <span className="text-sm font-medium">Settings</span>
-              </button>
-            </li>
-          </ul>
+        {/* Actions (scroll on small, wrap/justify on desktop) */}
+          <HUDQuickActions />
         </div>
 
         {/* Row 2: Gauges full width (hidden when collapsed on mobile) */}
