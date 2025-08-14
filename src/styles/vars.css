@@ -1,7 +1,7 @@
 /* Floating metrics for the app: right-side stack */
 :root {
   --compass-size: 72px;
-  --chatbar-h: 56px; /* chat bar */
+  --chatbar-h: 64px; /* chat bar */
   --dock-h: 56px; /* bottom dock */
   --fab-size: 56px;    /* new task */
   --gap: 12px;
