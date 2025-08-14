@@ -82,3 +82,13 @@ export async function auroraChat(
   for (const filter of brain.filters) filtered = filter(filtered);
   return { content: filtered, sentiment };
 }
+
+export async function auroraChatStream(
+  messages: ChatMessage[],
+  options: ChatOptions = {},
+  onChunk: (chunk: string) => void,
+): Promise<{ sentiment: number }> {
+  const { content, sentiment } = await auroraChat(messages, options);
+  onChunk(content);
+  return { sentiment };
+}
