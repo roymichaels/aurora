@@ -51,6 +51,7 @@ export default function AppShell() {
         voiceNote: 'voice',
         addNote: 'notes',
         openMap: 'portal',
+        openBrain: 'brain',
       };
       const vid = t ? map[t] : undefined;
       if (vid) open(vid);
