@@ -100,12 +100,12 @@ export default function HomeView() {
         </div>
 
         {/* Quick pods */}
-        <div className="flex gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {pods.map((p) => (
             <button
               key={p.action}
               onClick={() => run(p.action)}
-              className="flex-1 glass-panel rounded-xl p-4 flex flex-col items-center gap-2 hover-scale"
+              className="glass-panel rounded-xl p-4 flex flex-col items-center gap-2 hover-scale"
             >
               <p.icon className="w-6 h-6" />
               <span className="text-sm font-medium">{p.label}</span>
