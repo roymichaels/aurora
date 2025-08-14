@@ -17,6 +17,10 @@ export function AnchoredChatBar() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
@@ -51,9 +55,13 @@ export function AnchoredChatBar() {
     void send(text);
     setInput("");
     setShowChips(false);
+    inputRef.current?.focus();
   };
 
-  const handleConfirm = () => void handleSend();
+  const handleConfirm = () => {
+    void handleSend();
+    inputRef.current?.focus();
+  };
   const handleEdit = () => {
     setShowChips(false);
     inputRef.current?.focus();
@@ -63,6 +71,7 @@ export function AnchoredChatBar() {
 
   const playLast = () => {
     if (lastAssistant) speak(lastAssistant.content);
+    inputRef.current?.focus();
   };
 
   return (
@@ -111,7 +120,10 @@ export function AnchoredChatBar() {
         {blocked ? (
           <button
             type="button"
-            onClick={resume}
+            onClick={() => {
+              resume();
+              inputRef.current?.focus();
+            }}
             className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center gap-1"
           >
             <Volume2 className="w-3 h-3" />
