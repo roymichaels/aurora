@@ -29,6 +29,11 @@ function buildSystemMessages(profile: UserProfile | null): ChatMessage[] {
     systemMessages.push({ role: 'system', content: brain.cognition.contextPrompt });
   }
 
+  systemMessages.push({
+    role: 'system',
+    content: 'Respond in 2 to 4 sentences and finish with a question or call to action for the user.'
+  });
+
   return systemMessages;
 }
 
@@ -57,7 +62,10 @@ export async function auroraChat(
 
   const { preference, fallbackToCloud } = useModelPreference.getState();
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
-  const conn = typeof navigator !== 'undefined' ? (navigator as any).connection : undefined;
+  const conn =
+    typeof navigator !== 'undefined'
+      ? (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+      : undefined;
   const lowBandwidth = !!conn && (conn.saveData || ['slow-2g', '2g'].includes(conn.effectiveType || ''));
 
   let route: 'local' | 'cloud' | undefined;

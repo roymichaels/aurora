@@ -21,6 +21,7 @@ export function useTextToSpeech() {
   });
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [blocked, setBlocked] = useState<(() => void) | null>(null);
   const { voiceId, speed, pitch, expression, emotion, mode, setMode } =
 
     useVoiceStore((s) => ({
@@ -70,6 +71,7 @@ export function useTextToSpeech() {
   const speak = useCallback(
     async (text: string) => {
       if (!text?.trim()) return;
+      setBlocked(null);
       if (!enabled) {
         ttsAutoplayToast();
         const resume = () => {
@@ -120,14 +122,12 @@ export function useTextToSpeech() {
           });
           if (audio) {
             audioRef.current = audio;
-            if ((error as any)?.name === "NotAllowedError") {
+            if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
               fire('voice-processing', false);
               ttsAutoplayToast();
-              const resume = () => {
+              setBlocked(() => () => {
                 audio.play().catch(() => {});
-              };
-              window.addEventListener("pointerdown", resume, { once: true });
-              window.addEventListener("keydown", resume, { once: true });
+              });
             }
             return;
           }
@@ -155,14 +155,12 @@ export function useTextToSpeech() {
           );
           if (audio) {
             audioRef.current = audio;
-            if ((error as any)?.name === "NotAllowedError") {
+            if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
               fire('voice-processing', false);
               ttsAutoplayToast();
-              const resume = () => {
+              setBlocked(() => () => {
                 audio.play().catch(() => {});
-              };
-              window.addEventListener("pointerdown", resume, { once: true });
-              window.addEventListener("keydown", resume, { once: true });
+              });
             }
             return;
           }
@@ -204,13 +202,11 @@ export function useTextToSpeech() {
               window.speechSynthesis.speak(u);
             } catch (err) {
               fire('voice-processing', false);
-              if ((err as any)?.name === "NotAllowedError") {
+              if ((err as { name?: string } | undefined)?.name === "NotAllowedError") {
                 ttsAutoplayToast();
-                const resume = () => {
+                setBlocked(() => () => {
                   window.speechSynthesis.speak(u);
-                };
-                window.addEventListener("pointerdown", resume, { once: true });
-                window.addEventListener("keydown", resume, { once: true });
+                });
               }
               return;
             }
@@ -229,7 +225,7 @@ export function useTextToSpeech() {
       }
       fire('voice-processing', false);
     },
-    [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode, enable],
+    [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode, enable, canAccessFeature],
 
   );
 
@@ -241,9 +237,17 @@ export function useTextToSpeech() {
     } catch {
       /* ignore */
     }
+    setBlocked(null);
     setIsSpeaking(false);
   }, []);
 
-  return { speak, cancel, isSpeaking, enabled, enable };
+  const resume = useCallback(() => {
+    if (blocked) {
+      blocked();
+      setBlocked(null);
+    }
+  }, [blocked]);
+
+  return { speak, cancel, isSpeaking, enabled, enable, blocked: !!blocked, resume };
 }
 
