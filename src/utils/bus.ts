@@ -1,6 +1,8 @@
+import type { ChatEvents } from '@/state/types/chatEvents';
+
 export type EventMap = {
   'nav:view': { id: string; params?: Record<string, string> };
-};
+} & ChatEvents;
 
 const listeners: { [K in keyof EventMap]?: ((p: EventMap[K]) => void)[] } = {};
 

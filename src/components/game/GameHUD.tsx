@@ -8,6 +8,7 @@ import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { useHUDActions } from "@/game/hud/useHUDActions";
 import { useAvatarStore } from "@/state/avatar";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
+import { bus } from "@/utils/bus";
 
 function fire<T>(type: string, payload?: T) {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -33,12 +34,11 @@ export function GameHUD() {
 
   useEffect(() => {
     const onListen = (e: Event) => setListening(Boolean((e as CustomEvent).detail));
-    const onProcess = (e: Event) => setProcessing(Boolean((e as CustomEvent).detail));
     window.addEventListener('voice-listening', onListen);
-    window.addEventListener('voice-processing', onProcess);
+    const off = bus.on('voice/state:set', ({ state }) => setProcessing(state === 'thinking'));
     return () => {
       window.removeEventListener('voice-listening', onListen);
-      window.removeEventListener('voice-processing', onProcess);
+      off();
     };
   }, []);
 

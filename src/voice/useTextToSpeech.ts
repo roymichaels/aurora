@@ -5,12 +5,18 @@ import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
 import { ttsAutoplayToast } from "@/voice/ttsAutoplayToast";
 import { useSubscription } from "@/modules/payments/hooks/useSubscription";
 import { guardPremiumAction } from "@/modules/payments/guard";
+import { bus } from "@/utils/bus";
 
-function fire(type: string, detail: boolean) {
-  window.dispatchEvent(new CustomEvent(type, { detail }));
-  const store = useVoiceStore.getState();
-  if (type === "voice-listening") store.setListening(detail);
-  if (type === "voice-processing") store.setThinking(detail);
+function fire(type: 'voice-listening' | 'voice-processing', detail: boolean) {
+  if (type === 'voice-processing') {
+    const state = detail ? 'thinking' : 'speaking';
+    bus.emit('voice/state:set', { state });
+    bus.emit('sphere/state:set', { state });
+    useVoiceStore.getState().setThinking(detail);
+  } else {
+    window.dispatchEvent(new CustomEvent(type, { detail }));
+    useVoiceStore.getState().setListening(detail);
+  }
 }
 
 const ELEVENLABS_DEFAULT_VOICE_ID =

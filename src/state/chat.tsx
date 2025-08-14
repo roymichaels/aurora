@@ -4,6 +4,7 @@ import type { ChatMessage } from "@/types/chat";
 import { useAvatarStore } from "@/state/avatar";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { useVoiceStore } from "@/state/voice";
+import { bus } from "@/utils/bus";
 import {
   memoryStore,
   retrieveRelevantMemories,
@@ -33,7 +34,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     const history: ChatMessage[] = messages.map(m => ({ role: m.role, content: m.content }));
     const userMsg: ChatEntry = { id: crypto.randomUUID(), role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
-    window.dispatchEvent(new CustomEvent('voice-processing', { detail: true }));
+    bus.emit('chat/send', { id: userMsg.id, content: text });
+    const replyId = crypto.randomUUID();
+    bus.emit('chat/stream:start', { id: replyId });
+    bus.emit('voice/state:set', { state: 'thinking' });
+    bus.emit('sphere/state:set', { state: 'thinking' });
     useVoiceStore.getState().setThinking(true);
     setSending(true);
     void (async () => {
@@ -71,8 +76,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           confidence,
         });
         useAvatarStore.getState().setSentiment(sentiment);
+        bus.emit('chat/stream:chunk', { id: replyId, content: replyText });
         const reply: ChatEntry = {
-          id: crypto.randomUUID(),
+          id: replyId,
           role: "assistant",
           content: replyText,
         };
@@ -80,16 +86,19 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         void speak(replyText);
         memoryStore.add("episodic", "assistant", replyText).catch(() => {});
         saveMemory(replyText, { role: "assistant" }).catch(() => {});
-      } catch {
+        bus.emit('chat/stream:end', { id: replyId });
+      } catch (e) {
         const err: ChatEntry = {
-          id: crypto.randomUUID(),
+          id: replyId,
           role: "assistant",
           content: "Sorry, I couldn't respond.",
         };
         setMessages(prev => [...prev, err]);
+        bus.emit('chat/stream:error', { id: replyId, error: e });
       } finally {
         setSending(false);
-        window.dispatchEvent(new CustomEvent('voice-processing', { detail: false }));
+        bus.emit('voice/state:set', { state: 'speaking' });
+        bus.emit('sphere/state:set', { state: 'speaking' });
         useVoiceStore.getState().setThinking(false);
       }
     })();

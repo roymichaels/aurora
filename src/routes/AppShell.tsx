@@ -37,7 +37,7 @@ export default function AppShell() {
   useKeyboardOffset();
 
   useEffect(() => {
-    const off = bus.on('nav:view', ({ id, params }: { id: ViewId; params?: Record<string, string> }) => open(id, params));
+    const off = bus.on('nav:view', ({ id, params }) => open(id as ViewId, params));
     return off;
   }, [open]);
 
