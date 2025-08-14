@@ -6,6 +6,7 @@ import * as htmlToImage from "html-to-image";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfTodayISO } from "@/lib/utils";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 interface Props {
   open: boolean;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function ShareCard({ open, onOpenChange, progressPercent }: Props) {
   const { user } = useSupabaseAuth();
+  const focusChatInput = useChatInputFocus();
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const [imgUrl, setImgUrl] = useState<string | null>(null);
   const [streak, setStreak] = useState<number>(0);
@@ -120,8 +122,21 @@ export default function ShareCard({ open, onOpenChange, progressPercent }: Props
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) focusChatInput();
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-lg"
+        onEscapeKeyDown={(e) => {
+          e.preventDefault();
+          onOpenChange(false);
+          focusChatInput();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Share your progress</DialogTitle>
         </DialogHeader>

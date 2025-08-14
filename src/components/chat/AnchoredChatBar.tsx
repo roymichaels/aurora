@@ -5,6 +5,7 @@ import { Mic, Send, Volume2 } from "lucide-react";
 import { useChat } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
+import { setChatInputRef } from "@/hooks/useChatInputFocus";
 
 export function AnchoredChatBar() {
   const { send, sending, messages, recall } = useChat();
@@ -17,7 +18,10 @@ export function AnchoredChatBar() {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    const ref = inputRef.current;
+    setChatInputRef(ref);
+    ref?.focus();
+    return () => setChatInputRef(null);
   }, []);
 
   useEffect(() => {

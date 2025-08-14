@@ -23,12 +23,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 interface Props {
   bucket?: MemoryBucket;
 }
 
 export default function MemoryManager({ bucket = "semantic" }: Props) {
+  const focusChatInput = useChatInputFocus();
   const [memories, setMemories] = useState<MemoryEntry[]>([]);
   const [editing, setEditing] = useState<MemoryEntry | null>(null);
   const [content, setContent] = useState("");
@@ -103,8 +105,22 @@ export default function MemoryManager({ bucket = "semantic" }: Props) {
         </TableBody>
       </Table>
 
-      <Dialog open={!!editing} onOpenChange={() => setEditing(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null);
+            focusChatInput();
+          }
+        }}
+      >
+        <DialogContent
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            setEditing(null);
+            focusChatInput();
+          }}
+        >
           <DialogHeader>
             <DialogTitle>Edit Memory</DialogTitle>
           </DialogHeader>

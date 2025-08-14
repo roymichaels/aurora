@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useChatInputFocus } from "@/hooks/useChatInputFocus"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -174,6 +175,7 @@ const Sidebar = React.forwardRef<
     ref
   ) => {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const focusChatInput = useChatInputFocus()
 
     if (collapsible === "none") {
       return (
@@ -192,7 +194,14 @@ const Sidebar = React.forwardRef<
 
     if (isMobile) {
       return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+        <Sheet
+          open={openMobile}
+          onOpenChange={(open) => {
+            setOpenMobile(open)
+            if (!open) focusChatInput()
+          }}
+          {...props}
+        >
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
