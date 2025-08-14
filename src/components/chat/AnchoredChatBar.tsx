@@ -2,13 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
-import { useChatStore } from "@/state/chat";
+import { useChat } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 
 export function AnchoredChatBar() {
-  const send = useChatStore((s) => s.send);
-  const sending = useChatStore((s) => s.sending);
-  const messages = useChatStore((s) => s.messages);
+  const { send, sending, messages } = useChat();
   const { speak } = useTextToSpeech();
 
   const [input, setInput] = useState("");
@@ -59,7 +57,7 @@ export function AnchoredChatBar() {
     <div
       className="fixed left-3 right-3"
       style={{
-        bottom: `calc(var(--hud-h) + var(--hud-gap) + env(safe-area-inset-bottom))`,
+        bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + env(safe-area-inset-bottom))`,
         zIndex: "var(--z-hud)",
       }}
     >
