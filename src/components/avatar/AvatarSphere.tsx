@@ -14,6 +14,7 @@ interface Props {
   isSpeaking?: boolean;
   isListening?: boolean;
   progressPercent?: number;
+  draggable?: boolean;
 }
 
 export function AvatarSphere({
@@ -22,17 +23,23 @@ export function AvatarSphere({
   isSpeaking,
   isListening,
   progressPercent,
+  draggable = true,
 }: Props) {
   const { enabled, sentiment, audio, mood, milestone, streak } = useAvatarStore();
-  const storeSpeaking = useVoiceStore((s) => s.isSpeaking);
+  const store = useVoiceStore();
+  const storeSpeaking = store.isSpeaking;
+  const storeListening = store.isListening;
+  const storeThinking = store.isThinking;
   const progressStore = useGameStore((s) => s.stats.xp);
 
-  const [listening, setListening] = useState(isListening ?? false);
-  const [thinking, setThinking] = useState(isThinking ?? false);
+  const listening = isListening ?? storeListening;
+  const thinking = isThinking ?? storeThinking;
   const speaking = isSpeaking ?? storeSpeaking;
   const progressPct = progressPercent ?? progressStore;
 
   const mountRef = useRef<HTMLDivElement | null>(null);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const posRef = useRef(pos);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const matRef = useRef<THREE.MeshStandardMaterial | null>(null);
@@ -48,22 +55,22 @@ export function AvatarSphere({
   const reduceMotion = useRef(false);
 
   useEffect(() => {
-    if (isListening === undefined) {
-      const onListen = (e: Event) => setListening(Boolean((e as CustomEvent).detail));
-      window.addEventListener('voice-listening', onListen);
-      return () => window.removeEventListener('voice-listening', onListen);
+    posRef.current = pos;
+    if (draggable && mountRef.current) {
+      mountRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
     }
-    setListening(isListening ?? false);
-  }, [isListening]);
+  }, [pos, draggable]);
 
   useEffect(() => {
-    if (isThinking === undefined) {
-      const onProcess = (e: Event) => setThinking(Boolean((e as CustomEvent).detail));
-      window.addEventListener('voice-processing', onProcess);
-      return () => window.removeEventListener('voice-processing', onProcess);
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    let x = Number(window.localStorage.getItem('aurora.sphere.x') || 0);
+    let y = Number(window.localStorage.getItem('aurora.sphere.y') || 0);
+    if (isMobile || isNaN(x) || isNaN(y)) {
+      x = window.innerWidth - size - 16;
+      y = window.innerHeight - size - 16;
     }
-    setThinking(isThinking ?? false);
-  }, [isThinking]);
+    setPos({ x, y });
+  }, [size, draggable]);
 
   useEffect(() => {
     thinkingRef.current = thinking;
@@ -84,6 +91,67 @@ export function AvatarSphere({
   useEffect(() => {
     reduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, []);
+
+  useEffect(() => {
+    if (!draggable || !mountRef.current) return;
+    const el = mountRef.current;
+    const start = { x: 0, y: 0 };
+    const pointer = { x: 0, y: 0 };
+    let frame = 0;
+    const move = { x: 0, y: 0 };
+    const onPointerMove = (e: PointerEvent) => {
+      if (frame) return;
+      move.x = start.x + (e.clientX - pointer.x);
+      move.y = start.y + (e.clientY - pointer.y);
+      frame = requestAnimationFrame(() => {
+        setPos({ x: move.x, y: move.y });
+        frame = 0;
+      });
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      el.releasePointerCapture(e.pointerId);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      const { x, y } = posRef.current;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const isMobile = w <= 768;
+      const nearEdge = x < 40 || x > w - size - 40;
+      if (isMobile || nearEdge) {
+        const snapX = w - size - 16;
+        const snapY = h - size - 16;
+        setPos({ x: snapX, y: snapY });
+        try {
+          localStorage.setItem('aurora.sphere.x', String(snapX));
+          localStorage.setItem('aurora.sphere.y', String(snapY));
+        } catch {
+          /* ignore */
+        }
+      } else {
+        try {
+          localStorage.setItem('aurora.sphere.x', String(x));
+          localStorage.setItem('aurora.sphere.y', String(y));
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      start.x = posRef.current.x;
+      start.y = posRef.current.y;
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+      el.setPointerCapture(e.pointerId);
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+    };
+    el.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      el.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+    };
+  }, [draggable, size]);
 
   // Setup scene
   useEffect(() => {
@@ -276,7 +344,20 @@ export function AvatarSphere({
   }, [streak]);
 
   if (!enabled) return null;
-  return <div ref={mountRef} style={{ width: size, height: size }} />;
+  return (
+    <div
+      ref={mountRef}
+      style={{
+        width: size,
+        height: size,
+        position: draggable ? 'fixed' : undefined,
+        left: draggable ? 0 : undefined,
+        top: draggable ? 0 : undefined,
+        willChange: draggable ? 'transform' : undefined,
+        touchAction: draggable ? 'none' : undefined,
+      }}
+    />
+  );
 }
 
 export default AvatarSphere;

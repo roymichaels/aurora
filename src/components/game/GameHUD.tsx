@@ -77,7 +77,7 @@ export function GameHUD() {
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
-            {avatarEnabled && <AvatarSphere size={44} />}
+            {avatarEnabled && <AvatarSphere size={44} draggable={false} />}
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">
                 Lv. {stats.level} • Streak {stats.streak}

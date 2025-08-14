@@ -1,7 +1,11 @@
 import { useState, useRef, useCallback } from 'react'
+import { useVoiceStore } from '@/state/voice'
 
 function fire(type: string, detail: boolean) {
   window.dispatchEvent(new CustomEvent(type, { detail }))
+  const store = useVoiceStore.getState()
+  if (type === 'voice-listening') store.setListening(detail)
+  if (type === 'voice-processing') store.setThinking(detail)
 }
 
 export function useVoiceInput() {
