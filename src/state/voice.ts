@@ -93,14 +93,6 @@ export const useVoiceStore = create<VoiceState>((set) => ({
     }
     set({ locale });
   },
-  setLocale: (locale) => {
-    try {
-      window.localStorage.setItem(VOICE_LOCALE_KEY, locale);
-    } catch {
-      /* ignore */
-    }
-    set({ locale });
-  },
   setSpeed: (speed) => {
     try {
       window.localStorage.setItem(VOICE_SPEED_KEY, String(speed));
