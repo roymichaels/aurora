@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { toast } from "@/components/ui/use-toast";
+import { scheduleTrigger } from "@/lib/triggers";
 
 export const ToolImpl = {
   async get_page_context() {
@@ -106,6 +108,40 @@ export const ToolImpl = {
     await navigator.clipboard.writeText(text);
     toast({ title: "Copied", description: text.length > 60 ? `${text.slice(0, 60)}…` : text });
     return { ok: true };
+  },
+
+  async schedule_calendar_event({ title, time }: { title: string; time: string }) {
+    try {
+      toast({ title: "Calendar requires Pro", description: "Setting local reminder instead." });
+      scheduleTrigger({
+        message: title,
+        schedule: new Date(time),
+        delivery: 'notification',
+      });
+      return { ok: true } as any;
+    } catch (e) {
+      toast({ title: "Reminder failed", description: e instanceof Error ? e.message : String(e) });
+      return { ok: false } as any;
+    }
+  },
+
+  async send_email({ to, subject, body }: { to: string; subject: string; body: string }) {
+    toast({ title: "Email requires Pro", description: "Opening draft instead." });
+    const href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = href;
+    }
+    return { ok: true } as any;
+  },
+
+  async run_automation({ command }: { command: string }) {
+    toast({ title: "Automation requires Pro", description: "Will remind you locally instead." });
+    scheduleTrigger({
+      message: command,
+      schedule: new Date(Date.now() + 1000),
+      delivery: 'notification',
+    });
+    return { ok: true } as any;
   },
 
   async notify({ title, body }: { title: string; body?: string }) {

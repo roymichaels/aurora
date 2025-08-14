@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type ToolName =
   | "get_page_context"
   | "summarize_selection"
@@ -7,7 +8,10 @@ export type ToolName =
   | "block_sites"
   | "fill_form"
   | "copy_to_clipboard"
-  | "notify";
+  | "notify"
+  | "schedule_calendar_event"
+  | "send_email"
+  | "run_automation";
 
 export type Tools = {
   get_page_context: { params: Record<string, never>; result: any };
@@ -19,6 +23,9 @@ export type Tools = {
   fill_form: { params: { text: string }; result: { ok: boolean } };
   copy_to_clipboard: { params: { text: string }; result: { ok: boolean } };
   notify: { params: { title: string; body?: string }; result: { ok: boolean } };
+  schedule_calendar_event: { params: { title: string; time: string }; result: { ok: boolean } };
+  send_email: { params: { to: string; subject: string; body: string }; result: { ok: boolean } };
+  run_automation: { params: { command: string }; result: { ok: boolean } };
 };
 
 export const tools = {
@@ -57,5 +64,17 @@ export const tools = {
   notify: {
     description: "Show a HUD toast.",
     parameters: { title: "string", body: "string" },
+  },
+  schedule_calendar_event: {
+    description: "Schedule a calendar event (Pro only).",
+    parameters: { title: "string", time: "string" },
+  },
+  send_email: {
+    description: "Send an email (Pro only).",
+    parameters: { to: "string", subject: "string", body: "string" },
+  },
+  run_automation: {
+    description: "Run an automation (Pro only).",
+    parameters: { command: "string" },
   },
 } as const;
