@@ -9,6 +9,7 @@ export type GameState = {
   stats: Stats;
   mood: "Calm" | "Focused" | "Confident" | "Stressed" | "Tired";
   quests: Record<string, boolean>;
+  mission: { title: string; description: string };
   setPos: (x: number, y: number) => void;
   setMood: (m: GameState["mood"]) => void;
   awardXP: (amount: number) => void;
@@ -16,6 +17,8 @@ export type GameState = {
   incStreak: () => void;
   resetDaily: () => void;
   setStats: (s: Partial<Stats>) => void;
+  setMissionTitle: (title: string) => void;
+  setMissionDescription: (description: string) => void;
   fetchStats: () => Promise<void>;
 };
 
@@ -24,6 +27,7 @@ const defaults: GameState = {
   stats: { hp: 78, mp: 62, xp: 35, level: 7, streak: 1 },
   mood: "Focused",
   quests: {},
+  mission: { title: "", description: "" },
   setPos() {},
   setMood() {},
   awardXP() {},
@@ -31,6 +35,8 @@ const defaults: GameState = {
   incStreak() {},
   resetDaily() {},
   setStats() {},
+  setMissionTitle() {},
+  setMissionDescription() {},
   fetchStats: async () => {},
 };
 
@@ -114,6 +120,14 @@ export const useGameStore = create<GameState>((set, get) => {
     setStats: (s) => {
       const cur = get().stats;
       persist({ stats: { ...cur, ...s } });
+    },
+    setMissionTitle: (title) => {
+      const m = get().mission;
+      persist({ mission: { ...m, title } });
+    },
+    setMissionDescription: (description) => {
+      const m = get().mission;
+      persist({ mission: { ...m, description } });
     },
   };
 });
