@@ -13,6 +13,7 @@ import { useSwipeNav } from "@/hooks/useSwipeNav";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
+import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import HomeView from "@/views/HomeView";
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
@@ -32,6 +33,7 @@ export default function AppShell() {
   const swipe = useSwipeNav();
   useDailyCheckIn();
   useWeeklyBrainBackup();
+  useKeyboardOffset();
 
   useEffect(() => {
     const off = bus.on('nav:view', ({ id, params }: { id: ViewId; params?: Record<string, string> }) => open(id, params));
@@ -119,7 +121,7 @@ export default function AppShell() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+env(safe-area-inset-bottom))]"
+                  className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset)+env(safe-area-inset-bottom))]"
                 >
                   <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
                     <v.component />
