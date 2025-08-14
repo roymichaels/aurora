@@ -9,7 +9,7 @@ type NavState = {
 };
 
 export const useView = create<NavState>((set) => ({
-  current: "control",
+  current: "home",
   set: (v) => {
     console.debug('[useView] set current view', v);
     set({ current: v });

@@ -10,7 +10,7 @@ import { useSwipeNav } from "@/hooks/useSwipeNav";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
-import ControlView from "@/views/ControlView";
+import HomeView from "@/views/HomeView";
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
   const loc = useLocation();
@@ -102,8 +102,8 @@ export default function AppShell() {
       <div className="os-bg" />
       <AnimatePresence mode="wait">
         <Routes location={loc} key={loc.pathname + loc.search}>
-          <Route index element={<ControlView />} />
-          {views.filter((v) => v.id !== "control").map((v) => (
+          <Route index element={<HomeView />} />
+          {views.filter((v) => v.id !== "home").map((v) => (
             <Route
               key={v.id}
               path={v.path || undefined}

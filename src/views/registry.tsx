@@ -1,8 +1,8 @@
 import { lazy } from "react";
 
 export type ViewId =
-  | "control" | "focus" | "hypno" | "voice" | "notes"
-  | "browser" | "portal" | "archive" | "settings" | "agent" | "runner" | "plan";
+  | "home" | "focus" | "hypno" | "voice" | "notes"
+  | "browser" | "portal" | "archive" | "settings" | "agent" | "runner" | "plan" | "control";
 
 export type ViewMeta = {
   id: ViewId;
@@ -15,7 +15,7 @@ export type ViewMeta = {
 
 export const views: ViewMeta[] = [
 
-  { id: "control", label: "Control", path: "",            component: lazy(() => import("./ControlView")) },
+  { id: "home",    label: "Home",    path: "",            component: lazy(() => import("./HomeView")) },
   { id: "focus",   label: "Focus",   path: "focus",      component: lazy(() => import("./FocusView")) },
   { id: "hypno",   label: "Hypno",   path: "hypno",      component: lazy(() => import("./HypnoView")) },
   { id: "voice",   label: "Voice",   path: "voice",      component: lazy(() => import("./VoiceView")) },
@@ -27,4 +27,5 @@ export const views: ViewMeta[] = [
   { id: "agent",   label: "Agent",   path: "agent",      component: lazy(() => import("./AgentFullView")) },
   { id: "plan",    label: "Plan",    path: "plan",       component: lazy(() => import("./PlanView")) },
   { id: "runner",  label: "Node",    path: "node/:id",   component: lazy(() => import("../pages/NodeRunner")) },
+  { id: "control", label: "Control", path: "control",    component: lazy(() => import("./ControlView")) },
 ];

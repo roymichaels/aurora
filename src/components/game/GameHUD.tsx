@@ -10,7 +10,7 @@ import { useAvatarStore } from "@/state/avatar";
 import { useVoiceStore } from "@/state/voice";
 import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
 
-function fire(type: string, payload?: any) {
+function fire<T>(type: string, payload?: T) {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
 }
 
@@ -34,8 +34,8 @@ export function GameHUD() {
   }, [expanded, isMobile]);
 
   useEffect(() => {
-    const onListen = (e: any) => setListening(Boolean(e.detail));
-    const onProcess = (e: any) => setProcessing(Boolean(e.detail));
+    const onListen = (e: Event) => setListening(Boolean((e as CustomEvent).detail));
+    const onProcess = (e: Event) => setProcessing(Boolean((e as CustomEvent).detail));
     window.addEventListener('voice-listening', onListen);
     window.addEventListener('voice-processing', onProcess);
     return () => {
@@ -59,7 +59,7 @@ export function GameHUD() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [run]);
 
   return (
     <>
@@ -80,10 +80,11 @@ export function GameHUD() {
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
             {avatarEnabled && (
-              <AvatarSphere
+                <AvatarSphere
                 size={44}
                 isThinking={processing}
                 isSpeaking={isSpeaking}
+                isListening={listening}
                 progressPercent={stats.xp}
               />
             )}
