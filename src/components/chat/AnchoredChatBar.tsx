@@ -45,10 +45,10 @@ export function AnchoredChatBar() {
     }
   };
 
-  const handleSend = async (override?: string) => {
+  const handleSend = (override?: string) => {
     const text = (override ?? input).trim();
     if (!text) return;
-    await send(text);
+    void send(text);
     setInput("");
     setShowChips(false);
   };
