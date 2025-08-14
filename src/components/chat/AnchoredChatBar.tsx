@@ -16,6 +16,7 @@ export function AnchoredChatBar() {
   const [showChips, setShowChips] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const pressStartRef = useRef<number | null>(null);
 
   useEffect(() => {
     const ref = inputRef.current;
@@ -43,14 +44,41 @@ export function AnchoredChatBar() {
     recognitionRef.current = rec;
   }, []);
 
-  const toggleListening = () => {
+  const startListening = () => {
+    const rec = recognitionRef.current;
+    if (!rec || listening) return;
+    setListening(true);
+    rec.start();
+  };
+
+  const stopListening = () => {
     const rec = recognitionRef.current;
     if (!rec) return;
-    if (listening) rec.stop();
-    else {
-      setListening(true);
-      rec.start();
+    rec.stop();
+    setListening(false);
+  };
+
+  const toggleListening = () => {
+    if (listening) stopListening();
+    else startListening();
+  };
+
+  const handlePressStart = () => {
+    pressStartRef.current = Date.now();
+    startListening();
+  };
+
+  const handlePressEnd = () => {
+    stopListening();
+  };
+
+  const handleMicClick = () => {
+    if (pressStartRef.current) {
+      const duration = Date.now() - pressStartRef.current;
+      pressStartRef.current = null;
+      if (duration > 300) return;
     }
+    toggleListening();
   };
 
   const handleSend = (override?: string) => {
@@ -90,7 +118,12 @@ export function AnchoredChatBar() {
         <Button
           size="icon"
           variant={listening ? "secondary" : "ghost"}
-          onClick={toggleListening}
+          onMouseDown={handlePressStart}
+          onTouchStart={handlePressStart}
+          onMouseUp={handlePressEnd}
+          onTouchEnd={handlePressEnd}
+          onClick={handleMicClick}
+          aria-pressed={listening}
           aria-label={listening ? "Stop voice input" : "Start voice input"}
         >
           <Mic className="w-4 h-4" />
