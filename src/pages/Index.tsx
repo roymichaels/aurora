@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import GameHome from '@/game/path/GameHome';
 import ArchivePanel from '@/components/archive/ArchivePanel';
-import { FloatingAssistant } from '@/components/live/FloatingAssistant';
 import AppHeader from '@/components/layout/AppHeader';
 import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
 import DailyKickoff from '@/components/live/DailyKickoff';

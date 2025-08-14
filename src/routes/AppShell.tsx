@@ -3,6 +3,7 @@ import { Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
 import { GameHUD } from "@/components/game/GameHUD";
+import { AnchoredChatBar } from "@/components/chat/AnchoredChatBar";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
@@ -114,7 +115,7 @@ export default function AppShell() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="pb-[calc(var(--hud-h)+var(--hud-gap)+env(safe-area-inset-bottom))]"
+                  className="pb-[calc(var(--hud-h)+var(--hud-gap)+var(--chatbar-h)+env(safe-area-inset-bottom))]"
                 >
                   <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
                     <v.component />
@@ -129,6 +130,7 @@ export default function AppShell() {
 
 
       <GameHUD />
+      <AnchoredChatBar />
     </div>
   );
 }
