@@ -4,14 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
 import { useChat } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
+import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
 
 export function AnchoredChatBar() {
   const { send, sending, messages } = useChat();
-  const { speak } = useTextToSpeech();
+  const { speak, blocked, resume } = useTextToSpeech();
 
   const [input, setInput] = useState("");
   const [listening, setListening] = useState(false);
+  const [showChips, setShowChips] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,11 +26,13 @@ export function AnchoredChatBar() {
     rec.onresult = (e: SpeechRecognitionEvent) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const transcript = (e.results as any)?.[0]?.[0]?.transcript as string;
-      if (transcript) handleSend(transcript);
+      if (transcript) {
+        setInput(transcript);
+        setShowChips(true);
+      }
     };
     rec.onend = () => setListening(false);
     recognitionRef.current = rec;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleListening = () => {
@@ -45,6 +50,13 @@ export function AnchoredChatBar() {
     if (!text) return;
     await send(text);
     setInput("");
+    setShowChips(false);
+  };
+
+  const handleConfirm = () => void handleSend();
+  const handleEdit = () => {
+    setShowChips(false);
+    inputRef.current?.focus();
   };
 
   const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
@@ -55,7 +67,7 @@ export function AnchoredChatBar() {
 
   return (
     <div
-      className="fixed left-3 right-3"
+      className="fixed left-3 right-3 relative"
       style={{
         bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + env(safe-area-inset-bottom))`,
         zIndex: "var(--z-hud)",
@@ -72,7 +84,11 @@ export function AnchoredChatBar() {
         </Button>
         <Input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          ref={inputRef}
+          onChange={(e) => {
+            setInput(e.target.value);
+            if (showChips) setShowChips(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -91,17 +107,47 @@ export function AnchoredChatBar() {
         >
           <Send className="w-4 h-4" />
         </Button>
-        {lastAssistant && (
+        {sending && <EvolvingSphere size={24} className="ml-1" />}
+        {blocked ? (
           <button
             type="button"
-            onClick={playLast}
+            onClick={resume}
             className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center gap-1"
           >
             <Volume2 className="w-3 h-3" />
-            Play
+            Tap to play
           </button>
+        ) : (
+          lastAssistant && (
+            <button
+              type="button"
+              onClick={playLast}
+              className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center gap-1"
+            >
+              <Volume2 className="w-3 h-3" />
+              Play
+            </button>
+          )
         )}
       </div>
+      {showChips && (
+        <div className="flex gap-2 absolute -top-8 left-2">
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="action-chip px-3 py-1 text-xs"
+          >
+            Confirm
+          </button>
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="action-chip px-3 py-1 text-xs"
+          >
+            Edit
+          </button>
+        </div>
+      )}
     </div>
   );
 }
