@@ -25,7 +25,7 @@ export default function BrainBackupPanel() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'brain.enc';
+      a.download = 'brain.aurora';
       a.click();
       URL.revokeObjectURL(url);
       toast({ title: 'Brain exported', description: 'Encrypted brain downloaded.' });
@@ -44,6 +44,7 @@ export default function BrainBackupPanel() {
     }
     const input = document.createElement('input');
     input.type = 'file';
+    input.accept = '.aurora';
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;

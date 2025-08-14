@@ -1,4 +1,5 @@
-import { openBrainDb } from './brainDb';
+import { openBrainDb, __setMemoryDb } from './brainDb';
+import { toast } from '@/hooks/use-toast';
 
 const DB_FILE = 'brain.db';
 
@@ -28,33 +29,47 @@ export async function exportEncryptedBrain(passphrase: string): Promise<Blob> {
   out.set(salt, 0);
   out.set(iv, salt.length);
   out.set(encrypted, salt.length + iv.length);
-  return new Blob([out], { type: 'application/octet-stream' });
+  return new Blob([out], { type: 'application/x-aurora' });
 }
 
 async function writeBrain(bytes: Uint8Array) {
   const hasOpfs =
     typeof navigator !== 'undefined' && !!(navigator as any).storage?.getDirectory;
   if (hasOpfs) {
-    const root = await (navigator as any).storage.getDirectory();
-    const handle = await root.getFileHandle(DB_FILE, { create: true });
-    const writable = await handle.createWritable();
-    await writable.write(bytes);
-    await writable.close();
-    return;
+    try {
+      const root = await (navigator as any).storage.getDirectory();
+      const handle = await root.getFileHandle(DB_FILE, { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(bytes);
+      await writable.close();
+      return;
+    } catch {
+      toast({ title: 'Storage error', description: 'OPFS write failed' });
+    }
   }
-  const dbReq = indexedDB.open('brain-db', 1);
-  await new Promise<void>((resolve, reject) => {
-    dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('files');
-    dbReq.onsuccess = () => resolve();
-    dbReq.onerror = () => reject(dbReq.error);
-  });
-  const db = dbReq.result;
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction('files', 'readwrite');
-    const req = tx.objectStore('files').put(bytes, DB_FILE);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  });
+  if (typeof indexedDB !== 'undefined') {
+    try {
+      const dbReq = indexedDB.open('brain-db', 1);
+      await new Promise<void>((resolve, reject) => {
+        dbReq.onupgradeneeded = () => dbReq.result.createObjectStore('files');
+        dbReq.onsuccess = () => resolve();
+        dbReq.onerror = () => reject(dbReq.error);
+      });
+      const db = dbReq.result;
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction('files', 'readwrite');
+        const req = tx.objectStore('files').put(bytes, DB_FILE);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+      return;
+    } catch {
+      toast({ title: 'Storage error', description: 'IndexedDB write failed' });
+    }
+  } else {
+    toast({ title: 'Storage unavailable', description: 'IndexedDB not supported' });
+  }
+  __setMemoryDb(bytes);
 }
 
 export async function importEncryptedBrain(blob: Blob, passphrase: string) {

@@ -35,6 +35,8 @@ export default function BrainView() {
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [tagFilter, setTagFilter] = useState<string>('all');
+  const [recencyFilter, setRecencyFilter] = useState<string>('all');
+  const [importanceFilter, setImportanceFilter] = useState<string>('all');
   const [editing, setEditing] = useState<Memory | null>(null);
   const [editContent, setEditContent] = useState('');
   const [editTags, setEditTags] = useState('');
@@ -76,23 +78,35 @@ export default function BrainView() {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
+    const now = Date.now() / 1000;
     return memories
-      .filter((m) =>
-        m.content.toLowerCase().includes(q)
-      )
-      .filter((m) =>
-        typeFilter === 'all' ? true : m.type === typeFilter
-      )
+      .filter((m) => m.content.toLowerCase().includes(q))
+      .filter((m) => (typeFilter === 'all' ? true : m.type === typeFilter))
       .filter((m) =>
         tagFilter === 'all'
           ? true
           : m.tags.split(',').map((t) => t.trim()).includes(tagFilter)
       )
+      .filter((m) =>
+        importanceFilter === 'all'
+          ? true
+          : m.importance >= Number(importanceFilter)
+      )
+      .filter((m) => {
+        if (recencyFilter === 'all') return true;
+        const map: Record<string, number> = {
+          '24h': 86400,
+          '7d': 604800,
+          '30d': 2592000,
+        };
+        const limit = map[recencyFilter];
+        return m.ts >= now - limit;
+      })
       .map((m) => ({
         ...m,
         why: q ? `Matches "${query}"` : undefined,
       }));
-  }, [memories, query, typeFilter, tagFilter]);
+  }, [memories, query, typeFilter, tagFilter, recencyFilter, importanceFilter]);
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -169,7 +183,7 @@ export default function BrainView() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'brain-backup.bin';
+    a.download = 'brain.aurora';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -213,6 +227,30 @@ export default function BrainView() {
             {uniqueTags.map((t) => (
               <SelectItem key={t} value={t}>
                 {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={recencyFilter} onValueChange={setRecencyFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Recency" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="24h">Last 24h</SelectItem>
+            <SelectItem value="7d">Last 7d</SelectItem>
+            <SelectItem value="30d">Last 30d</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={importanceFilter} onValueChange={setImportanceFilter}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Importance" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All importance</SelectItem>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <SelectItem key={n} value={String(n)}>
+                {`>= ${n}`}
               </SelectItem>
             ))}
           </SelectContent>
@@ -279,6 +317,7 @@ export default function BrainView() {
           <input
             ref={fileInputRef}
             type="file"
+            accept=".aurora"
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
