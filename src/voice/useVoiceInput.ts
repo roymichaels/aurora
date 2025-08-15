@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useVoiceStore } from '@/state/voice';
 import { voiceService } from '@/voice/voiceService';
-import { bus } from '@/utils/bus';
 
 export function useVoiceInput() {
   const listenMode = useVoiceStore((s) => s.listenMode);
@@ -9,12 +8,8 @@ export function useVoiceInput() {
   const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
-    const off = bus.on('voice/transcript', ({ text }) => {
-      setTranscript(text);
-    });
-    return () => {
-      off();
-    };
+    const off = voiceService.onTranscript(setTranscript);
+    return off;
   }, []);
 
   const startListening = useCallback(() => {

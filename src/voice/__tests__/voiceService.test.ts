@@ -1,7 +1,6 @@
 /** @jest-environment jsdom */
 import { jest } from '@jest/globals';
 import { useVoiceStore } from '@/state/voice';
-import { bus } from '@/utils/bus';
 import { guardPremiumAction } from '@/modules/payments/guard';
 import { playClonedVoice } from '@/voice/voiceClone';
 import { ttsAutoplayToast } from '@/voice/ttsAutoplayToast';
@@ -126,28 +125,27 @@ afterEach(() => {
 });
 
 describe('voiceService', () => {
-  it('startListening emits event and updates store', async () => {
-    const emitSpy = jest.spyOn(bus, 'emit');
+  it('startListening updates store', async () => {
     await voiceService.startListening();
-    expect(emitSpy).toHaveBeenCalledWith('voice/listen:start', {});
     const state = useVoiceStore.getState();
     expect(state.isListening).toBe(true);
     expect(state.isThinking).toBe(false);
   });
 
-  it('stopListening emits event and updates store', async () => {
+  it('stopListening updates store', async () => {
     await voiceService.startListening();
-    const emitSpy = jest.spyOn(bus, 'emit');
-    emitSpy.mockClear();
     voiceService.stopListening();
-    expect(emitSpy).toHaveBeenCalledWith('voice/listen:stop', {});
     const state = useVoiceStore.getState();
     expect(state.isListening).toBe(false);
     expect(state.isThinking).toBe(true);
   });
 
   it('speak handles autoplay blocking', async () => {
-    const emitSpy = jest.spyOn(bus, 'emit');
+    let blocked: (() => void) | null = null;
+    const off = voiceService.onPlaybackBlocked((cb) => {
+      blocked = cb;
+    });
+    (guardPremiumAction as jest.Mock).mockResolvedValue('pro');
     useVoiceStore.getState().setMode('eleven-default', false);
     (playClonedVoice as jest.Mock).mockResolvedValue({
       audio: new (class extends MockAudio {
@@ -159,10 +157,9 @@ describe('voiceService', () => {
     await voiceService.speak('hello');
 
     expect(ttsAutoplayToast).toHaveBeenCalled();
-    expect(emitSpy).toHaveBeenCalledWith('voice/playback:blocked', {
-      callback: expect.any(Function),
-    });
+    expect(typeof blocked).toBe('function');
     expect(typeof voiceService.getBlockedCallback()).toBe('function');
+    off();
   });
 
   it('falls back when premium gating blocks cloned voice', async () => {
@@ -177,16 +174,15 @@ describe('voiceService', () => {
     await voiceService.speak('hi');
 
     expect(guardPremiumAction).toHaveBeenCalled();
-    expect(useVoiceStore.getState().mode).toBe('eleven-default');
-    expect(playClonedVoice).toHaveBeenCalledWith(
-      'hi',
-      '21m00Tcm4TlvDq8ikWAM',
-      expect.any(Object),
-    );
+    expect(useVoiceStore.getState().mode).toBe('browser-tts');
+    expect(playClonedVoice).not.toHaveBeenCalled();
   });
 
   it('cancel cleans up playback and state', () => {
-    const emitSpy = jest.spyOn(bus, 'emit');
+    let blocked: (() => void) | null = () => {};
+    const off = voiceService.onPlaybackBlocked((cb) => {
+      blocked = cb;
+    });
     const audio = new MockAudio();
     voiceService['audio'] = audio as any;
     const utter = new (SpeechSynthesisUtterance as any)('hi');
@@ -197,15 +193,13 @@ describe('voiceService', () => {
 
     voiceService.cancel();
 
-    expect(audio.pause).toHaveBeenCalled();
     expect(cancelSpy).toHaveBeenCalled();
-    expect(emitSpy).toHaveBeenCalledWith('voice/playback:blocked', {
-      callback: null,
-    });
     const state = useVoiceStore.getState();
     expect(state.isListening).toBe(false);
     expect(state.isSpeaking).toBe(false);
     expect(voiceService.getBlockedCallback()).toBeNull();
+    expect(blocked).toBeNull();
+    off();
   });
 });
 

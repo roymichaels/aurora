@@ -23,6 +23,8 @@ class VoiceService {
   private audios = new Set<HTMLAudioElement>();
   private enableHandler?: () => void;
   private beforeUnloadHandler?: () => void;
+  private transcriptListeners = new Set<(text: string) => void>();
+  private playbackBlockedListeners = new Set<(cb: (() => void) | null) => void>();
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -35,6 +37,24 @@ class VoiceService {
       this.beforeUnloadHandler = () => this.destroy();
       window.addEventListener('beforeunload', this.beforeUnloadHandler);
     }
+  }
+
+  onTranscript(cb: (text: string) => void) {
+    this.transcriptListeners.add(cb);
+    return () => this.transcriptListeners.delete(cb);
+  }
+
+  onPlaybackBlocked(cb: (callback: (() => void) | null) => void) {
+    this.playbackBlockedListeners.add(cb);
+    return () => this.playbackBlockedListeners.delete(cb);
+  }
+
+  private emitTranscript(text: string) {
+    this.transcriptListeners.forEach((cb) => cb(text));
+  }
+
+  private emitPlaybackBlocked(callback: (() => void) | null) {
+    this.playbackBlockedListeners.forEach((cb) => cb(callback));
   }
 
   enable() {
@@ -63,7 +83,7 @@ class VoiceService {
           const msg = JSON.parse(ev.data);
           if (msg.transcript) {
             useVoiceStore.getState().setThinking(false);
-            bus.emit('voice/transcript', { text: msg.transcript });
+            this.emitTranscript(msg.transcript);
           }
           if (msg.audio) {
             const audio = new Audio('data:audio/wav;base64,' + msg.audio);
@@ -75,7 +95,7 @@ class VoiceService {
                 this.blocked = () => {
                   audio.play().catch(() => {});
                 };
-                bus.emit('voice/playback:blocked', { callback: this.blocked });
+                this.emitPlaybackBlocked(this.blocked);
               }
             });
           }
@@ -109,7 +129,6 @@ class VoiceService {
     await pc.setRemoteDescription(answer);
     useVoiceStore.getState().setListening(true);
     useVoiceStore.getState().setThinking(false);
-    bus.emit('voice/listen:start', {});
   }
 
   stopListening() {
@@ -128,13 +147,12 @@ class VoiceService {
     this.stream = null;
     useVoiceStore.getState().setListening(false);
     useVoiceStore.getState().setThinking(true);
-    bus.emit('voice/listen:stop', {});
   }
 
   async speak(text: string) {
     if (!text?.trim()) return;
     this.blocked = null;
-    bus.emit('voice/playback:blocked', { callback: null });
+    this.emitPlaybackBlocked(null);
     if (!this.enabled) {
       ttsAutoplayToast();
       const resume = () => {
@@ -144,7 +162,7 @@ class VoiceService {
         void this.speak(text);
       };
       this.blocked = resume;
-      bus.emit('voice/playback:blocked', { callback: this.blocked });
+      this.emitPlaybackBlocked(this.blocked);
       window.addEventListener('pointerdown', resume, { once: true });
       window.addEventListener('keydown', resume, { once: true });
       return;
@@ -207,7 +225,7 @@ class VoiceService {
             this.blocked = () => {
               audio.play().catch(() => {});
             };
-            bus.emit('voice/playback:blocked', { callback: this.blocked });
+            this.emitPlaybackBlocked(this.blocked);
           }
           return;
         }
@@ -269,7 +287,7 @@ class VoiceService {
             this.blocked = () => {
               audio.play().catch(() => {});
             };
-            bus.emit('voice/playback:blocked', { callback: this.blocked });
+            this.emitPlaybackBlocked(this.blocked);
           }
           return;
         }
@@ -315,7 +333,7 @@ class VoiceService {
               this.blocked = () => {
                 window.speechSynthesis.speak(utter);
               };
-              bus.emit('voice/playback:blocked', { callback: this.blocked });
+              this.emitPlaybackBlocked(this.blocked);
             }
             return;
           }
@@ -360,7 +378,7 @@ class VoiceService {
       this.utter = null;
     }
     this.blocked = null;
-    bus.emit('voice/playback:blocked', { callback: null });
+    this.emitPlaybackBlocked(null);
     useVoiceStore.getState().setListening(false);
     useVoiceStore.getState().setSpeaking(false);
   }
@@ -384,7 +402,7 @@ class VoiceService {
     if (this.blocked) {
       const cb = this.blocked;
       this.blocked = null;
-      bus.emit('voice/playback:blocked', { callback: null });
+      this.emitPlaybackBlocked(null);
       cb();
     }
   }

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useVoiceStore } from '@/state/voice';
 import { voiceService } from '@/voice/voiceService';
-import { bus } from '@/utils/bus';
 
 export function useTextToSpeech() {
   const isSpeaking = useVoiceStore((s) => s.isSpeaking);
@@ -9,10 +8,8 @@ export function useTextToSpeech() {
 
   useEffect(() => {
     setBlocked(voiceService.getBlockedCallback());
-    const off = bus.on('voice/playback:blocked', ({ callback }) => {
-      setBlocked(callback);
-    });
-    return () => off();
+    const off = voiceService.onPlaybackBlocked(setBlocked);
+    return off;
   }, []);
 
   const speak = useCallback((text: string) => {

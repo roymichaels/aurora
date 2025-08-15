@@ -6,7 +6,6 @@ import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
-import { bus } from "@/utils/bus";
 import { useVoiceStore } from "@/state/voice";
 import {
   startListening as startBusListening,
@@ -33,10 +32,7 @@ export function AnchoredChatBar() {
   }, []);
 
   useEffect(() => {
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bus.emit('sphere/state:set', { state: 'idle' } as any);
-
+    // placeholder for any init logic
   }, []);
 
   useEffect(() => {
@@ -65,8 +61,6 @@ export function AnchoredChatBar() {
     const rec = recognitionRef.current;
     if (!rec || listening) return;
     startBusListening();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bus.emit('sphere/state:set', { state: 'listening' } as any);
     rec.start();
   };
 
@@ -75,8 +69,6 @@ export function AnchoredChatBar() {
     if (!rec) return;
     rec.stop();
     stopBusListening();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    bus.emit('sphere/state:set', { state: 'thinking' } as any);
   };
 
   const handlePressStart = () => {
