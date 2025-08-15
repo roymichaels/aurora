@@ -16,5 +16,6 @@ export type ChatEvents = {
   'voice/listen:start': {};
   'voice/listen:stop': {};
   'voice/transcript': { text: string };
+  'voice/playback:blocked': { callback: (() => void) | null };
 };
 

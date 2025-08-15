@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { auroraChatStream } from "@/utils/auroraChat";
 import type { ChatMessage } from "@/types/chat";
 import { useAvatarStore } from "@/state/avatar";
-import { VoiceIO } from "@/voice/voiceio";
+import { voiceService } from "@/voice/voiceService";
 import {
   memoryStore,
   retrieveRelevantMemories,
@@ -20,7 +20,7 @@ type ChatState = {
   send: (content: string) => Promise<void>;
 };
 
-const voice = typeof window !== "undefined" ? new VoiceIO() : null;
+// VoiceService handles TTS internally
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
@@ -85,7 +85,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       useAvatarStore.getState().setSentiment(sentiment);
       bus.emit('chat/stream:end', { id: responseId });
       set({ sending: false });
-      voice?.speak(fullText);
+      void voiceService.speak(fullText);
       memoryStore.add("episodic", "assistant", fullText).catch(() => {});
       saveMemory(fullText, { role: "assistant" }).catch(() => {});
     } catch (error) {
