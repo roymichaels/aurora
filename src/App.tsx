@@ -12,6 +12,7 @@ import HypnoShell from "@/routes/hypno/HypnoShell";
 import ExtensionPage from "@/pages/Extension";
 import StackPage from "./pages/Stack";
 import AccountPlanPage from "./pages/AccountPlan";
+import HomeSnapshot from "./pages/HomeSnapshot";
 import AppShell from "@/routes/AppShell";
 import HomeView from "@/views/HomeView";
 import { views } from "@/views/registry";
@@ -38,6 +39,7 @@ function AppRoutesWithShell() {
         <Route path="/extension" element={<ExtensionPage />} />
         <Route path="/stack" element={<StackPage />} />
         <Route path="/plan" element={<AccountPlanPage />} />
+        <Route path="/home" element={<HomeSnapshot />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Route>
@@ -64,6 +66,7 @@ function LegacyRoutes() {
       <Route path="/extension" element={<ExtensionPage />} />
       <Route path="/stack" element={<StackPage />} />
       <Route path="/plan" element={<AccountPlanPage />} />
+      <Route path="/home" element={<HomeSnapshot />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
