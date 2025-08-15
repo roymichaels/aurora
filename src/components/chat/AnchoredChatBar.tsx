@@ -7,13 +7,19 @@ import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 import { bus } from "@/utils/bus";
+import { useVoiceStore } from "@/state/voice";
+import {
+  startListening as startBusListening,
+  stopListening as stopBusListening,
+} from "@/voice/listenHelpers";
 
 export function AnchoredChatBar() {
   const { send, sending, messages, recall } = useChatStore();
   const { speak, blocked, resume } = useTextToSpeech();
 
   const [input, setInput] = useState("");
-  const [listening, setListening] = useState(false);
+  const listening = useVoiceStore((s) => s.isListening);
+  const listenMode = useVoiceStore((s) => s.listenMode);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -28,6 +34,7 @@ export function AnchoredChatBar() {
 
   useEffect(() => {
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bus.emit('sphere/state:set', { state: 'idle' } as any);
 
   }, []);
@@ -46,7 +53,7 @@ export function AnchoredChatBar() {
         setSuggestion(transcript);
       }
     };
-    rec.onend = () => setListening(false);
+    rec.onend = () => stopBusListening();
     recognitionRef.current = rec;
     return () => {
       rec.stop();
@@ -57,11 +64,9 @@ export function AnchoredChatBar() {
   const startListening = () => {
     const rec = recognitionRef.current;
     if (!rec || listening) return;
-    setListening(true);
-    bus.emit('voice/listen:start', {});
-
+    startBusListening();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bus.emit('sphere/state:set', { state: 'listening' } as any);
-
     rec.start();
   };
 
@@ -69,25 +74,18 @@ export function AnchoredChatBar() {
     const rec = recognitionRef.current;
     if (!rec) return;
     rec.stop();
-    bus.emit('voice/listen:stop', {});
-
+    stopBusListening();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bus.emit('sphere/state:set', { state: 'thinking' } as any);
-
-    setListening(false);
-  };
-
-  const toggleListening = () => {
-    if (listening) stopListening();
-    else startListening();
   };
 
   const handlePressStart = () => {
     pressStartRef.current = Date.now();
-    startListening();
+    if (listenMode === 'push-to-talk') startListening();
   };
 
   const handlePressEnd = () => {
-    stopListening();
+    if (listenMode === 'push-to-talk') stopListening();
   };
 
   const handleMicClick = () => {
@@ -96,7 +94,10 @@ export function AnchoredChatBar() {
       pressStartRef.current = null;
       if (duration > 300) return;
     }
-    toggleListening();
+    if (listenMode === 'toggle') {
+      if (listening) stopListening();
+      else startListening();
+    }
   };
 
   const handleSend = (override?: string) => {

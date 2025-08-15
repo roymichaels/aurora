@@ -4,6 +4,16 @@ This package provides speech-to-text (STT) and text-to-speech (TTS) utilities
 for the Aurora project.  By default it uses [Whisper](https://github.com/openai/whisper)
 for transcription and streams results to the client over WebRTC.
 
+## Listening modes
+
+The frontend supports two listening modes for voice input:
+
+- `push-to-talk` – hold the microphone button to listen (default).
+- `toggle` – tap the microphone button to start or stop listening.
+
+The selected mode is persisted in `localStorage` under `aurora.voiceListenMode`
+so existing behaviour remains `push-to-talk` unless changed by the user.
+
 ## Configuring Whisper Model Size
 
 The STT pipeline loads a Whisper model at import time.  You can adjust the
