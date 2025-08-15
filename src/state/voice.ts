@@ -8,6 +8,7 @@ const VOICE_EXPR_KEY = 'aurora.voiceExpression';
 const VOICE_EMOTION_KEY = 'aurora.voiceEmotion';
 const VOICE_MODE_KEY = 'aurora.voiceMode';
 const VOICE_LOCALE_KEY = 'aurora.voiceLocale';
+const VOICE_INPUT_MODE_KEY = 'aurora.voiceInputMode';
 
 type VoiceMode =
   | 'cloned'
@@ -16,12 +17,15 @@ type VoiceMode =
   | 'local-tts'
   | 'off';
 
+type VoiceInputMode = 'push-to-talk' | 'toggle';
+
 type VoiceState = {
   isListening: boolean;
   isThinking: boolean;
   isSpeaking: boolean;
   voiceId: string | null;
   mode: VoiceMode;
+  inputMode: VoiceInputMode;
   locale: string;
   speed: number;
   pitch: number;
@@ -32,6 +36,7 @@ type VoiceState = {
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
   setMode: (m: VoiceMode, persist?: boolean) => void; // <- align with impl
+  setInputMode: (m: VoiceInputMode) => void;
   setLocale: (l: string) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
@@ -59,6 +64,9 @@ export const useVoiceStore = create<VoiceState>((set) => {
       ? (ls!.getItem(VOICE_MODE_KEY) as VoiceMode) ||
         (import.meta.env.VITE_ELEVEN_API_KEY ? 'eleven-default' : 'browser-tts')
       : 'browser-tts',
+    inputMode: hasWindow
+      ? ((ls!.getItem(VOICE_INPUT_MODE_KEY) as VoiceInputMode) || 'push-to-talk')
+      : 'push-to-talk',
     locale: hasWindow
       ? ls!.getItem(VOICE_LOCALE_KEY) || navigator.language || 'en-US'
       : 'en-US',
@@ -88,6 +96,13 @@ export const useVoiceStore = create<VoiceState>((set) => {
         } catch {}
       }
       set({ mode });
+    },
+
+    setInputMode: (inputMode) => {
+      try {
+        ls?.setItem(VOICE_INPUT_MODE_KEY, inputMode);
+      } catch {}
+      set({ inputMode });
     },
 
     setLocale: (locale) => {

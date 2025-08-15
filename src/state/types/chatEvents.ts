@@ -15,5 +15,6 @@ export type ChatEvents = {
   'voice/state:set': { state: 'thinking' | 'speaking' };
   'voice/listen:start': {};
   'voice/listen:stop': {};
+  'voice/transcript': { text: string };
 };
 
