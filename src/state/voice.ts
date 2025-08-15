@@ -8,7 +8,9 @@ const VOICE_EXPR_KEY = 'aurora.voiceExpression';
 const VOICE_EMOTION_KEY = 'aurora.voiceEmotion';
 const VOICE_MODE_KEY = 'aurora.voiceMode';
 const VOICE_LOCALE_KEY = 'aurora.voiceLocale';
-const VOICE_LISTEN_MODE_KEY = 'aurora.voiceListenMode';
+const VOICE_INPUT_MODE_KEY = 'aurora.voiceInputMode';
+const VOICE_LISTEN_MODE_KEY = 'aurora.listenMode';
+
 
 type VoiceMode =
   | 'cloned'
@@ -25,6 +27,9 @@ type VoiceState = {
   isSpeaking: boolean;
   voiceId: string | null;
   mode: VoiceMode;
+  listenMode: ListenMode;
+  /** @deprecated use listenMode */
+  inputMode: ListenMode;
   locale: string;
   speed: number;
   pitch: number;
@@ -36,6 +41,9 @@ type VoiceState = {
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
   setMode: (m: VoiceMode, persist?: boolean) => void; // <- align with impl
+  setListenMode: (m: ListenMode) => void;
+  /** @deprecated use setListenMode */
+  setInputMode: (m: ListenMode) => void;
   setLocale: (l: string) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
@@ -71,6 +79,17 @@ export const useVoiceStore = create<VoiceState>((set) => {
       ? (ls!.getItem(VOICE_MODE_KEY) as VoiceMode) ||
         (import.meta.env.VITE_ELEVEN_API_KEY ? 'eleven-default' : 'browser-tts')
       : 'browser-tts',
+    listenMode: hasWindow
+      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) ||
+          (ls!.getItem(VOICE_INPUT_MODE_KEY) as ListenMode) ||
+          'push-to-talk')
+      : 'push-to-talk',
+    // deprecated alias; keep in sync with listenMode
+    inputMode: hasWindow
+      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) ||
+          (ls!.getItem(VOICE_INPUT_MODE_KEY) as ListenMode) ||
+          'push-to-talk')
+      : 'push-to-talk',
     locale: hasWindow
       ? ls!.getItem(VOICE_LOCALE_KEY) || navigator.language || 'en-US'
       : 'en-US',
@@ -107,6 +126,21 @@ export const useVoiceStore = create<VoiceState>((set) => {
         }
       }
       set({ mode });
+    },
+
+    setListenMode: (listenMode) => {
+      try {
+        ls?.setItem(VOICE_LISTEN_MODE_KEY, listenMode);
+        ls?.setItem(VOICE_INPUT_MODE_KEY, listenMode);
+      } catch {}
+      set({ listenMode, inputMode: listenMode });
+    },
+    setInputMode: (inputMode) => {
+      try {
+        ls?.setItem(VOICE_LISTEN_MODE_KEY, inputMode);
+        ls?.setItem(VOICE_INPUT_MODE_KEY, inputMode);
+      } catch {}
+      set({ listenMode: inputMode, inputMode });
     },
 
     setLocale: (locale) => {

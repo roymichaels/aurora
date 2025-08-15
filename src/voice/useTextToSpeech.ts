@@ -1,275 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useVoiceStore } from "@/state/voice";
-import { playClonedVoice } from "./voiceClone";
-import { ttsFallbackToast } from "@/voice/ttsFallbackToast";
-import { ttsAutoplayToast } from "@/voice/ttsAutoplayToast";
-import { useSubscription } from "@/modules/payments/hooks/useSubscription";
-import { guardPremiumAction } from "@/modules/payments/guard";
-import { bus } from "@/utils/bus";
-
-const ELEVENLABS_DEFAULT_VOICE_ID =
-  import.meta.env.VITE_ELEVENLABS_DEFAULT_VOICE_ID ||
-  "21m00Tcm4TlvDq8ikWAM"; // Rachel (stock voice)
+import { useCallback, useEffect, useState } from 'react';
+import { useVoiceStore } from '@/state/voice';
+import { voiceService } from '@/voice/voiceService';
+import { bus } from '@/utils/bus';
 
 export function useTextToSpeech() {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [enabled, setEnabled] = useState<boolean>(() => {
-    return localStorage.getItem("aurora_voice_enabled") === "1";
-  });
-  const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const isSpeaking = useVoiceStore((s) => s.isSpeaking);
   const [blocked, setBlocked] = useState<(() => void) | null>(null);
-  const { voiceId, speed, pitch, expression, emotion, mode, setMode } =
 
-    useVoiceStore((s) => ({
-      voiceId: s.voiceId,
-      speed: s.speed,
-      pitch: s.pitch,
-      expression: s.expression,
-      emotion: s.emotion,
-      mode: s.mode,
-      setMode: s.setMode,
-
-    }));
-  const { canAccessFeature } = useSubscription();
-
-  // Allow enabling via first user gesture (click/keydown) OR explicit call
   useEffect(() => {
-    if (enabled) return;
-    const prime = () => {
-      setEnabled(true);
-      localStorage.setItem("aurora_voice_enabled", "1");
-      try {
-        window.speechSynthesis.getVoices();
-        window.speechSynthesis.resume();
-      } catch {
-        /* ignore */
-      }
-    };
-    window.addEventListener("pointerdown", prime, { once: true });
-    window.addEventListener("keydown", prime, { once: true });
-    return () => {
-      window.removeEventListener("pointerdown", prime);
-      window.removeEventListener("keydown", prime);
-    };
-  }, [enabled]);
-
-  const enable = useCallback(() => {
-    setEnabled(true);
-    localStorage.setItem("aurora_voice_enabled", "1");
-    try {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.resume();
-    } catch {
-      /* ignore */
-    }
+    setBlocked(voiceService.getBlockedCallback());
+    const off = bus.on('voice/playback:blocked', ({ callback }) => {
+      setBlocked(callback);
+    });
+    return () => off();
   }, []);
 
-  const speak = useCallback(
-    async (text: string) => {
-      if (!text?.trim()) return;
-      setBlocked(null);
-      if (!enabled) {
-        ttsAutoplayToast();
-        const resume = () => {
-          enable();
-          void speak(text);
-        };
-        window.addEventListener("pointerdown", resume, { once: true });
-        window.addEventListener("keydown", resume, { once: true });
-        return;
-      }
-      bus.emit('sphere/state:set', { state: 'thinking' });
-      bus.emit('voice/state:set', { state: 'thinking' });
-
-      let current = mode;
-      const locale = navigator.language;
-
-      while (current && current !== "off") {
-        if (current === "cloned") {
-          const result = await guardPremiumAction(
-            canAccessFeature,
-            "voice_features",
-            "voice_clone",
-            "use the default voice instead",
-          );
-          if (result === null) {
-            bus.emit('sphere/state:set', { state: 'thinking' });
-            bus.emit('voice/state:set', { state: 'thinking' });
-            return;
-          }
-          if (result === 'free') {
-            current = "eleven-default";
-            setMode("eleven-default", false);
-            continue;
-          }
-          if (!voiceId) {
-            current = "eleven-default";
-            setMode("eleven-default", false);
-            continue;
-          }
-            const { audio, error } = await playClonedVoice(text, voiceId, {
-              emotion,
-              speed,
-              pitch,
-              expression,
-              onStart: () => {
-                bus.emit('sphere/state:set', { state: 'speaking' });
-                bus.emit('voice/state:set', { state: 'speaking' });
-                setIsSpeaking(true);
-              },
-              onEnd: () => {
-                bus.emit('sphere/state:set', { state: 'thinking' });
-                bus.emit('voice/state:set', { state: 'thinking' });
-                setIsSpeaking(false);
-              },
-            });
-          if (audio) {
-            audioRef.current = audio;
-            if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
-              bus.emit('sphere/state:set', { state: 'thinking' });
-              bus.emit('voice/state:set', { state: 'thinking' });
-              ttsAutoplayToast();
-              setBlocked(() => () => {
-                audio.play().catch(() => {});
-              });
-            }
-            return;
-          }
-          const status = (error as { status?: number } | undefined)?.status;
-          if (status === 401 || status === 429) ttsFallbackToast();
-          current = "eleven-default";
-          setMode("eleven-default", false);
-          continue;
-        }
-        if (current === "eleven-default") {
-          const { audio, error } = await playClonedVoice(
-            text,
-            ELEVENLABS_DEFAULT_VOICE_ID,
-            {
-              emotion,
-              speed,
-              pitch,
-              expression,
-              onStart: () => {
-                bus.emit('sphere/state:set', { state: 'speaking' });
-                bus.emit('voice/state:set', { state: 'speaking' });
-                setIsSpeaking(true);
-              },
-              onEnd: () => {
-                bus.emit('sphere/state:set', { state: 'thinking' });
-                bus.emit('voice/state:set', { state: 'thinking' });
-                setIsSpeaking(false);
-              },
-            },
-          );
-          if (audio) {
-            audioRef.current = audio;
-            if ((error as { name?: string } | undefined)?.name === "NotAllowedError") {
-              bus.emit('sphere/state:set', { state: 'thinking' });
-              bus.emit('voice/state:set', { state: 'thinking' });
-              ttsAutoplayToast();
-              setBlocked(() => () => {
-                audio.play().catch(() => {});
-              });
-            }
-            return;
-          }
-          current = "browser-tts";
-          setMode("browser-tts", false);
-          ttsFallbackToast();
-          continue;
-        }
-        if (current === "browser-tts") {
-          try {
-            window.speechSynthesis.cancel();
-            let voices = window.speechSynthesis.getVoices();
-            if (!voices.length) {
-              await new Promise((r) => setTimeout(r, 250));
-              voices = window.speechSynthesis.getVoices();
-            }
-            const v = voices.find(
-              (vo) =>
-                vo.lang === locale ||
-                vo.lang.startsWith(locale.split("-")[0]),
-            );
-            if (!v) {
-              current = "off";
-              setMode("off", false);
-              continue;
-            }
-            const u = new SpeechSynthesisUtterance(text);
-            utterRef.current = u;
-            u.voice = v;
-            u.rate = speed;
-            u.pitch = pitch;
-            u.onstart = () => {
-              bus.emit('sphere/state:set', { state: 'speaking' });
-              bus.emit('voice/state:set', { state: 'speaking' });
-              setIsSpeaking(true);
-            };
-            u.onend = () => {
-              bus.emit('sphere/state:set', { state: 'thinking' });
-              bus.emit('voice/state:set', { state: 'thinking' });
-              setIsSpeaking(false);
-            };
-            u.onerror = () => {
-              bus.emit('sphere/state:set', { state: 'thinking' });
-              bus.emit('voice/state:set', { state: 'thinking' });
-              setIsSpeaking(false);
-            };
-            try {
-              window.speechSynthesis.speak(u);
-            } catch (err) {
-              bus.emit('sphere/state:set', { state: 'thinking' });
-              bus.emit('voice/state:set', { state: 'thinking' });
-              if ((err as { name?: string } | undefined)?.name === "NotAllowedError") {
-                ttsAutoplayToast();
-                setBlocked(() => () => {
-                  window.speechSynthesis.speak(u);
-                });
-              }
-              return;
-            }
-            return;
-          } catch {
-            current = "off";
-            setMode("off", false);
-            continue;
-          }
-        }
-        if (current === "local-tts") {
-          current = "off";
-          setMode("off", false);
-          continue;
-        }
-      }
-      bus.emit('sphere/state:set', { state: 'thinking' });
-      bus.emit('voice/state:set', { state: 'thinking' });
-    },
-    [enabled, mode, voiceId, emotion, speed, pitch, expression, setMode, enable, canAccessFeature],
-
-  );
+  const speak = useCallback((text: string) => {
+    void voiceService.speak(text);
+  }, []);
 
   const cancel = useCallback(() => {
-    try { audioRef.current?.pause(); } catch { /* ignore */ }
-    audioRef.current = null;
-    try {
-      window.speechSynthesis.cancel();
-    } catch {
-      /* ignore */
-    }
-    setBlocked(null);
-    setIsSpeaking(false);
+    voiceService.cancel();
   }, []);
 
   const resume = useCallback(() => {
-    if (blocked) {
-      blocked();
-      setBlocked(null);
-    }
-  }, [blocked]);
+    voiceService.resume();
+  }, []);
 
-  return { speak, cancel, isSpeaking, enabled, enable, blocked: !!blocked, resume };
+  return { speak, cancel, isSpeaking, blocked: !!blocked, resume };
 }
-
