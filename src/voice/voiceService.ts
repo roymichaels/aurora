@@ -150,16 +150,12 @@ class VoiceService {
           canAccess,
           'voice_features',
           'voice_clone',
-          'use the default voice instead',
+          'use the browser voice instead',
         );
-        if (result === null) {
-          bus.emit('sphere/state:set', { state: 'thinking' });
-          bus.emit('voice/state:set', { state: 'thinking' });
-          return;
-        }
-        if (result === 'free') {
-          current = 'eleven-default';
-          store.setMode('eleven-default', false);
+        if (result !== 'pro') {
+          current = 'browser-tts';
+          store.setMode('browser-tts', false);
+          ttsFallbackToast();
           continue;
         }
         if (!voiceId) {
@@ -195,12 +191,35 @@ class VoiceService {
           return;
         }
         const status = (error as { status?: number } | undefined)?.status;
-        if (status === 401 || status === 429) ttsFallbackToast();
+        if (status === 401 || status === 429) {
+          ttsFallbackToast();
+          current = 'browser-tts';
+          store.setMode('browser-tts', false);
+          continue;
+        }
         current = 'eleven-default';
         store.setMode('eleven-default', false);
         continue;
       }
       if (current === 'eleven-default') {
+        const canAccess = (feature: string) => {
+          if (feature === 'voice_features') {
+            return useFeatureFlags.getState().isPro;
+          }
+          return true;
+        };
+        const result = await guardPremiumAction(
+          canAccess,
+          'voice_features',
+          'voice_default',
+          'use the browser voice instead',
+        );
+        if (result !== 'pro') {
+          current = 'browser-tts';
+          store.setMode('browser-tts', false);
+          ttsFallbackToast();
+          continue;
+        }
         const { audio, error } = await playClonedVoice(
           text,
           ELEVENLABS_DEFAULT_VOICE_ID,
@@ -232,9 +251,9 @@ class VoiceService {
           }
           return;
         }
+        ttsFallbackToast();
         current = 'browser-tts';
         store.setMode('browser-tts', false);
-        ttsFallbackToast();
         continue;
       }
       if (current === 'browser-tts') {
