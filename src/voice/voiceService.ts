@@ -122,9 +122,13 @@ class VoiceService {
     if (!this.enabled) {
       ttsAutoplayToast();
       const resume = () => {
+        window.removeEventListener('pointerdown', resume);
+        window.removeEventListener('keydown', resume);
         this.enable();
         void this.speak(text);
       };
+      this.blocked = resume;
+      bus.emit('voice/playback:blocked', { callback: this.blocked });
       window.addEventListener('pointerdown', resume, { once: true });
       window.addEventListener('keydown', resume, { once: true });
       return;
