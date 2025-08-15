@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import FocusRunner from "@/nodes/FocusRunner";
+import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
@@ -23,10 +24,20 @@ type Track = {
 };
 
 export function QuickPodsRow() {
+  const focusChatInput = useChatInputFocus();
+
   const [focusOpen, setFocusOpen] = useState(false);
+  const handleFocusOpenChange = (open: boolean) => {
+    setFocusOpen(open);
+    if (!open) focusChatInput();
+  };
 
   // Notes
   const [noteOpen, setNoteOpen] = useState(false);
+  const handleNoteOpenChange = (open: boolean) => {
+    setNoteOpen(open);
+    if (!open) focusChatInput();
+  };
   const [noteText, setNoteText] = useState("");
   const saveNote = async () => {
     const user = (await supabase.auth.getUser()).data.user;
@@ -49,11 +60,15 @@ export function QuickPodsRow() {
     }
     toast({ title: "Saved", description: "Your note has been added to Archive." });
     setNoteText("");
-    setNoteOpen(false);
+    handleNoteOpenChange(false);
   };
 
   // Voice note
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const handleVoiceOpenChange = (open: boolean) => {
+    setVoiceOpen(open);
+    if (!open) focusChatInput();
+  };
   const [recording, setRecording] = useState(false);
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [chunks, setChunks] = useState<BlobPart[]>([]);
@@ -96,7 +111,7 @@ export function QuickPodsRow() {
           toast({ title: "Error", description: "Could not save voice note." });
         } finally {
           setRecording(false);
-          setVoiceOpen(false);
+          handleVoiceOpenChange(false);
           setElapsed(0);
           stream.getTracks().forEach((t) => t.stop());
         }
@@ -108,7 +123,7 @@ export function QuickPodsRow() {
       timerRef.current = window.setInterval(() => setElapsed((s) => s + 1), 1000) as unknown as number;
     } catch (e) {
       console.error(e);
-      toast({ title: "Microphone blocked", description: "Please allow microphone access." });
+          toast({ title: "Microphone blocked", description: "Please allow microphone access." });
     }
   };
 
@@ -122,7 +137,15 @@ export function QuickPodsRow() {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [tracksLoading, setTracksLoading] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const handleLibraryOpenChange = (open: boolean) => {
+    setLibraryOpen(open);
+    if (!open) focusChatInput();
+  };
   const [preOpen, setPreOpen] = useState(false);
+  const handlePreOpenChange = (open: boolean) => {
+    setPreOpen(open);
+    if (!open) focusChatInput();
+  };
   const [mode, setMode] = useState<'focus' | 'calm' | 'confidence'>(() => (localStorage.getItem('hypnosis.mode') as any) || 'focus');
   const [countdown, setCountdown] = useState(3);
 
@@ -152,7 +175,7 @@ export function QuickPodsRow() {
       setCountdown((c) => {
         if (c <= 1) {
           window.clearInterval(id);
-          setPreOpen(false);
+          handlePreOpenChange(false);
           setLibraryOpen(true);
           (async () => {
             try {
@@ -192,20 +215,20 @@ export function QuickPodsRow() {
       </div>
 
       {/* Focus Runner */}
-      <Dialog open={focusOpen} onOpenChange={setFocusOpen}>
-        <DialogContent className="sm:max-w-md p-0" onEscapeKeyDown={() => setFocusOpen(false)}>
+      <Dialog open={focusOpen} onOpenChange={handleFocusOpenChange}>
+        <DialogContent className="sm:max-w-md p-0" onEscapeKeyDown={() => handleFocusOpenChange(false)}>
           {focusOpen && (
             <FocusRunner
               node={{ id: 'quick-focus', label: 'Focus Session', minutes: 25 }}
-              onExit={() => setFocusOpen(false)}
+              onExit={() => handleFocusOpenChange(false)}
             />
           )}
         </DialogContent>
       </Dialog>
 
       {/* Hypnosis pre-roll */}
-      <Dialog open={preOpen} onOpenChange={setPreOpen}>
-        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => setPreOpen(false)}>
+      <Dialog open={preOpen} onOpenChange={handlePreOpenChange}>
+        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => handlePreOpenChange(false)}>
           <DialogHeader>
             <DialogTitle>Get ready</DialogTitle>
           </DialogHeader>
@@ -225,8 +248,8 @@ export function QuickPodsRow() {
       </Dialog>
 
       {/* Hypnosis library */}
-      <Dialog open={libraryOpen} onOpenChange={setLibraryOpen}>
-        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => setLibraryOpen(false)}>
+      <Dialog open={libraryOpen} onOpenChange={handleLibraryOpenChange}>
+        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => handleLibraryOpenChange(false)}>
           <DialogHeader>
             <DialogTitle>Hypnosis library</DialogTitle>
           </DialogHeader>
@@ -253,8 +276,8 @@ export function QuickPodsRow() {
       </Dialog>
 
       {/* Voice note */}
-      <Dialog open={voiceOpen} onOpenChange={setVoiceOpen}>
-        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => setVoiceOpen(false)}>
+      <Dialog open={voiceOpen} onOpenChange={handleVoiceOpenChange}>
+        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => handleVoiceOpenChange(false)}>
           <DialogHeader>
             <DialogTitle>Record voice note</DialogTitle>
           </DialogHeader>
@@ -275,8 +298,8 @@ export function QuickPodsRow() {
       </Dialog>
 
       {/* Notes */}
-      <Dialog open={noteOpen} onOpenChange={setNoteOpen}>
-        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => setNoteOpen(false)}>
+      <Dialog open={noteOpen} onOpenChange={handleNoteOpenChange}>
+        <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => handleNoteOpenChange(false)}>
           <DialogHeader>
             <DialogTitle>Quick note</DialogTitle>
           </DialogHeader>
@@ -286,7 +309,7 @@ export function QuickPodsRow() {
             placeholder="Type a quick note..."
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setNoteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => handleNoteOpenChange(false)}>Cancel</Button>
             <Button onClick={saveNote}>Save</Button>
           </div>
         </DialogContent>
