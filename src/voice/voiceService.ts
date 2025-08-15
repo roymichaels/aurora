@@ -18,16 +18,22 @@ class VoiceService {
   private utter: SpeechSynthesisUtterance | null = null;
   private blocked: (() => void) | null = null;
   private enabled = false;
+  private connections = new Set<RTCPeerConnection>();
+  private streams = new Set<MediaStream>();
+  private audios = new Set<HTMLAudioElement>();
+  private enableHandler?: () => void;
+  private beforeUnloadHandler?: () => void;
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.enabled = localStorage.getItem('aurora_voice_enabled') === '1';
-      const enable = () => this.enable();
+      this.enableHandler = () => this.enable();
       if (!this.enabled) {
-        window.addEventListener('pointerdown', enable, { once: true });
-        window.addEventListener('keydown', enable, { once: true });
+        window.addEventListener('pointerdown', this.enableHandler, { once: true });
+        window.addEventListener('keydown', this.enableHandler, { once: true });
       }
-      window.addEventListener('beforeunload', () => this.cancel());
+      this.beforeUnloadHandler = () => this.destroy();
+      window.addEventListener('beforeunload', this.beforeUnloadHandler);
     }
   }
 
@@ -48,6 +54,7 @@ class VoiceService {
     if (this.pc) return;
     const pc = new RTCPeerConnection();
     this.pc = pc;
+    this.connections.add(pc);
 
     pc.ondatachannel = (e) => {
       this.channel = e.channel;
@@ -61,6 +68,7 @@ class VoiceService {
           if (msg.audio) {
             const audio = new Audio('data:audio/wav;base64,' + msg.audio);
             this.audio = audio;
+            this.audios.add(audio);
             audio.play().catch((err) => {
               if ((err as { name?: string } | undefined)?.name === 'NotAllowedError') {
                 ttsAutoplayToast();
@@ -82,10 +90,12 @@ class VoiceService {
       audio.srcObject = ev.streams[0];
       audio.play().catch(() => {});
       this.audio = audio;
+      this.audios.add(audio);
     };
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     this.stream = stream;
+    this.streams.add(stream);
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
     const offer = await pc.createOffer();
@@ -104,11 +114,17 @@ class VoiceService {
 
   stopListening() {
     this.channel?.close();
-    this.pc?.getSenders().forEach((s) => s.track?.stop());
-    this.pc?.close();
+    if (this.pc) {
+      this.pc.getSenders().forEach((s) => s.track?.stop());
+      this.pc.close();
+      this.connections.delete(this.pc);
+    }
     this.pc = null;
     this.channel = null;
-    this.stream?.getTracks().forEach((t) => t.stop());
+    if (this.stream) {
+      this.stream.getTracks().forEach((t) => t.stop());
+      this.streams.delete(this.stream);
+    }
     this.stream = null;
     useVoiceStore.getState().setListening(false);
     useVoiceStore.getState().setThinking(true);
@@ -185,6 +201,7 @@ class VoiceService {
         });
         if (audio) {
           this.audio = audio;
+          this.audios.add(audio);
           if ((error as { name?: string } | undefined)?.name === 'NotAllowedError') {
             ttsAutoplayToast();
             this.blocked = () => {
@@ -223,6 +240,7 @@ class VoiceService {
         );
         if (audio) {
           this.audio = audio;
+          this.audios.add(audio);
           if ((error as { name?: string } | undefined)?.name === 'NotAllowedError') {
             ttsAutoplayToast();
             this.blocked = () => {
@@ -292,17 +310,24 @@ class VoiceService {
 
   cancel() {
     this.channel?.close();
-    this.pc?.getSenders().forEach((s) => s.track?.stop());
-    this.pc?.close();
-    this.pc = null;
     this.channel = null;
-    this.stream?.getTracks().forEach((t) => t.stop());
+    this.connections.forEach((pc) => {
+      pc.getSenders().forEach((s) => s.track?.stop());
+      pc.close();
+    });
+    this.connections.clear();
+    this.pc = null;
+    this.streams.forEach((s) => {
+      s.getTracks().forEach((t) => t.stop());
+    });
+    this.streams.clear();
     this.stream = null;
-    if (this.audio) {
-      this.audio.pause();
-      this.audio.srcObject = null;
-      this.audio = null;
-    }
+    this.audios.forEach((a) => {
+      a.pause();
+      a.srcObject = null;
+    });
+    this.audios.clear();
+    this.audio = null;
     if (this.utter) {
       try {
         window.speechSynthesis.cancel();
@@ -315,6 +340,21 @@ class VoiceService {
     bus.emit('voice/playback:blocked', { callback: null });
     useVoiceStore.getState().setListening(false);
     useVoiceStore.getState().setSpeaking(false);
+  }
+
+  destroy() {
+    this.cancel();
+    if (typeof window !== 'undefined') {
+      if (this.enableHandler) {
+        window.removeEventListener('pointerdown', this.enableHandler);
+        window.removeEventListener('keydown', this.enableHandler);
+        this.enableHandler = undefined;
+      }
+      if (this.beforeUnloadHandler) {
+        window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+        this.beforeUnloadHandler = undefined;
+      }
+    }
   }
 
   resume() {
