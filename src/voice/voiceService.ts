@@ -52,6 +52,7 @@ class VoiceService {
           const msg = JSON.parse(ev.data);
           if (msg.transcript) {
             useVoiceStore.getState().setThinking(false);
+            bus.emit('voice/listen:transcript', { text: msg.transcript });
           }
           if (msg.audio) {
             const audio = new Audio('data:audio/wav;base64,' + msg.audio);

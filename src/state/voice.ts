@@ -8,6 +8,7 @@ const VOICE_EXPR_KEY = 'aurora.voiceExpression';
 const VOICE_EMOTION_KEY = 'aurora.voiceEmotion';
 const VOICE_MODE_KEY = 'aurora.voiceMode';
 const VOICE_LOCALE_KEY = 'aurora.voiceLocale';
+const VOICE_INPUT_MODE_KEY = 'aurora.voiceInputMode';
 
 type VoiceMode =
   | 'cloned'
@@ -27,6 +28,7 @@ type VoiceState = {
   pitch: number;
   expression: number;
   emotion: string;
+  inputMode: 'push-to-talk' | 'toggle';
   setListening: (v: boolean) => void;
   setThinking: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
@@ -37,6 +39,7 @@ type VoiceState = {
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
   setEmotion: (v: string) => void;
+  setInputMode: (m: 'push-to-talk' | 'toggle') => void;
 };
 
 export const useVoiceStore = create<VoiceState>((set) => {
@@ -68,6 +71,10 @@ export const useVoiceStore = create<VoiceState>((set) => {
     emotion: hasWindow
       ? ls!.getItem(VOICE_EMOTION_KEY) || 'neutral'
       : 'neutral',
+    inputMode: hasWindow
+      ? (ls!.getItem(VOICE_INPUT_MODE_KEY) as 'push-to-talk' | 'toggle') ||
+        'push-to-talk'
+      : 'push-to-talk',
 
     setListening: (v) => set({ isListening: v }),
     setThinking: (v) => set({ isThinking: v }),
@@ -123,6 +130,13 @@ export const useVoiceStore = create<VoiceState>((set) => {
         ls?.setItem(VOICE_EMOTION_KEY, emotion);
       } catch {}
       set({ emotion });
-    }, // <- no extra comma after the last property
+    },
+
+    setInputMode: (inputMode) => {
+      try {
+        ls?.setItem(VOICE_INPUT_MODE_KEY, inputMode);
+      } catch {}
+      set({ inputMode });
+    } // <- no extra comma after the last property
   };
 });
