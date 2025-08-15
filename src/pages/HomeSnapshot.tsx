@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useGameStore } from "@/game/store";
-import { QuickPodsRow } from "@/components/quick/QuickPodsRow";
+import { QuickPodsRow } from "@/components/home/QuickPodsRow";
 
 export default function HomeSnapshot() {
   const mission = useGameStore((s) => s.mission);
