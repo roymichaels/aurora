@@ -4,7 +4,7 @@ import { voiceService } from '@/voice/voiceService';
 import { bus } from '@/utils/bus';
 
 export function useVoiceInput() {
-  const mode = useVoiceStore((s) => s.inputMode);
+  const listenMode = useVoiceStore((s) => s.listenMode);
   const isListening = useVoiceStore((s) => s.isListening);
   const [transcript, setTranscript] = useState('');
 
@@ -25,6 +25,25 @@ export function useVoiceInput() {
     voiceService.stopListening();
   }, []);
 
+  const toggleListening = useCallback(() => {
+    if (isListening) stopListening();
+    else startListening();
+  }, [isListening, startListening, stopListening]);
+
+  const handleListen = useCallback(() => {
+    if (listenMode === 'toggle') {
+      toggleListening();
+    } else {
+      startListening();
+    }
+  }, [listenMode, toggleListening, startListening]);
+
+  const handleListenEnd = useCallback(() => {
+    if (listenMode === 'push-to-talk') {
+      stopListening();
+    }
+  }, [listenMode, stopListening]);
+
   useEffect(() => {
     return () => {
       voiceService.cancel();
@@ -35,5 +54,15 @@ export function useVoiceInput() {
     voiceService.cancel();
   }, []);
 
-  return { startListening, stopListening, transcript, isListening, mode, cleanup };
+  return {
+    startListening,
+    stopListening,
+    handleListen,
+    handleListenEnd,
+    transcript,
+    isListening,
+    listenMode,
+    mode: listenMode,
+    cleanup,
+  };
 }

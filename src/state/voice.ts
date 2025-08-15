@@ -9,6 +9,7 @@ const VOICE_EMOTION_KEY = 'aurora.voiceEmotion';
 const VOICE_MODE_KEY = 'aurora.voiceMode';
 const VOICE_LOCALE_KEY = 'aurora.voiceLocale';
 const VOICE_INPUT_MODE_KEY = 'aurora.voiceInputMode';
+const VOICE_LISTEN_MODE_KEY = 'aurora.listenMode';
 
 type VoiceMode =
   | 'cloned'
@@ -17,7 +18,7 @@ type VoiceMode =
   | 'local-tts'
   | 'off';
 
-type VoiceInputMode = 'push-to-talk' | 'toggle';
+type ListenMode = 'push-to-talk' | 'toggle';
 
 type VoiceState = {
   isListening: boolean;
@@ -25,7 +26,9 @@ type VoiceState = {
   isSpeaking: boolean;
   voiceId: string | null;
   mode: VoiceMode;
-  inputMode: VoiceInputMode;
+  listenMode: ListenMode;
+  /** @deprecated use listenMode */
+  inputMode: ListenMode;
   locale: string;
   speed: number;
   pitch: number;
@@ -36,7 +39,9 @@ type VoiceState = {
   setSpeaking: (v: boolean) => void;
   setVoiceId: (id: string | null) => void;
   setMode: (m: VoiceMode, persist?: boolean) => void; // <- align with impl
-  setInputMode: (m: VoiceInputMode) => void;
+  setListenMode: (m: ListenMode) => void;
+  /** @deprecated use setListenMode */
+  setInputMode: (m: ListenMode) => void;
   setLocale: (l: string) => void;
   setSpeed: (v: number) => void;
   setPitch: (v: number) => void;
@@ -52,6 +57,13 @@ export const useVoiceStore = create<VoiceState>((set) => {
     });
   });
 
+  bus.on('voice/listen:start', () => {
+    set({ isListening: true });
+  });
+  bus.on('voice/listen:stop', () => {
+    set({ isListening: false });
+  });
+
   const hasWindow = typeof window !== 'undefined';
   const ls = hasWindow ? window.localStorage : null;
 
@@ -64,8 +76,16 @@ export const useVoiceStore = create<VoiceState>((set) => {
       ? (ls!.getItem(VOICE_MODE_KEY) as VoiceMode) ||
         (import.meta.env.VITE_ELEVEN_API_KEY ? 'eleven-default' : 'browser-tts')
       : 'browser-tts',
+    listenMode: hasWindow
+      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) ||
+          (ls!.getItem(VOICE_INPUT_MODE_KEY) as ListenMode) ||
+          'push-to-talk')
+      : 'push-to-talk',
+    // deprecated alias; keep in sync with listenMode
     inputMode: hasWindow
-      ? ((ls!.getItem(VOICE_INPUT_MODE_KEY) as VoiceInputMode) || 'push-to-talk')
+      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) ||
+          (ls!.getItem(VOICE_INPUT_MODE_KEY) as ListenMode) ||
+          'push-to-talk')
       : 'push-to-talk',
     locale: hasWindow
       ? ls!.getItem(VOICE_LOCALE_KEY) || navigator.language || 'en-US'
@@ -98,11 +118,19 @@ export const useVoiceStore = create<VoiceState>((set) => {
       set({ mode });
     },
 
+    setListenMode: (listenMode) => {
+      try {
+        ls?.setItem(VOICE_LISTEN_MODE_KEY, listenMode);
+        ls?.setItem(VOICE_INPUT_MODE_KEY, listenMode);
+      } catch {}
+      set({ listenMode, inputMode: listenMode });
+    },
     setInputMode: (inputMode) => {
       try {
+        ls?.setItem(VOICE_LISTEN_MODE_KEY, inputMode);
         ls?.setItem(VOICE_INPUT_MODE_KEY, inputMode);
       } catch {}
-      set({ inputMode });
+      set({ listenMode: inputMode, inputMode });
     },
 
     setLocale: (locale) => {
