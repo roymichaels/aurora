@@ -4,13 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };
+export type ScheduleItem = { time: string; title: string };
 export type GameState = {
   pos: { x: number; y: number };
   stats: Stats;
   mood: "Calm" | "Focused" | "Confident" | "Stressed" | "Tired";
   quests: Record<string, boolean>;
   mission: { title: string; description: string };
-  today: { nextCommitment: string };
+  today: { nextCommitment: string; schedule: ScheduleItem[] };
   setPos: (x: number, y: number) => void;
   setMood: (m: GameState["mood"]) => void;
   awardXP: (amount: number) => void;
@@ -18,9 +19,10 @@ export type GameState = {
   incStreak: () => void;
   resetDaily: () => void;
   setStats: (s: Partial<Stats>) => void;
+  setMission: (m: GameState["mission"]) => void;
   setMissionTitle: (title: string) => void;
   setMissionDescription: (description: string) => void;
-  setToday: (t: GameState["today"]) => void;
+  setToday: (t: Partial<GameState["today"]>) => void;
   fetchStats: () => Promise<void>;
 };
 
@@ -30,7 +32,7 @@ const defaults: GameState = {
   mood: "Focused",
   quests: {},
   mission: { title: "", description: "" },
-  today: { nextCommitment: "Focus session at 2 PM" },
+  today: { nextCommitment: "Focus session at 2 PM", schedule: [] },
   setPos() {},
   setMood() {},
   awardXP() {},
@@ -38,6 +40,7 @@ const defaults: GameState = {
   incStreak() {},
   resetDaily() {},
   setStats() {},
+  setMission() {},
   setMissionTitle() {},
   setMissionDescription() {},
   setToday() {},
@@ -125,6 +128,7 @@ export const useGameStore = create<GameState>((set, get) => {
       const cur = get().stats;
       persist({ stats: { ...cur, ...s } });
     },
+    setMission: (mission) => persist({ mission }),
     setMissionTitle: (title) => {
       const m = get().mission;
       persist({ mission: { ...m, title } });
@@ -133,9 +137,16 @@ export const useGameStore = create<GameState>((set, get) => {
       const m = get().mission;
       persist({ mission: { ...m, description } });
     },
-    setToday: (t) => persist({ today: t }),
+    setToday: (t) => persist({ today: { ...get().today, ...t } }),
   };
 });
+
+export const selectMission = (s: GameState) => s.mission;
+export const selectSetMission = (s: GameState) => s.setMission;
+export const selectSetMissionTitle = (s: GameState) => s.setMissionTitle;
+export const selectSetMissionDescription = (s: GameState) => s.setMissionDescription;
+export const selectToday = (s: GameState) => s.today;
+export const selectSetToday = (s: GameState) => s.setToday;
 
 if (typeof window !== "undefined") {
   window.addEventListener("xp-total-update", (e: any) => {
