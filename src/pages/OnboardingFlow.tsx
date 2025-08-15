@@ -15,6 +15,7 @@ import {
   saveProfile,
 } from "@/data/profile";
 import { setEncryptionKey } from "@/state/encryption";
+import { Volume2 } from "lucide-react";
 
 
 type Msg = { role: "assistant" | "user"; content: string };
@@ -111,7 +112,7 @@ export default function OnboardingFlow() {
   const navigate = useNavigate();
 
   // SINGLE instance
-  const { speak, cancel, isSpeaking } = useTextToSpeech();
+  const { speak, cancel, isSpeaking, blocked, resume } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -404,6 +405,16 @@ export default function OnboardingFlow() {
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex-shrink-0 flex flex-col items-center gap-4 p-4">
           <EvolvingSphere size={220} speaking={isSpeaking} />
+          {blocked && (
+            <button
+              type="button"
+              onClick={resume}
+              className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center gap-1"
+            >
+              <Volume2 className="w-3 h-3" />
+              Tap to play
+            </button>
+          )}
           <div className="relative w-full">
             <Progress value={progressPercent} />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
