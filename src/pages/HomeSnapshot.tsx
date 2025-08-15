@@ -1,13 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useGameStore } from "@/game/store";
+import { useGameStore, selectMission, selectSetMissionTitle, selectSetMissionDescription, selectToday } from "@/game/store";
 import { QuickPodsRow } from "@/components/quick/QuickPodsRow";
 
 export default function HomeSnapshot() {
-  const mission = useGameStore((s) => s.mission);
-  const setMissionTitle = useGameStore((s) => s.setMissionTitle);
-  const setMissionDescription = useGameStore((s) => s.setMissionDescription);
-  const nextCommitment = useGameStore((s) => s.today.nextCommitment);
+  const mission = useGameStore(selectMission);
+  const setMissionTitle = useGameStore(selectSetMissionTitle);
+  const setMissionDescription = useGameStore(selectSetMissionDescription);
+  const { nextCommitment } = useGameStore(selectToday);
 
   return (
     <div className="min-h-svh bg-background text-foreground p-4 space-y-6">
