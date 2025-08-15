@@ -2,18 +2,10 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Target,
-  Waves,
-  StickyNote,
-  Mic,
-  Pencil,
-  type LucideIcon,
-} from "lucide-react";
+import { Pencil } from "lucide-react";
 import { AvatarSphere } from "@/components/avatar/AvatarSphere";
 import { useGameStore } from "@/game/store";
-import { useHUDActions } from "@/game/hud/useHUDActions";
-import type { QuickActionKey } from "@/game/hud/hud.data";
+import QuickPodsRow from "@/components/quick/QuickPodsRow";
 
 function ProgressRing({ value }: { value: number }) {
   return (
@@ -32,7 +24,6 @@ function ProgressRing({ value }: { value: number }) {
 }
 
 export default function HomeView() {
-  const { run } = useHUDActions();
   const progress = useGameStore((s) => s.stats.xp);
   const mission = useGameStore((s) => s.mission);
   const setMissionTitle = useGameStore((s) => s.setMissionTitle);
@@ -44,13 +35,6 @@ export default function HomeView() {
   const changes = [
     { id: 1, text: "Logged a voice note", time: "2h ago" },
     { id: 2, text: "Completed focus session", time: "Yesterday" },
-  ];
-
-  const pods: { action: QuickActionKey; label: string; icon: LucideIcon }[] = [
-    { action: "startFocus", label: "Focus", icon: Target },
-    { action: "startHypnosis", label: "Hypno", icon: Waves },
-    { action: "addNote", label: "Notes", icon: StickyNote },
-    { action: "voiceNote", label: "Voice", icon: Mic },
   ];
 
   const handleSave = () => {
@@ -124,22 +108,10 @@ export default function HomeView() {
             <div className="text-sm opacity-80">Next:</div>
             <div className="font-medium">{nextCommitment}</div>
           </div>
-          <Button onClick={() => run("startFocus")}>Start Focus</Button>
         </div>
 
         {/* Quick pods */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {pods.map((p) => (
-            <button
-              key={p.action}
-              onClick={() => run(p.action)}
-              className="glass-panel rounded-xl p-4 flex flex-col items-center gap-2 hover-scale"
-            >
-              <p.icon className="w-6 h-6" />
-              <span className="text-sm font-medium">{p.label}</span>
-            </button>
-          ))}
-        </div>
+        <QuickPodsRow />
 
         {/* Recent changes */}
         <div className="glass-panel rounded-xl p-6">
