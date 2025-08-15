@@ -1,12 +1,12 @@
-import { bus } from '@/utils/bus';
 import { useVoiceStore } from '@/state/voice';
+import { voiceService } from '@/voice/voiceService';
 
 export const startListening = () => {
-  bus.emit('voice/listen:start', {});
+  void voiceService.startListening();
 };
 
 export const stopListening = () => {
-  bus.emit('voice/listen:stop', {});
+  voiceService.stopListening();
 };
 
 export const toggleListening = () => {

@@ -2,9 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { bus } from "@/utils/bus";
 import { useAvatarStore } from "@/state/avatar";
-import { generatePhonemeTimings } from "./phonemeUtils";
 
-import type { SphereState } from "@/state/types/chatEvents";
+type SphereState = 'idle' | 'thinking' | 'speaking';
 
 
 interface Props {
@@ -14,13 +13,9 @@ interface Props {
 export function ReactiveSphere({ size = 48, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const micStreamRef = useRef<MediaStream | null>(null);
   const frameRef = useRef<number>(0);
-  const phonemeTimes = useRef<number[]>([]);
-  const phonemeStart = useRef<number>(0);
   const audio = useAvatarStore((s) => s.audio);
-  const [state, setState] = useState<SphereState>("idle");
-  const progressRef = useRef(0);
+  const [state, setState] = useState<SphereState>('idle');
 
   // Setup WebGL scene
   useEffect(() => {
@@ -51,26 +46,15 @@ export function ReactiveSphere({ size = 48, className }: Props) {
       frameRef.current = requestAnimationFrame(animate);
       let scale = 1;
 
-      if (state === "listening" && analyserRef.current) {
+      if (state === 'speaking' && analyserRef.current) {
         analyserRef.current.getByteTimeDomainData(data);
         let sum = 0;
         for (let i = 0; i < data.length; i++) {
           sum += Math.abs(data[i] - 128);
         }
-        const level = sum / data.length / 128; // 0..1
+        const level = sum / data.length / 128;
         scale += level;
-      } else if (state === "speaking") {
-        const now = performance.now() - phonemeStart.current;
-        const times = phonemeTimes.current;
-        if (times.length) {
-          const idx = times.findIndex((t) => t > now);
-          if (idx % 2 === 0) {
-            scale += 0.3;
-          }
-        }
-      } else if (state === "progress") {
-        scale = 0.5 + progressRef.current * 0.5;
-      } else if (state === "thinking") {
+      } else if (state === 'thinking') {
         scale = 1 + Math.sin(performance.now() * 0.005) * 0.05;
       }
 
@@ -88,28 +72,12 @@ export function ReactiveSphere({ size = 48, className }: Props) {
   // Handle bus events
   useEffect(() => {
 
-    const off = bus.on("sphere/state:set", (e: any) => {
-
-      if (e.state === "listening") {
-        setState("listening");
-        startMic();
-      } else if (e.state === "speaking") {
-        setState("speaking");
-        if (typeof e.text === "string") {
-          phonemeTimes.current = generatePhonemeTimings(e.text);
-          phonemeStart.current = performance.now();
-        } else if (audio) {
-          attachAnalyser(audio);
-        }
-      } else if (e.state === "thinking") {
-        setState("thinking");
+    const off = bus.on('sphere/state:set', ({ state }) => {
+      setState(state);
+      if (state === 'speaking' && audio) {
+        attachAnalyser(audio);
+      } else {
         cleanupAudio();
-      } else if (e.state === "idle") {
-        setState("idle");
-        cleanupAudio();
-      } else if (e.state === "progress") {
-        progressRef.current = e.value ?? 0;
-        setState("progress");
       }
     });
     return () => {
@@ -137,32 +105,8 @@ export function ReactiveSphere({ size = 48, className }: Props) {
     }
   };
 
-  const startMic = async () => {
-    cleanupAudio();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      micStreamRef.current = stream;
-      const Ctx =
-        (window.AudioContext ||
-          (window as unknown as { webkitAudioContext?: typeof AudioContext })
-            .webkitAudioContext);
-      const ctx = new Ctx();
-      const src = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 2048;
-      src.connect(analyser);
-      analyserRef.current = analyser;
-    } catch {
-      analyserRef.current = null;
-    }
-  };
-
   const cleanupAudio = () => {
     analyserRef.current = null;
-    if (micStreamRef.current) {
-      micStreamRef.current.getTracks().forEach((t) => t.stop());
-      micStreamRef.current = null;
-    }
   };
 
   return <canvas ref={canvasRef} className={className} style={{ width: size, height: size }} />;

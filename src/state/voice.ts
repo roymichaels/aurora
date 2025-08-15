@@ -60,13 +60,6 @@ export const useVoiceStore = create<VoiceState>((set) => {
     });
   });
 
-  bus.on('voice/listen:start', () => {
-    set({ isListening: true });
-  });
-  bus.on('voice/listen:stop', () => {
-    set({ isListening: false });
-  });
-
   const hasWindow = typeof window !== 'undefined';
   const ls = hasWindow ? window.localStorage : null;
 
