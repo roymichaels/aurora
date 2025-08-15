@@ -22,21 +22,25 @@ class VoiceService {
   constructor() {
     if (typeof window !== 'undefined') {
       this.enabled = localStorage.getItem('aurora_voice_enabled') === '1';
-      const enable = () => {
-        this.enabled = true;
-        localStorage.setItem('aurora_voice_enabled', '1');
-        try {
-          window.speechSynthesis.getVoices();
-          window.speechSynthesis.resume();
-        } catch {
-          /* ignore */
-        }
-      };
+      const enable = () => this.enable();
       if (!this.enabled) {
         window.addEventListener('pointerdown', enable, { once: true });
         window.addEventListener('keydown', enable, { once: true });
       }
       window.addEventListener('beforeunload', () => this.cancel());
+    }
+  }
+
+  enable() {
+    this.enabled = true;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('aurora_voice_enabled', '1');
+      try {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.resume();
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -63,6 +67,7 @@ class VoiceService {
                 this.blocked = () => {
                   audio.play().catch(() => {});
                 };
+                bus.emit('voice/playback:blocked', { callback: this.blocked });
               }
             });
           }
@@ -113,11 +118,11 @@ class VoiceService {
   async speak(text: string) {
     if (!text?.trim()) return;
     this.blocked = null;
+    bus.emit('voice/playback:blocked', { callback: null });
     if (!this.enabled) {
       ttsAutoplayToast();
       const resume = () => {
-        this.enabled = true;
-        localStorage.setItem('aurora_voice_enabled', '1');
+        this.enable();
         void this.speak(text);
       };
       window.addEventListener('pointerdown', resume, { once: true });
@@ -185,6 +190,7 @@ class VoiceService {
             this.blocked = () => {
               audio.play().catch(() => {});
             };
+            bus.emit('voice/playback:blocked', { callback: this.blocked });
           }
           return;
         }
@@ -222,6 +228,7 @@ class VoiceService {
             this.blocked = () => {
               audio.play().catch(() => {});
             };
+            bus.emit('voice/playback:blocked', { callback: this.blocked });
           }
           return;
         }
@@ -259,7 +266,18 @@ class VoiceService {
             bus.emit('voice/state:set', { state: 'thinking' });
           };
           this.utter = utter;
-          window.speechSynthesis.speak(utter);
+          try {
+            window.speechSynthesis.speak(utter);
+          } catch (err) {
+            if ((err as { name?: string } | undefined)?.name === 'NotAllowedError') {
+              ttsAutoplayToast();
+              this.blocked = () => {
+                window.speechSynthesis.speak(utter);
+              };
+              bus.emit('voice/playback:blocked', { callback: this.blocked });
+            }
+            return;
+          }
           return;
         } catch {
           current = 'off';
@@ -294,8 +312,18 @@ class VoiceService {
       this.utter = null;
     }
     this.blocked = null;
+    bus.emit('voice/playback:blocked', { callback: null });
     useVoiceStore.getState().setListening(false);
     useVoiceStore.getState().setSpeaking(false);
+  }
+
+  resume() {
+    if (this.blocked) {
+      const cb = this.blocked;
+      this.blocked = null;
+      bus.emit('voice/playback:blocked', { callback: null });
+      cb();
+    }
   }
 
   getBlockedCallback() {

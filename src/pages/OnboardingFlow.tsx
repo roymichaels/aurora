@@ -111,7 +111,7 @@ export default function OnboardingFlow() {
   const navigate = useNavigate();
 
   // SINGLE instance
-  const { speak, cancel, isSpeaking, enabled, enable } = useTextToSpeech();
+  const { speak, cancel, isSpeaking } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -198,9 +198,9 @@ export default function OnboardingFlow() {
   // Speak assistant messages as they appear
   useEffect(() => {
     const last = messages[messages.length - 1];
-    if (enabled && last?.role === "assistant") speak(last.content);
+    if (last?.role === "assistant") speak(last.content);
     return cancel;
-  }, [messages, enabled, speak, cancel]);
+  }, [messages, speak, cancel]);
 
   // Scroll to latest message
   useEffect(() => {
@@ -444,14 +444,14 @@ export default function OnboardingFlow() {
               placeholder="Your answer..."
               className="resize-none"
               onFocus={() => {
-                if (!enabled) enable();
+                /* voice enabled via service */
               }}
             />
             <Button
               type="submit"
               className="self-end"
               onClick={() => {
-                if (!enabled) enable();
+                /* voice enabled via service */
               }}
             >
               Continue
