@@ -11,6 +11,7 @@ const VOICE_LOCALE_KEY = 'aurora.voiceLocale';
 const VOICE_INPUT_MODE_KEY = 'aurora.voiceInputMode';
 const VOICE_LISTEN_MODE_KEY = 'aurora.listenMode';
 
+
 type VoiceMode =
   | 'cloned'
   | 'eleven-default'
@@ -34,6 +35,7 @@ type VoiceState = {
   pitch: number;
   expression: number;
   emotion: string;
+  listenMode: ListenMode;
   setListening: (v: boolean) => void;
   setThinking: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
@@ -47,6 +49,7 @@ type VoiceState = {
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
   setEmotion: (v: string) => void;
+  setListenMode: (m: ListenMode) => void;
 };
 
 export const useVoiceStore = create<VoiceState>((set) => {
@@ -96,6 +99,9 @@ export const useVoiceStore = create<VoiceState>((set) => {
     emotion: hasWindow
       ? ls!.getItem(VOICE_EMOTION_KEY) || 'neutral'
       : 'neutral',
+    listenMode: hasWindow
+      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) || 'push-to-talk')
+      : 'push-to-talk',
 
     setListening: (v) => set({ isListening: v }),
     setThinking: (v) => set({ isThinking: v }),
@@ -105,7 +111,9 @@ export const useVoiceStore = create<VoiceState>((set) => {
       try {
         if (id) ls?.setItem(VOICE_ID_KEY, id);
         else ls?.removeItem(VOICE_ID_KEY);
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ voiceId: id });
     },
 
@@ -113,7 +121,9 @@ export const useVoiceStore = create<VoiceState>((set) => {
       if (persist) {
         try {
           ls?.setItem(VOICE_MODE_KEY, mode);
-        } catch {}
+        } catch {
+          /* empty */
+        }
       }
       set({ mode });
     },
@@ -136,36 +146,55 @@ export const useVoiceStore = create<VoiceState>((set) => {
     setLocale: (locale) => {
       try {
         ls?.setItem(VOICE_LOCALE_KEY, locale);
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ locale });
     },
 
     setSpeed: (speed) => {
       try {
         ls?.setItem(VOICE_SPEED_KEY, String(speed));
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ speed });
     },
 
     setPitch: (pitch) => {
       try {
         ls?.setItem(VOICE_PITCH_KEY, String(pitch));
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ pitch });
     },
 
     setExpression: (expression) => {
       try {
         ls?.setItem(VOICE_EXPR_KEY, String(expression));
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ expression });
     },
 
     setEmotion: (emotion) => {
       try {
         ls?.setItem(VOICE_EMOTION_KEY, emotion);
-      } catch {}
+      } catch {
+        /* empty */
+      }
       set({ emotion });
+    },
+
+    setListenMode: (listenMode) => {
+      try {
+        ls?.setItem(VOICE_LISTEN_MODE_KEY, listenMode);
+      } catch {
+        /* empty */
+      }
+      set({ listenMode });
     }, // <- no extra comma after the last property
   };
 });
