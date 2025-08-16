@@ -33,7 +33,7 @@
   50% { transform: scale(1.04); }
   100% { transform: scale(1); }
 }
-.node-pulse { animation: nodePulse 2.4s ease-in-out infinite; }
+.node-pulse { animation: nodePulse 2.4s var(--ease-standard) infinite; }
 
 /* tiny stars */
 .tiny-star {
