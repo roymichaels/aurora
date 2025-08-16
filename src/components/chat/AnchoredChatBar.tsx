@@ -138,7 +138,7 @@ export function AnchoredChatBar() {
     <div
       className="fixed inset-x-0 pointer-events-none"
       style={{
-        bottom: "calc(var(--kb-offset) + var(--safe-area-bottom))",
+        bottom: "var(--kb-offset)",
         zIndex: 70,
       }}
     >
@@ -150,7 +150,7 @@ export function AnchoredChatBar() {
       >
         {lastAssistant?.content}
       </div>
-      <div ref={ref} className="pointer-events-auto relative mx-3">
+      <div ref={ref} className="pointer-events-auto relative mx-3 pb-safe-bottom">
       <div className="glass-panel rounded-2xl p-2 elev flex items-center gap-2">
 
         <Button
