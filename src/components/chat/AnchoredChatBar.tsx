@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
 import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
-import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
+import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 import { useVoiceStore } from "@/state/voice";
 import {
@@ -179,7 +179,7 @@ export function AnchoredChatBar() {
         >
           <Send className="w-4 h-4" />
         </Button>
-        <ReactiveSphere size={24} className="ml-1" />
+        <AuroraSphere size={24} className="ml-1" />
         {blocked ? (
           <button
             type="button"
