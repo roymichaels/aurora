@@ -4,9 +4,11 @@ import QuickSlot from './QuickSlot'
 import { quickSlots } from './hud.data'
 import { useHUDActions } from './useHUDActions'
 import { useEffect } from 'react'
+import { useUIStore } from '@/state/ui'
 
 export default function HUDBar() {
   const { run } = useHUDActions()
+  const openModal = useUIStore.getState().openModal
 
   // Desktop hotkeys 1..6
   useEffect(() => {
@@ -14,7 +16,7 @@ export default function HUDBar() {
       const target = e.target as HTMLElement | null
       if (target && (target.closest('input, textarea, [contenteditable="true"]'))) return
       const n = Number(e.key)
-      if (n >= 1 && n <= quickSlots.length) run(quickSlots[n-1].action as any)
+      if (n >= 1 && n <= quickSlots.length) run(quickSlots[n-1].action)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -36,17 +38,49 @@ export default function HUDBar() {
               <div className="grow min-w-[260px]"><StatBars/></div>
 
               {/* Right: System icons always at far right */}
-              <div className="ml-auto flex items-center gap-2 order-3 sm:order-none">
-                <button className="hud-icon settings hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Settings"/>
-                <button className="hud-icon bag hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Bag"/>
-                <button className="hud-icon map hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Map" onClick={()=>run('openMap' as any)}/>
-                <button className="hud-icon stick hover-scale smooth hover:brightness-110 active:scale-95" aria-label="Joystick" onClick={() => window.dispatchEvent(new CustomEvent('mos', { detail: { type: 'toggleJoystick' } }))}/>
+              <div className="ml-auto flex items-center gap-2 sm:gap-3 order-3 sm:order-none">
+                <button
+                  type="button"
+                  className="hud-icon settings hover-scale smooth hover:brightness-110 active:scale-95"
+                  aria-label="Settings"
+                  title="Settings"
+                  onClick={() => openModal('settings')}
+                >
+                  <span className="sr-only">Settings</span>
+                </button>
+                <button
+                  type="button"
+                  className="hud-icon bag hover-scale smooth hover:brightness-110 active:scale-95"
+                  aria-label="Inventory"
+                  title="Inventory"
+                  onClick={() => openModal('inventory')}
+                >
+                  <span className="sr-only">Inventory</span>
+                </button>
+                <button
+                  type="button"
+                  className="hud-icon map hover-scale smooth hover:brightness-110 active:scale-95"
+                  aria-label="Map"
+                  title="Map"
+                  onClick={() => openModal('map')}
+                >
+                  <span className="sr-only">Map</span>
+                </button>
+                <button
+                  type="button"
+                  className="hud-icon stick hover-scale smooth hover:brightness-110 active:scale-95"
+                  aria-label="Controls"
+                  title="Controls"
+                  onClick={() => openModal('controls')}
+                >
+                  <span className="sr-only">Controls</span>
+                </button>
               </div>
 
               {/* Quick Slots: full width on small (second line), inline on large */}
               <div className="flex items-center gap-3 basis-full sm:basis-auto order-4 sm:order-none">
                 {quickSlots.map(s => (
-                  <QuickSlot key={s.id} hotkey={s.key} label={s.label} icon={s.icon} onClick={() => run(s.action as any)} />
+                  <QuickSlot key={s.id} hotkey={s.key} label={s.label} icon={s.icon} onClick={() => run(s.action)} />
                 ))}
               </div>
             </div>
