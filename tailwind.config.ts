@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
 	darkMode: ["class"],
@@ -84,11 +85,18 @@ export default {
                                 md: 'var(--radius-md)',
                                 sm: 'var(--radius-sm)'
                         },
-			keyframes: {
-				'accordion-down': {
-					from: { height: '0', opacity: '0' },
-					to: { height: 'var(--radix-accordion-content-height)', opacity: '1' }
-				},
+                        transitionTimingFunction: {
+                                standard: 'var(--ease-standard)'
+                        },
+                        transitionDuration: {
+                                fast: 'var(--duration-fast)',
+                                slow: 'var(--duration-slow)'
+                        },
+                        keyframes: {
+                                'accordion-down': {
+                                        from: { height: '0', opacity: '0' },
+                                        to: { height: 'var(--radix-accordion-content-height)', opacity: '1' }
+                                },
 				'accordion-up': {
 					from: { height: 'var(--radix-accordion-content-height)', opacity: '1' },
 					to: { height: '0', opacity: '0' }
@@ -117,21 +125,21 @@ export default {
 					'0%': { transform: 'translateX(0)' },
 					'100%': { transform: 'translateX(100%)' }
 				}
-			},
-			animation: {
-				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out',
-				'fade-in': 'fade-in 0.3s ease-out',
-				'fade-out': 'fade-out 0.3s ease-out',
-				'scale-in': 'scale-in 0.2s ease-out',
-				'scale-out': 'scale-out 0.2s ease-out',
-				'slide-in-right': 'slide-in-right 0.3s ease-out',
-				'slide-out-right': 'slide-out-right 0.3s ease-out',
-				// Combined
-				'enter': 'fade-in 0.3s ease-out, scale-in 0.2s ease-out',
-				'exit': 'fade-out 0.3s ease-out, scale-out 0.2s ease-out'
-			}
-		}
-	},
-	plugins: [require("tailwindcss-animate")],
+                        },
+                        animation: {
+                                'accordion-down': 'accordion-down var(--duration-fast) var(--ease-standard)',
+                                'accordion-up': 'accordion-up var(--duration-fast) var(--ease-standard)',
+                                'fade-in': 'fade-in var(--duration-slow) var(--ease-standard)',
+                                'fade-out': 'fade-out var(--duration-slow) var(--ease-standard)',
+                                'scale-in': 'scale-in var(--duration-fast) var(--ease-standard)',
+                                'scale-out': 'scale-out var(--duration-fast) var(--ease-standard)',
+                                'slide-in-right': 'slide-in-right var(--duration-slow) var(--ease-standard)',
+                                'slide-out-right': 'slide-out-right var(--duration-slow) var(--ease-standard)',
+                                // Combined
+                                'enter': 'fade-in var(--duration-slow) var(--ease-standard), scale-in var(--duration-fast) var(--ease-standard)',
+                                'exit': 'fade-out var(--duration-slow) var(--ease-standard), scale-out var(--duration-fast) var(--ease-standard)'
+                        }
+                }
+        },
+        plugins: [tailwindcssAnimate],
 } satisfies Config;
