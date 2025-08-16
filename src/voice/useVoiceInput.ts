@@ -3,6 +3,7 @@ import { useVoiceStore } from '@/state/voice';
 import { bus } from '@/utils/bus';
 import { voiceService } from '@/voice/voiceService';
 import { useVoiceMode } from '@/voice/useVoiceMode';
+import { track } from '@/utils/telemetry';
 
 export function useVoiceInput() {
   const { mode } = useVoiceMode();
@@ -11,15 +12,20 @@ export function useVoiceInput() {
   const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
-    const off = voiceService.onTranscript(setTranscript);
+    const off = voiceService.onTranscript((text) => {
+      setTranscript(text);
+      track('voice/transcript', { text });
+    });
     return off;
   }, []);
 
   const startListening = useCallback(() => {
+    track('voice/start');
     void voiceService.startListening();
   }, []);
 
   const stopListening = useCallback(() => {
+    track('voice/stop');
     voiceService.stopListening();
   }, []);
 
