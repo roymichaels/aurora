@@ -1,6 +1,9 @@
 import BrainView from "@/views/BrainView";
 import JournalView from "@/views/JournalView";
 import LiveFocusView from "@/components/live/LiveFocusView";
+import FocusView from "@/views/FocusView";
+import HypnoView from "@/views/HypnoView";
+import VoiceView from "@/views/VoiceView";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
@@ -27,6 +30,18 @@ export default function ModalHost() {
       break;
     case "journal":
       content = <JournalView />;
+      break;
+    case "focus":
+      content = <FocusView />;
+      break;
+    case "hypno":
+      content = <HypnoView />;
+      break;
+    case "notes":
+      content = <JournalView />;
+      break;
+    case "voice":
+      content = <VoiceView />;
       break;
     case "live":
       content = <LiveFocusView />;

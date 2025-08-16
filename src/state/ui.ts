@@ -10,7 +10,11 @@ export type ModalId =
   | "tasks"
   | "goals"
   | "settings"
-  | "more";
+  | "more"
+  | "focus"
+  | "hypno"
+  | "notes"
+  | "voice";
 
 type UIState = {
   activeModal: ModalId | null;
