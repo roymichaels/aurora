@@ -4,14 +4,8 @@ import { exportEncryptedBrain, importEncryptedBrain } from '@/memory/brainBackup
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import ViewHeader from '@/components/view/ViewHeader';
 import { useChatInputFocus } from '@/hooks/useChatInputFocus';
 import {
   Select,
@@ -200,12 +194,10 @@ export default function BrainView() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
-      <DialogHeader>
-        <DialogTitle>Brain</DialogTitle>
-        <DialogDescription>
-          Search and manage stored memories.
-        </DialogDescription>
-      </DialogHeader>
+      <ViewHeader
+        title="Brain"
+        description="Search and manage stored memories."
+      />
       <div className="flex flex-wrap gap-2 items-center">
         <Input
           placeholder="Search memories"
@@ -351,9 +343,7 @@ export default function BrainView() {
             focusChatInput();
           }}
         >
-          <DialogHeader>
-            <DialogTitle>Edit Memory</DialogTitle>
-          </DialogHeader>
+          <ViewHeader title="Edit Memory" />
           <div className="space-y-2 py-2">
             <Input
               value={editContent}
