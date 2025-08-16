@@ -134,6 +134,7 @@ export function AnchoredChatBar() {
       </div>
       <div className="pointer-events-auto relative mx-3 mb-[var(--gap-h)]">
       <div className="glass-panel rounded-2xl p-2 elev flex items-center gap-2">
+
         <Button
           size="icon"
           variant={listening ? "secondary" : "ghost"}
