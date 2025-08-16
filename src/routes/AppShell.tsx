@@ -35,6 +35,11 @@ export default function AppShell() {
   useWeeklyBrainBackup();
   useKeyboardOffset();
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--hud-h", "0px");
+    document.documentElement.style.setProperty("--hud-gap", "8px");
+  }, []);
+
 
   useEffect(() => {
     const off = bus.on('nav:view', ({ id, params }) => open(id as ViewId, params));
@@ -113,7 +118,7 @@ export default function AppShell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="aurora-app pb-[calc(var(--dock-h)+var(--chatbar-h)+var(--gap-h)+var(--kb-offset)+var(--safe-area-bottom))]"
+            className="aurora-app pb-[calc(var(--dock-h)+var(--chatbar-h)+var(--hud-gap)+var(--kb-offset)+var(--safe-area-bottom))]"
           >
             <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
               <Outlet />
