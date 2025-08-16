@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { WebGPURenderer } from 'three/webgpu';
 import { useAvatarStore } from '@/state/avatar';
 import { useVoiceStore } from '@/state/voice';
+import { createHalo } from './auroraSphereHalo';
+import './aurora-sphere.css';
 
 export type AuroraMood = 'calm' | 'focused' | 'confident' | 'stressed';
 
@@ -15,6 +17,7 @@ interface Props {
   xpPct?: number;
   mood?: AuroraMood;
   speaking?: boolean;
+  progress?: number;
 }
 
 /**
@@ -31,11 +34,14 @@ export function AuroraSphere({
   xpPct = 0,
   mood,
   speaking,
+  progress = 0,
 }: Props) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const materialRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const haloRef = useRef<THREE.Mesh | null>(null);
   const frameRef = useRef<number>(0);
 
   // pull defaults from global stores
@@ -63,6 +69,7 @@ export function AuroraSphere({
   useEffect(() => {
     levelRef.current = level;
   }, [level]);
+
 
   // attach analyser for audio driven scale
   useEffect(() => {
@@ -117,6 +124,10 @@ export function AuroraSphere({
     materialRef.current = material;
     scene.add(mesh);
 
+    const halo = createHalo();
+    haloRef.current = halo;
+    scene.add(halo);
+
     const dir = new THREE.DirectionalLight(0xffffff, 1);
     dir.position.set(0, 0, 4);
     scene.add(dir);
@@ -127,20 +138,25 @@ export function AuroraSphere({
       frameRef.current = requestAnimationFrame(animate);
       const mesh = meshRef.current;
       const mat = materialRef.current;
-      if (!mesh || !mat) return;
+      const halo = haloRef.current;
+      if (!mesh || !mat || !halo) return;
 
       let scale = 1;
+      let levelAmp = 0;
       if (speakingRef.current && analyserRef.current) {
         analyserRef.current.getByteTimeDomainData(data);
         let sum = 0;
         for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
-        const levelAmp = sum / data.length / 128;
+        levelAmp = sum / data.length / 128;
         scale += levelAmp;
       } else {
         // subtle pulse when idle/thinking
         scale = 1 + Math.sin(performance.now() * 0.005) * 0.05;
       }
       mesh.scale.setScalar(scale);
+      const haloScale = 1.2 + levelAmp * 0.6;
+      halo.scale.setScalar(haloScale);
+      (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
 
       // color from xp + mood
       const hue = 180 + Math.round((xpRef.current / 100) * 140); // 180..320
@@ -167,7 +183,16 @@ export function AuroraSphere({
     };
   }, [size]);
 
-  return <div ref={mountRef} className={className} style={{ width: size, height: size }} />;
+  return (
+    <div
+      ref={containerRef}
+      className={`aurora-sphere-container ${className ?? ''}`}
+      style={{ width: size, height: size, ['--progress' as any]: progress }}
+    >
+      <div className="aurora-sphere-ring" />
+      <div ref={mountRef} className="aurora-sphere-mount" />
+    </div>
+  );
 }
 
 export default AuroraSphere;
