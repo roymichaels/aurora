@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { track } from '@/utils/telemetry';
 
 const clamp = (v: number, min = 0, max = 100) => Math.max(min, Math.min(max, v));
 
@@ -40,11 +41,13 @@ export const useProgressStore = create<ProgressState>()(
       notes: [],
       awardXP: (amount) =>
         set((s) => {
+          track('progress/award_xp', { amount });
           const { xp, level } = calcXP(s.xp, amount);
           return { xp, level };
         }),
       complete: (id) =>
         set((s) => {
+          track('progress/complete', { id });
           const { xp, level } = calcXP(s.xp, 10);
           return {
             completed: { ...s.completed, [id]: true },
@@ -54,9 +57,14 @@ export const useProgressStore = create<ProgressState>()(
             mp: clamp(s.mp + 2),
           };
         }),
-      unlock: (id) => set((s) => ({ unlocked: new Set<string>([...s.unlocked, id]) })),
+      unlock: (id) =>
+        set((s) => {
+          track('progress/unlock', { id });
+          return { unlocked: new Set<string>([...s.unlocked, id]) };
+        }),
       addNote: (note) =>
         set((s) => {
+          track('progress/add_note');
           const last = s.notes[s.notes.length - 1];
           let streak = s.streak;
           const lastDay = last ? new Date(last.ts).toDateString() : null;
@@ -74,6 +82,7 @@ export const useProgressStore = create<ProgressState>()(
         }),
       confidenceRep: () =>
         set((s) => {
+          track('progress/confidence_rep');
           const { xp, level } = calcXP(s.xp, 3);
           return {
             xp,

@@ -1,5 +1,6 @@
 
 import { create } from "zustand";
+import { track } from '@/utils/telemetry';
 
 export type ModalId =
   | "brain"
@@ -23,10 +24,17 @@ export const useUIStore = create<UIState>((set) => ({
   activeModal: null,
   tasksRoadmapId: null,
   openModal: (id, options) =>
-    set({
-      activeModal: id,
-      ...(id === "tasks" ? { tasksRoadmapId: options?.roadmapId ?? null } : {}),
+    set(() => {
+      track('ui/modal_open', { id });
+      return {
+        activeModal: id,
+        ...(id === "tasks" ? { tasksRoadmapId: options?.roadmapId ?? null } : {}),
+      };
     }),
-  closeModal: () => set({ activeModal: null, tasksRoadmapId: null }),
+  closeModal: () =>
+    set((s) => {
+      track('ui/modal_close', { id: s.activeModal });
+      return { activeModal: null, tasksRoadmapId: null };
+    }),
 }));
 
