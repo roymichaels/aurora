@@ -15,7 +15,10 @@ export type ModalId =
   | "focus"
   | "hypno"
   | "notes"
-  | "voice";
+  | "voice"
+  | "inventory"
+  | "map"
+  | "controls";
 
 type UIState = {
   activeModal: ModalId | null;
