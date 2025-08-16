@@ -3,6 +3,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Flame, Mic, MicOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceIO } from "@/voice/voiceio";
@@ -109,13 +114,18 @@ export default function JournalView() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Journal</h1>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-sm">
-          <Flame className="w-4 h-4 text-destructive" />
-          <span className="font-medium tabular-nums">{streak}</span>
+      <DialogHeader>
+        <div className="flex items-center justify-between">
+          <DialogTitle>Journal</DialogTitle>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground text-sm">
+            <Flame className="w-4 h-4 text-destructive" />
+            <span className="font-medium tabular-nums">{streak}</span>
+          </div>
         </div>
-      </div>
+        <DialogDescription>
+          Record your thoughts and feelings.
+        </DialogDescription>
+      </DialogHeader>
 
       <Card>
         <CardContent className="space-y-2 pt-4">

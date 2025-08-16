@@ -9,6 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useChatInputFocus } from '@/hooks/useChatInputFocus';
@@ -199,7 +200,12 @@ export default function BrainView() {
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Brain</h1>
+      <DialogHeader>
+        <DialogTitle>Brain</DialogTitle>
+        <DialogDescription>
+          Search and manage stored memories.
+        </DialogDescription>
+      </DialogHeader>
       <div className="flex flex-wrap gap-2 items-center">
         <Input
           placeholder="Search memories"

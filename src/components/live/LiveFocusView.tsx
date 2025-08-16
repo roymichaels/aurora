@@ -6,6 +6,11 @@ import { Button } from '@/components/ui/button';
 import { useCurrentTask, type Task } from '@/state/task';
 import { FocusTimer } from './FocusTimer';
 import { useViewNav } from '@/state/view';
+import {
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type Roadmap = {
   id: string;
@@ -174,9 +179,12 @@ export default function LiveFocusView() {
       <Button variant="ghost" className="self-start" onClick={() => open('home')}>
         Back
       </Button>
-      <h2 className="text-xl font-semibold">
-        {task ? task.title : 'No task selected'}
-      </h2>
+      <DialogHeader className="text-center">
+        <DialogTitle>{task ? task.title : 'No task selected'}</DialogTitle>
+        <DialogDescription>
+          Stay focused on your current task.
+        </DialogDescription>
+      </DialogHeader>
       <FocusTimer />
     </section>
   );

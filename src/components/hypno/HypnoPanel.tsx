@@ -5,6 +5,7 @@ import { useGameStore } from "@/game/store";
 import { REWARDS } from "@/game/QuestEngine";
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/integrations/supabase/gameSync";
+import { DialogTitle } from "@/components/ui/dialog";
 
 type Props = {
   onClose?: () => void;
@@ -52,7 +53,7 @@ export default function HypnoPanel({ onClose }: Props) {
     <div className="fixed inset-x-0 bottom-0" style={{ zIndex: "var(--z-modal)" }}>
       <div className="glass-panel rounded-t-2xl p-4 elev">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold">Hypno Temple</h3>
+          <DialogTitle className="text-base font-semibold">Hypno Temple</DialogTitle>
           <button className="rounded-full px-3 py-1 bg-secondary" onClick={handleClose}>Close</button>
         </div>
         <div className="mt-3">
