@@ -4,7 +4,13 @@ import LiveFocusView from "@/components/live/LiveFocusView";
 import FocusView from "@/views/FocusView";
 import HypnoPanel from "@/components/hypno/HypnoPanel";
 import VoiceView from "@/views/VoiceView";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
 import { useEffect, type ReactNode } from "react";
@@ -72,7 +78,16 @@ export default function ModalHost() {
       className = "p-0 sm:max-w-lg";
       break;
     case "more":
-      content = <div>More</div>;
+      content = (
+        <>
+          <DialogHeader>
+            <DialogTitle>More</DialogTitle>
+            <DialogDescription>Additional options</DialogDescription>
+          </DialogHeader>
+          <div>More</div>
+        </>
+      );
+      className = "sm:max-w-md";
       break;
     case "inventory":
       content = <InventoryModal />;
