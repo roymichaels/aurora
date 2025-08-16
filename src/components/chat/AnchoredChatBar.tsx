@@ -144,7 +144,13 @@ export function AnchoredChatBar() {
   };
 
   return (
-    <>
+    <div
+      className="fixed inset-x-0 pointer-events-none"
+      style={{
+        bottom: `calc(var(--dock-h) + var(--hud-gap) + var(--kb-offset) + var(--safe-area-bottom))`,
+        zIndex: "var(--z-hud)",
+      }}
+    >
       {/* Visually hidden live region for screen reader announcements */}
       <div
         className="sr-only"
@@ -153,7 +159,7 @@ export function AnchoredChatBar() {
       >
         {lastAssistant?.content}
       </div>
-      <div ref={barRef} className="pointer-events-auto relative mx-3 mb-[var(--hud-gap)]">
+      <div ref={barRef} className="pointer-events-auto relative mx-3">
       <div className="glass-panel rounded-2xl p-2 elev flex items-center gap-2">
 
         <Button
@@ -254,6 +260,6 @@ export function AnchoredChatBar() {
         </button>
       </div>
     </div>
-    </>
+  </div>
   );
 }

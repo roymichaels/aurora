@@ -57,11 +57,18 @@ export default function BottomDock() {
   }, []);
 
   return (
-    <div ref={ref} className="w-full pointer-events-auto">
-      <div className="mx-3 hud-panel hud-maple rounded-2xl px-4 py-3 flex flex-col gap-2 select-none">
-        <div className="flex items-center gap-3 min-w-0">
-          {avatarEnabled && <AuroraSphere size={44} />}
-          <div className="min-w-0">
+    <div
+      className="fixed inset-x-0 pointer-events-none"
+      style={{
+        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom))`,
+        zIndex: "var(--z-hud)",
+      }}
+    >
+      <div ref={ref} className="w-full pointer-events-auto">
+        <div className="mx-3 hud-panel hud-maple rounded-2xl px-4 py-3 flex flex-col gap-2 select-none">
+          <div className="flex items-center gap-3 min-w-0">
+            {avatarEnabled && <AuroraSphere size={44} />}
+            <div className="min-w-0">
             <div className="text-[13px] opacity-90 truncate">
               Lv. {stats.level} • Streak {stats.streak}
             </div>
@@ -156,5 +163,6 @@ export default function BottomDock() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
