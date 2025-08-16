@@ -38,6 +38,14 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
               {this.state.error.message}
             </pre>
           )}
+          {this.state.error?.stack && (
+            <details className="w-full max-w-full">
+              <summary className="cursor-pointer text-blue-600 underline">View stack trace</summary>
+              <pre className="max-h-64 overflow-auto rounded bg-red-50 p-2 text-left text-xs text-red-800">
+                {this.state.error.stack}
+              </pre>
+            </details>
+          )}
           <div className="flex gap-4">
             <button
               className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
