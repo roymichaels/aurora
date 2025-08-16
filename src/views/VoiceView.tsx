@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import ViewHeader from "@/components/view/ViewHeader";
 import { toast } from "@/components/ui/use-toast";
 import { Mic, MicOff, Save, Sparkles, Send } from "lucide-react";
 import { useViewNav } from "@/state/view";
@@ -69,12 +65,10 @@ export default function VoiceView() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <DialogHeader>
-        <DialogTitle>Voice</DialogTitle>
-        <DialogDescription>
-          Press to talk. I’ll transcribe as you speak.
-        </DialogDescription>
-      </DialogHeader>
+      <ViewHeader
+        title="Voice"
+        description="Press to talk. I’ll transcribe as you speak."
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="md:col-span-2">
