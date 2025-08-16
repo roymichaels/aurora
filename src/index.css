@@ -66,7 +66,9 @@ All colors MUST be HSL.
     --gradient-surface: linear-gradient(180deg, hsl(240 3.7% 15.9% / 0.70), hsl(240 10% 3.9% / 0.50));
 
     /* Motion */
-    --transition-smooth: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+    --duration-fast: 150ms;
+    --duration-slow: 300ms;
 
     /* Layering */
     --z-bg: 0;
@@ -117,6 +119,13 @@ All colors MUST be HSL.
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 240 5% 64.9%;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --duration-fast: 0ms;
+      --duration-slow: 0ms;
+    }
+  }
 }
 
 @layer base {
@@ -151,7 +160,7 @@ All colors MUST be HSL.
   }
 
   .smooth {
-    transition: var(--transition-smooth);
+    transition: all var(--duration-slow) var(--ease-standard);
   }
 }
 
@@ -285,7 +294,7 @@ All colors MUST be HSL.
 @media (prefers-reduced-motion: reduce) { .idle-float { animation: none; } }
 
 /* Hub scene backgrounds */
-.hub-scene { position: relative; overflow: hidden; background: var(--gradient-surface); transition: var(--transition-smooth); }
+.hub-scene { position: relative; overflow: hidden; background: var(--gradient-surface); transition: all var(--duration-slow) var(--ease-standard); }
 .hub-scene .world-sky {
   background-image:
     radial-gradient(1400px 700px at 20% -10%, hsl(var(--primary) / 0.25), transparent 55%),
