@@ -87,11 +87,15 @@ export default function BottomDock() {
             </div>
           </div>
         </div>
-        <nav>
+        <div
+          role="region"
+          aria-label="Quick actions"
+          className="flex justify-around items-center"
+        >
+          <QuickActionBar />
+        </div>
+        <nav aria-label="Main navigation">
           <ul className="flex justify-around items-center">
-            <li>
-              <QuickActionBar />
-            </li>
             {items.map(({ to, label, icon: Icon }) => (
               <li key={label}>
                 <NavLink
