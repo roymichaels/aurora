@@ -6,6 +6,7 @@ import './styles/hud-fixes.css'
 import { registerSW } from 'virtual:pwa-register';
 import { initSettings } from './state/settings';
 import { preloadLocalModels } from './models/preload';
+import './state/quickActions';
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true })

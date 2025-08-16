@@ -1,6 +1,6 @@
 import type { QuickActionKey } from "./hud.data";
 import { addNote, startVoiceNote } from "@/utils/moments";
-import { useQuickActionModals } from "@/state/quickActions";
+import { useUIStore } from "@/state/ui";
 
 export function useHUDActions() {
   const run = (a: QuickActionKey) => {
@@ -13,7 +13,7 @@ export function useHUDActions() {
       return;
     }
     if (a === "openTasks") {
-      useQuickActionModals.getState().openTasks();
+      useUIStore.getState().openModal("tasks");
       return;
     }
     const eventMap: Record<string, string> = {
