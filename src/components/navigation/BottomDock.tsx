@@ -1,8 +1,6 @@
-import { NavLink } from "react-router-dom";
 import {
   Brain,
   BookOpen,
-  Home,
   MoreHorizontal,
   Radio,
   Target,
@@ -14,21 +12,20 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { useAvatarStore } from "@/state/avatar";
-import { useUIStore } from "@/state/ui";
+import { type ModalId, useUIStore } from "@/state/ui";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 
-interface DockItem {
-  to: string;
+interface Action {
+  id: ModalId;
   label: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
-const items: DockItem[] = [
-  { to: "/app", label: "Home", icon: Home },
-  { to: "/app/plan", label: "Brain", icon: Brain },
-  { to: "/app/notes", label: "Journal", icon: BookOpen },
-  { to: "/app/control", label: "Live", icon: Radio },
-  { to: "/app/settings", label: "More", icon: MoreHorizontal },
+const actions: Action[] = [
+  { id: "brain", label: "Brain", icon: Brain },
+  { id: "journal", label: "Journal", icon: BookOpen },
+  { id: "live", label: "Live", icon: Radio },
+  { id: "settings", label: "Settings", icon: MoreHorizontal },
 ];
 
 export default function BottomDock() {
@@ -55,6 +52,8 @@ export default function BottomDock() {
       observer.disconnect();
     };
   }, []);
+
+  const { activeModal, openModal } = useUIStore();
 
   return (
     <div
@@ -141,21 +140,22 @@ export default function BottomDock() {
           </div>
           <nav aria-label="Main navigation" className="flex-1">
             <ul className="flex justify-around items-center">
-              {items.map(({ to, label, icon: Icon }) => (
-                <li key={label}>
-                  <NavLink
-                    to={to}
-                    end={to === "/app"}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex flex-col items-center text-xs gap-1",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )
-                    }
+              {actions.map(({ id, label, icon: Icon }) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    onClick={() => openModal(id)}
+                    className={cn(
+                      "flex flex-col items-center text-xs gap-1",
+                      activeModal === id
+                        ? "text-primary"
+                        : "text-muted-foreground"
+                    )}
+                    aria-label={label}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{label}</span>
-                  </NavLink>
+                  </button>
                 </li>
               ))}
             </ul>
