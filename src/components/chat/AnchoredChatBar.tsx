@@ -20,6 +20,7 @@ export function AnchoredChatBar() {
   const listenMode = useVoiceStore((s) => s.listenMode);
   const [suggestion, setSuggestion] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognizingRef = useRef(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const pressStartRef = useRef<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
@@ -60,19 +61,38 @@ export function AnchoredChatBar() {
         setSuggestion(transcript);
       }
     };
-    rec.onend = () => stopBusListening();
+    rec.onstart = () => {
+      recognizingRef.current = true;
+    };
+    rec.onend = () => {
+      recognizingRef.current = false;
+      stopBusListening();
+    };
     recognitionRef.current = rec;
     return () => {
       rec.stop();
       recognitionRef.current = null;
+      recognizingRef.current = false;
     };
   }, []);
 
   const startListening = () => {
     const rec = recognitionRef.current;
-    if (!rec || listening) return;
+    if (!rec || listening || recognizingRef.current) return;
     startBusListening();
-    rec.start();
+    try {
+      rec.start();
+    } catch (err) {
+      if ((err as DOMException)?.name === "InvalidStateError") {
+        recognizingRef.current = false;
+        stopBusListening();
+        try {
+          useVoiceStore.getState().setListening(false);
+        } catch {
+          /* empty */
+        }
+      }
+    }
   };
 
   const stopListening = () => {
@@ -81,6 +101,12 @@ export function AnchoredChatBar() {
     rec.stop();
     stopBusListening();
   };
+
+  useEffect(() => {
+    return () => {
+      stopListening();
+    };
+  }, [listenMode]);
 
   const handlePressStart = () => {
     pressStartRef.current = Date.now();
