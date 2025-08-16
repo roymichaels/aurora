@@ -30,7 +30,7 @@ export function GameHUD() {
       <div
         className="fixed left-3 right-3"
         style={{
-          top: 'max(12px, env(safe-area-inset-top))',
+          top: 'max(var(--space-md), var(--safe-area-top))',
           zIndex: 'var(--z-hud)',
           pointerEvents: 'auto',
         }}

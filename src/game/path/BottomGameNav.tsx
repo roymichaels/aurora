@@ -10,7 +10,7 @@ export default function BottomGameNav({ onSelect }: { onSelect?: (key: 'home' | 
   return (
     <nav
       className="fixed left-1/2 -translate-x-1/2 z-20 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,.5)]"
-      style={{ bottom: `calc(env(safe-area-inset-bottom) + 8px)` }}
+      style={{ bottom: `calc(var(--safe-area-bottom) + var(--space-sm))` }}
       role="tablist"
       aria-label="Game navigation"
     >

@@ -354,9 +354,9 @@ function CompassIndicator({
       style={{
         width: 72,
         height: 72,
-        right: `calc(env(safe-area-inset-right) + 12px)`,
+        right: `calc(var(--safe-area-right) + var(--space-md))`,
         bottom:
-          `calc(env(safe-area-inset-bottom) + var(--compass-bottom, 12px))` as unknown as number,
+          `calc(var(--safe-area-bottom) + var(--compass-bottom, var(--space-md)))` as unknown as number,
       }}
     >
       {/* center */}

@@ -112,7 +112,7 @@ export default function AppShell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset)+env(safe-area-inset-bottom))]"
+            className="pb-[calc(var(--hud-h)+var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset)+var(--safe-area-bottom))]"
           >
             <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
               <Outlet />

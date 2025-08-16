@@ -78,7 +78,7 @@ export default function VirtualJoystick({
 
   return (
     <div
-      className="fixed left-4" style={{ bottom: `calc(env(safe-area-inset-bottom) + 16px)` }}
+      className="fixed left-4" style={{ bottom: `calc(var(--safe-area-bottom) + var(--space-lg))` }}
     >
       <div
         ref={baseRef}
