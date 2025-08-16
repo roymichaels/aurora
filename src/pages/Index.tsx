@@ -16,9 +16,6 @@ import DailyKickoff from '@/components/live/DailyKickoff';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import LandingPage from './LandingPage';
 import { type PathNode } from '@/game/path/path.data';
-import HUDBar from '@/game/hud/HUDBar';
-import { QuickActionsBar } from '@/components/live/QuickActionsBar';
-import ModalHost from '@/components/modals/ModalHost';
 import FastTravel from '@/components/overlays/FastTravel';
 import HypnoPanel from '@/components/hypno/HypnoPanel';
 import { useGameStore } from '@/game/store';
@@ -622,14 +619,9 @@ const Index = () => {
       {/* Daily Kickoff overlay */}
       <DailyKickoff visible={showKickoff} onComplete={handleKickoffComplete} />
 
-      {/* Unified HUD */}
-      <HUDBar />
-      <QuickActionsBar currentTask={null} />
-
       {/* Overlays */}
       <FastTravel />
       <HypnoPanel />
-      <ModalHost />
     </div>
   );
 };
