@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import GameHome from '@/game/path/GameHome';
 import ArchivePanel from '@/components/archive/ArchivePanel';
-import AppHeader from '@/components/layout/AppHeader';
 import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
 import DailyKickoff from '@/components/live/DailyKickoff';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -563,7 +562,6 @@ const Index = () => {
       onPointerUp={onPointerUp}
     >
       <div className="os-bg" />
-      <AppHeader />
 
       <div className="absolute inset-0 smooth" style={{ transform: translate }}>
         {/* 3x3 grid canvas sized by viewport */}

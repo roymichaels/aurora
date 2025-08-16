@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppHeader from '@/components/layout/AppHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PRICING_TIERS } from '@/modules/payments/components/PricingPage';
@@ -25,7 +24,6 @@ export default function AccountPlan() {
   return (
     <div className="relative min-h-svh">
       <div className="os-bg" />
-      <AppHeader />
       <main className="pt-24 pb-16 px-4 sm:px-6 max-w-5xl mx-auto space-y-8">
         <section>
           <h1 className="text-2xl font-semibold mb-4">Account Plan</h1>

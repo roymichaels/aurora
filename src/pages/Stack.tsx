@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import AppHeader from "@/components/layout/AppHeader";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarStore } from "@/state/avatar";
@@ -69,7 +68,6 @@ export default function StackPage() {
   return (
     <div className="relative min-h-svh">
       <div className="os-bg" />
-      <AppHeader />
       <main className="pt-24 pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
         <article className="space-y-8">
           <header>

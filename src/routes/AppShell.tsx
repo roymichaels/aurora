@@ -14,6 +14,7 @@ import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import AppHeader from "@/components/layout/AppHeader";
 
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
@@ -111,6 +112,7 @@ export default function AppShell() {
   return (
     <div className={`relative min-h-svh room-${currentRoom}`} {...swipe}>
         <div className="os-bg" />
+        <AppHeader />
         <AnimatePresence mode="wait">
           <motion.div
             key={loc.pathname + loc.search}
