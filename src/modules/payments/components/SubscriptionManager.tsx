@@ -56,6 +56,11 @@ function SubscriptionManagerUI() {
     }
   };
 
+  const handleRefresh = () => {
+    const usedTimes = usage?.usedTimes ?? 0;
+    refetch();
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -99,7 +104,7 @@ function SubscriptionManagerUI() {
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Subscription Management</h1>
-        <Button variant="outline" onClick={refetch}>
+        <Button variant="outline" onClick={handleRefresh}>
           <Settings className="w-4 h-4 mr-2" />
           Refresh
         </Button>
