@@ -43,7 +43,9 @@ All colors MUST be HSL.
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
 
-    --radius: 1.25rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 1rem;
+    --radius-lg: 1.5rem;
 
     /* Sidebar tokens */
     --sidebar-background: 240 5.9% 10%;
