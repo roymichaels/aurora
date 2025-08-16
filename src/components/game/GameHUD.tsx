@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useGameStore } from "@/game/store";
-import { AvatarSphere } from "@/components/avatar/AvatarSphere";
+import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAvatarStore } from "@/state/avatar";
 import HUDQuickActions from "@/components/hud/HUDQuickActions";
@@ -42,7 +42,7 @@ export function GameHUD() {
         <div className="flex items-center gap-3 min-w-0 flex-wrap">
           {/* Identity */}
           <div className="flex items-center gap-3 min-w-0 shrink">
-            {avatarEnabled && <AvatarSphere size={44} draggable={false} />}
+            {avatarEnabled && <ReactiveSphere size={44} />}
             <div className="min-w-0">
               <div className="text-[13px] opacity-90 truncate">
                 Lv. {stats.level} • Streak {stats.streak}

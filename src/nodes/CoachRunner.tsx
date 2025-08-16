@@ -1,29 +1,18 @@
 import { useEffect, useState } from "react";
-import { AuroraAgent } from "@/agent/AuroraAgent";
+import { conversationService } from "@/services/conversation";
+import { startListening, stopListening } from "@/voice/listenHelpers";
+import { useVoiceStore } from "@/state/voice";
 
 type Props = { node: { id: string; label: string }; onExit: () => void };
 
 export default function CoachRunner({ node, onExit }: Props) {
-  const [listening, setListening] = useState(false);
-  const [partial, setPartial] = useState("");
-  const [final, setFinal] = useState<string[]>([]);
-  const [responses, setResponses] = useState<string[]>([]);
+  const listening = useVoiceStore((s) => s.isListening);
+  const [state, setState] = useState(conversationService.getState());
 
-  useEffect(() => {
-    const agent = new AuroraAgent({
-      onListeningChange: setListening,
-      onPartial: (t: string) => setPartial(t),
-      onFinal: (t: string) => setFinal((arr) => [...arr, t]),
-      onResponse: (t: string) => setResponses((arr) => [...arr, t]),
-    });
-    window.__coachAgent = agent;
-    return () => {
-      try { agent.stopPTT(); } catch {}
-    };
-  }, []);
+  useEffect(() => conversationService.subscribe(setState), []);
 
-  const start = () => window.__coachAgent?.startPTT();
-  const stop = () => window.__coachAgent?.stopPTT();
+  const start = () => startListening();
+  const stop = () => stopListening();
 
   return (
     <main className="relative min-h-svh px-4 pt-10 pb-28 max-w-[760px] mx-auto">
@@ -33,13 +22,17 @@ export default function CoachRunner({ node, onExit }: Props) {
 
       <div className="rounded-lg border border-white/10 p-4 bg-white/5">
         <div className="flex items-center gap-3 mb-3">
-          <button className="btn" onClick={start} aria-pressed={listening}>🎤 {listening ? 'Listening…' : 'Push-to-talk'}</button>
+          <button className="btn" onClick={start} aria-pressed={listening}>
+            🎤 {listening ? 'Listening…' : 'Push-to-talk'}
+          </button>
           {listening && <button className="btn" onClick={stop}>Stop</button>}
         </div>
-        {partial && <p className="text-sm opacity-80">{partial}</p>}
         <div className="mt-3 space-y-2">
-          {final.map((t, i) => <p key={i} className="text-sm">You: {t}</p>)}
-          {responses.map((t, i) => <p key={`r-${i}`} className="text-sm opacity-90">Aurora: {t}</p>)}
+          {state.messages.map((m, i) => (
+            <p key={i} className="text-sm">
+              {m.role === 'assistant' ? 'Aurora: ' : 'You: '}{m.content}
+            </p>
+          ))}
         </div>
       </div>
 

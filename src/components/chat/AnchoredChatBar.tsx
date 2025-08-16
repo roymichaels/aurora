@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
-import { useChatStore } from "@/state/chat";
+import { conversationService } from "@/services/conversation";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
@@ -13,9 +13,10 @@ import {
 } from "@/voice/listenHelpers";
 
 export function AnchoredChatBar() {
-  const { send, sending, messages, recall } = useChatStore();
+  const [state, setState] = useState(conversationService.getState());
   const { speak, blocked, resume } = useTextToSpeech();
 
+  const { messages, sending, recall } = state;
   const [input, setInput] = useState("");
   const listening = useVoiceStore((s) => s.isListening);
   const listenMode = useVoiceStore((s) => s.listenMode);
@@ -30,6 +31,8 @@ export function AnchoredChatBar() {
     ref?.focus();
     return () => setChatInputRef(null);
   }, []);
+
+  useEffect(() => conversationService.subscribe(setState), []);
 
   useEffect(() => {
     // placeholder for any init logic
@@ -95,7 +98,7 @@ export function AnchoredChatBar() {
   const handleSend = (override?: string) => {
     const text = (override ?? input).trim();
     if (!text) return;
-    void send(text);
+    void conversationService.send(text);
     setInput("");
     setSuggestion(null);
     inputRef.current?.focus();

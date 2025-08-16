@@ -1,43 +1,32 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AuroraAgent } from "@/agent/AuroraAgent";
-import { useToast } from "@/components/ui/use-toast";
+import { conversationService } from "@/services/conversation";
+import { startListening, stopListening } from "@/voice/listenHelpers";
+import { useVoiceStore } from "@/state/voice";
 
 export default function AgentPanel() {
-  const { toast } = useToast();
-  const agentRef = useRef<AuroraAgent | null>(null);
-  const [listening, setListening] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [partial, setPartial] = useState("");
-  const [messages, setMessages] = useState<Array<{ role: 'user'|'assistant'; text: string }>>([]);
+  const [state, setState] = useState(conversationService.getState());
+  const listening = useVoiceStore((s) => s.isListening);
+  const speaking = useVoiceStore((s) => s.isSpeaking);
 
-  useEffect(() => {
-    const agent = new AuroraAgent({
-      onPartial: setPartial,
-      onFinal: (t) => setMessages((m) => [...m, { role: 'user', text: t }]),
-      onResponse: (t) => setMessages((m) => [...m, { role: 'assistant', text: t }]),
-      onListeningChange: setListening,
-      onSpeakingChange: setSpeaking,
-      onError: (e) => toast({ title: 'Voice error', description: e?.message || String(e) })
-    });
-    agentRef.current = agent;
-    return () => { agentRef.current = null; };
-  }, [toast]);
+  useEffect(() => conversationService.subscribe(setState), []);
 
   // Alt+Space toggles PTT
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.altKey && e.code === 'Space') {
         e.preventDefault();
-        if (!listening) agentRef.current?.startPTT(); else agentRef.current?.stopPTT();
+        if (!listening) startListening(); else stopListening();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [listening]);
 
-  const onHoldStart = () => agentRef.current?.startPTT();
-  const onHoldEnd = () => agentRef.current?.stopPTT();
+  const onHoldStart = () => startListening();
+  const onHoldEnd = () => stopListening();
+
+  const { messages } = state;
 
   return (
     <div className="max-w-3xl mx-auto grid gap-4">
@@ -66,10 +55,6 @@ export default function AgentPanel() {
           </div>
         </div>
       </section>
-
-      {partial && (
-        <div className="glass-panel rounded-xl p-3 text-sm text-muted-foreground">{partial}</div>
-      )}
 
       <div className="grid gap-2" role="log" aria-live="polite">
         {messages.map((m, i) => (
