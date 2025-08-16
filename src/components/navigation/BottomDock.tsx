@@ -1,31 +1,30 @@
 import {
   Brain,
   BookOpen,
-  MoreHorizontal,
   Radio,
-  Target,
-  Sparkles,
-  NotebookPen,
-  Mic,
+  Home,
+  Settings,
 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import QuickActionBar from "./QuickActionBar";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { useAvatarStore } from "@/state/avatar";
-import { type ModalId, useUIStore } from "@/state/ui";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 
-interface Action {
-  id: ModalId;
+interface NavItem {
+  to: string;
   label: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 }
 
-const actions: Action[] = [
-  { id: "brain", label: "Brain", icon: Brain },
-  { id: "journal", label: "Journal", icon: BookOpen },
-  { id: "live", label: "Live", icon: Radio },
-  { id: "settings", label: "Settings", icon: MoreHorizontal },
+const items: NavItem[] = [
+  { to: "/app", label: "Home", icon: Home },
+  { to: "/app/brain", label: "Brain", icon: Brain },
+  { to: "/app/journal", label: "Journal", icon: BookOpen },
+  { to: "/app/live", label: "Live", icon: Radio },
+  { to: "/app/settings", label: "Settings", icon: Settings },
 ];
 
 export default function BottomDock() {
@@ -53,7 +52,8 @@ export default function BottomDock() {
     };
   }, []);
 
-  const { activeModal, openModal } = useUIStore();
+  const { pathname } = useLocation();
+  const onHome = pathname === "/app";
 
   return (
     <div
@@ -104,58 +104,24 @@ export default function BottomDock() {
           </div>
         </div>
         <div className="flex items-center">
-          <div
-            role="region"
-            aria-label="Quick actions"
-            className="flex items-center gap-2"
-          >
-            <button
-              onClick={() => useUIStore.getState().openModal("focus")}
-              aria-label="Focus"
-              className="p-2 rounded-md hover:bg-accent"
-            >
-              <Target className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => useUIStore.getState().openModal("hypno")}
-              aria-label="Hypno"
-              className="p-2 rounded-md hover:bg-accent"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => useUIStore.getState().openModal("notes")}
-              aria-label="Notes"
-              className="p-2 rounded-md hover:bg-accent"
-            >
-              <NotebookPen className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => useUIStore.getState().openModal("voice")}
-              aria-label="Voice"
-              className="p-2 rounded-md hover:bg-accent"
-            >
-              <Mic className="w-5 h-5" />
-            </button>
-          </div>
+          {!onHome ? <QuickActionBar /> : <span aria-hidden="true" />}
           <nav aria-label="Main navigation" className="flex-1">
             <ul className="flex justify-around items-center">
-              {actions.map(({ id, label, icon: Icon }) => (
-                <li key={id}>
-                  <button
-                    type="button"
-                    onClick={() => openModal(id)}
-                    className={cn(
-                      "flex flex-col items-center text-xs gap-1",
-                      activeModal === id
-                        ? "text-primary"
-                        : "text-muted-foreground"
-                    )}
+              {items.map(({ to, label, icon: Icon }) => (
+                <li key={to}>
+                  <NavLink
+                    to={to}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex flex-col items-center text-xs gap-1",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )
+                    }
                     aria-label={label}
                   >
                     <Icon className="w-5 h-5" />
                     <span>{label}</span>
-                  </button>
+                  </NavLink>
                 </li>
               ))}
             </ul>

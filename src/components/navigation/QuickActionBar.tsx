@@ -1,11 +1,20 @@
-import { QuickAction, useQuickActions } from "./quickActions";
+import { Mic } from "lucide-react";
+import { useUIStore } from "@/state/ui";
+
+const actions = [
+  {
+    id: "voice",
+    label: "Voice",
+    icon: Mic,
+    onClick: () => useUIStore.getState().openModal("voice"),
+  },
+];
 
 export function QuickActionBar() {
-  const actions = useQuickActions();
   if (!actions.length) return null;
   return (
     <div className="flex items-center gap-2">
-      {actions.map(({ id, label, icon: Icon, onClick }: QuickAction) => (
+      {actions.map(({ id, label, icon: Icon, onClick }) => (
         <button
           key={id}
           onClick={onClick}
