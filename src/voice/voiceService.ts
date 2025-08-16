@@ -110,22 +110,46 @@ class VoiceService {
       this.audios.add(audio);
     };
 
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    this.stream = stream;
-    this.streams.add(stream);
-    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.stream = stream;
+      this.streams.add(stream);
+      if (pc.signalingState === 'closed') {
+        this.stopListening();
+        return;
+      }
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    const res = await fetch('/voice', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sdp: offer.sdp, type: offer.type }),
-    });
-    const answer = await res.json();
-    await pc.setRemoteDescription(answer);
-    useVoiceStore.getState().setListening(true);
-    useVoiceStore.getState().setThinking(false);
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      let res: Response;
+      try {
+        res = await fetch('/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sdp: offer.sdp, type: offer.type }),
+        });
+      } catch {
+        bus.emit('tts/pill', {
+          message: 'Unable to reach the voice server. Please try again later.',
+        });
+        throw new Error('voice endpoint unreachable');
+      }
+
+      if (!res.ok) {
+        bus.emit('tts/pill', {
+          message: 'Unable to reach the voice server. Please try again later.',
+        });
+        throw new Error(`voice endpoint error: ${res.status}`);
+      }
+
+      const answer = await res.json();
+      await pc.setRemoteDescription(answer);
+      useVoiceStore.getState().setListening(true);
+      useVoiceStore.getState().setThinking(false);
+    } catch {
+      this.stopListening();
+    }
   }
 
   stopListening() {
