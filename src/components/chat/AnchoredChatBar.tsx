@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
 import { useChatStore } from "@/state/chat";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
-import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 import { useVoiceStore } from "@/state/voice";
 import {
@@ -136,7 +135,7 @@ export function AnchoredChatBar() {
       <div
         className="fixed left-3 right-3 relative"
         style={{
-          bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--kb-offset) + var(--safe-area-bottom))`,
+          bottom: `calc(var(--dock-h) + var(--gap-h) + var(--kb-offset) + var(--safe-area-bottom))`,
           zIndex: "var(--z-hud)",
         }}
       >
@@ -179,7 +178,6 @@ export function AnchoredChatBar() {
         >
           <Send className="w-4 h-4" />
         </Button>
-        <AuroraSphere size={24} className="ml-1" />
         {blocked ? (
           <button
             type="button"

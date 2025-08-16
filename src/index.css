@@ -77,10 +77,8 @@ All colors MUST be HSL.
     --z-modal: 60;
     --z-toast: 100;
 
-    /* HUD */
-    --hud-h: 128px;            /* desktop HUD height */
-    --hud-h-mobile: 164px;     /* mobile/two-line HUD height */
-    --hud-gap: 12px;           /* gap above HUD (the “white line” gutter) */
+    /* Layout gap */
+    --gap-h: 12px;           /* gap above dock/chat bar */
   }
 
   .light {
@@ -446,9 +444,9 @@ All colors MUST be HSL.
 }
 
 /* responsive tokens */
-@media (max-width: 768px){
-  :root { --hud-h: var(--hud-h-mobile); }
-}
+  @media (max-width: 768px){
+    /* no HUD height adjustments needed */
+  }
 
 /* Quick slot glyphs */
 .hud-glyph { width: 22px; height: 22px; display: block; filter: drop-shadow(0 1px 0 hsl(var(--background) / 0.3)); }
