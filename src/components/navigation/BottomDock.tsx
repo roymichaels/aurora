@@ -27,8 +27,23 @@ export default function BottomDock() {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const h = ref.current?.offsetHeight || 0;
-    document.documentElement.style.setProperty("--dock-h", `${h}px`);
+    const el = ref.current;
+    if (!el) return;
+
+    const setHeight = () => {
+      document.documentElement.style.setProperty(
+        "--dock-h",
+        `${el.offsetHeight}px`
+      );
+    };
+
+    const observer = new ResizeObserver(setHeight);
+    setHeight();
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (
