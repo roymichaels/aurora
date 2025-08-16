@@ -11,6 +11,7 @@ export type ModalId =
   | "goals"
   | "settings"
   | "more"
+  // supplemental panels
   | "focus"
   | "hypno"
   | "notes"

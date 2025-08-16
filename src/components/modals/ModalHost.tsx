@@ -2,12 +2,12 @@ import BrainView from "@/views/BrainView";
 import JournalView from "@/views/JournalView";
 import LiveFocusView from "@/components/live/LiveFocusView";
 import FocusView from "@/views/FocusView";
-import HypnoView from "@/views/HypnoView";
+import HypnoPanel from "@/components/hypno/HypnoPanel";
 import VoiceView from "@/views/VoiceView";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import AnalyticsModal from "@/components/modals/AnalyticsModal";
 import GoalsModal from "@/components/modals/GoalsModal";
 import SettingsModal from "@/components/modals/SettingsModal";
@@ -16,6 +16,12 @@ import TasksModal from "@/components/modals/TasksModal";
 export default function ModalHost() {
   const { activeModal, closeModal } = useUIStore();
   const focusChatInput = useChatInputFocus();
+
+  useEffect(() => {
+    if (activeModal === "hypno") {
+      window.dispatchEvent(new Event("open-hypno-panel"));
+    }
+  }, [activeModal]);
 
   const handleClose = () => {
     closeModal();
@@ -35,7 +41,7 @@ export default function ModalHost() {
       content = <FocusView />;
       break;
     case "hypno":
-      content = <HypnoView />;
+      content = <HypnoPanel onClose={closeModal} />;
       break;
     case "notes":
       content = <JournalView />;
