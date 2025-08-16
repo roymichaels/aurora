@@ -2,10 +2,10 @@ import { Suspense, useEffect, useMemo } from "react";
 import { useLocation, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
-import { GameHUD } from "@/components/game/GameHUD";
 import { AnchoredChatBar } from "@/components/chat/AnchoredChatBar";
 import BottomDock from "@/components/navigation/BottomDock";
 import { TimerHudChip } from "@/components/navigation/TimerHudChip";
+import ModalHost from "@/components/modals/ModalHost";
 import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
@@ -34,6 +34,10 @@ export default function AppShell() {
   useDailyCheckIn();
   useWeeklyBrainBackup();
   useKeyboardOffset();
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--hud-h", "0px");
+  }, []);
 
   useEffect(() => {
     const off = bus.on('nav:view', ({ id, params }) => open(id as ViewId, params));
@@ -120,7 +124,7 @@ export default function AppShell() {
           </motion.div>
         </AnimatePresence>
 
-        <GameHUD />
+        <ModalHost />
         <BottomDock />
         <AnchoredChatBar />
         <TimerHudChip />
