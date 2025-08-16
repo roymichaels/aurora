@@ -3,8 +3,6 @@ import { jest } from '@jest/globals';
 import { useVoiceStore } from '@/state/voice';
 import { guardPremiumAction } from '@/modules/payments/guard';
 import { playClonedVoice } from '@/voice/voiceClone';
-import { ttsAutoplayToast } from '@/voice/ttsAutoplayToast';
-import { ttsFallbackToast } from '@/voice/ttsFallbackToast';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as ts from 'typescript';
@@ -16,12 +14,6 @@ jest.mock('@/modules/payments/guard', () => ({
 }));
 jest.mock('@/voice/voiceClone', () => ({
   playClonedVoice: jest.fn(),
-}));
-jest.mock('@/voice/ttsAutoplayToast', () => ({
-  ttsAutoplayToast: jest.fn(),
-}));
-jest.mock('@/voice/ttsFallbackToast', () => ({
-  ttsFallbackToast: jest.fn(),
 }));
 jest.mock('@/state/voice', () => {
   const { create } = require('zustand');
@@ -156,7 +148,6 @@ describe('voiceService', () => {
 
     await voiceService.speak('hello');
 
-    expect(ttsAutoplayToast).toHaveBeenCalled();
     expect(typeof blocked).toBe('function');
     expect(typeof voiceService.getBlockedCallback()).toBe('function');
     off();

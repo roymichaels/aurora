@@ -5,13 +5,10 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useAvatarStore } from "@/state/avatar";
 import HUDQuickActions from "@/components/hud/HUDQuickActions";
 import ModalHost from "@/components/modals/ModalHost";
-import SettingsPanel from "../../../frontend/components/SettingsPanel.jsx";
 
 export function GameHUD() {
   const stats = useGameStore((s) => s.stats);
   const avatarEnabled = useAvatarStore((s) => s.enabled);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   // Mobile collapse state
   const isMobile = window.innerWidth <= 768;
   const [expanded, setExpanded] = useState(() => !isMobile);
@@ -26,7 +23,6 @@ export function GameHUD() {
   return (
     <>
       <ModalHost />
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <div
         className="fixed left-3 right-3"
         style={{

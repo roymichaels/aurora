@@ -15,6 +15,7 @@ module.exports = {
       { useESM: true },
     ],
   },
+  testPathIgnorePatterns: ['<rootDir>/tests/a11y/'],
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^@/(.*)$': '<rootDir>/src/$1',

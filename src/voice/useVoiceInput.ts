@@ -1,22 +1,31 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useVoiceStore } from '@/state/voice';
+import { bus } from '@/utils/bus';
 import { voiceService } from '@/voice/voiceService';
+import { useVoiceMode } from '@/voice/useVoiceMode';
+import { track } from '@/utils/telemetry';
 
 export function useVoiceInput() {
-  const listenMode = useVoiceStore((s) => s.listenMode);
+  const { mode } = useVoiceMode();
   const isListening = useVoiceStore((s) => s.isListening);
+  const isThinking = useVoiceStore((s) => s.isThinking);
   const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
-    const off = voiceService.onTranscript(setTranscript);
+    const off = voiceService.onTranscript((text) => {
+      setTranscript(text);
+      track('voice/transcript', { text });
+    });
     return off;
   }, []);
 
   const startListening = useCallback(() => {
+    track('voice/start');
     void voiceService.startListening();
   }, []);
 
   const stopListening = useCallback(() => {
+    track('voice/stop');
     voiceService.stopListening();
   }, []);
 
@@ -26,18 +35,24 @@ export function useVoiceInput() {
   }, [isListening, startListening, stopListening]);
 
   const handleListen = useCallback(() => {
-    if (listenMode === 'toggle') {
+    if (mode === 'toggle') {
       toggleListening();
     } else {
       startListening();
     }
-  }, [listenMode, toggleListening, startListening]);
+  }, [mode, toggleListening, startListening]);
 
   const handleListenEnd = useCallback(() => {
-    if (listenMode === 'push-to-talk') {
+    if (mode === 'push-to-talk') {
       stopListening();
     }
-  }, [listenMode, stopListening]);
+  }, [mode, stopListening]);
+
+  useEffect(() => {
+    if (isThinking) {
+      bus.emit('sphere/state:set', { state: 'thinking' });
+    }
+  }, [isThinking]);
 
   useEffect(() => {
     return () => {
@@ -56,8 +71,7 @@ export function useVoiceInput() {
     handleListenEnd,
     transcript,
     isListening,
-    listenMode,
-    mode: listenMode,
+    mode,
     cleanup,
   };
 }

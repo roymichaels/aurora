@@ -1,17 +1,22 @@
-// Node-specific memory store that delegates to a Python script.
-// These utilities are loaded dynamically so the module can be imported in
-// browser environments without bundling Node built-ins.
-async function runStorePy(args: string[]) {
-  if (typeof window !== 'undefined') return null;
-  const { execFile } = await import('child_process');
-  const { promisify } = await import('util');
-  const path = await import('path');
-  const { fileURLToPath } = await import('url');
-  const execFileAsync = promisify(execFile);
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
-  const STORE_PY = path.resolve(__dirname, '../../memory/store.py');
-  return execFileAsync('python', [STORE_PY, ...args]);
+import { IndexedDbMemory, type MemoryBucket, type MemoryEntry } from './indexedDbMemory';
+import { OpfsMemory } from './opfsStore';
+
+async function createStore() {
+  if (
+    typeof window !== 'undefined' &&
+    'storage' in navigator &&
+    typeof (navigator.storage as any).getDirectory === 'function'
+  ) {
+    try {
+      return await OpfsMemory.create();
+    } catch {
+      return new IndexedDbMemory();
+    }
+  }
+  return new IndexedDbMemory();
 }
+
+export const memoryStore = await createStore();
 
 export interface MemoryRecord {
   id: number;
@@ -20,21 +25,13 @@ export interface MemoryRecord {
 }
 
 export async function saveMemory(text: string, metadata: Record<string, any> = {}): Promise<void> {
-  try {
-    await runStorePy(['save', text, JSON.stringify(metadata)]);
-  } catch (e) {
-    console.error('saveMemory failed', e);
-  }
+  await memoryStore.add('semantic', metadata.role ?? 'user', text, metadata);
 }
 
 export async function queryMemory(query: string, k = 5): Promise<MemoryRecord[]> {
-  try {
-    const result = await runStorePy(['query', query, String(k)]);
-    if (!result) return [];
-    const stdout = (result as any).stdout ?? '';
-    return JSON.parse(stdout || '[]');
-  } catch (e) {
-    console.error('queryMemory failed', e);
-    return [];
-  }
+  const results = await memoryStore.search(query, k);
+  return results.map((m, i) => ({ id: i, text: m.content, metadata: m }));
 }
+
+export type { MemoryBucket, MemoryEntry } from './indexedDbMemory';
+export { sync } from './sync';

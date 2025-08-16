@@ -1,33 +1,14 @@
 import BrainView from "@/views/BrainView";
 import JournalView from "@/views/JournalView";
 import LiveFocusView from "@/components/live/LiveFocusView";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
-import { useProgressStore } from "@/state/progress";
 import type { ReactNode } from "react";
-
-function AnalyticsContent() {
-  const { xp, level, streak, notes } = useProgressStore();
-  return (
-    <>
-      <DialogHeader>
-        <DialogTitle>Analytics</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-2 text-sm">
-        <div>XP: {xp}</div>
-        <div>Level: {level}</div>
-        <div>Streak: {streak}</div>
-        <div>Notes recorded: {notes.length}</div>
-      </div>
-    </>
-  );
-}
+import AnalyticsModal from "@/components/modals/AnalyticsModal";
+import GoalsModal from "@/components/modals/GoalsModal";
+import SettingsModal from "@/components/modals/SettingsModal";
+import TasksModal from "@/components/modals/TasksModal";
 
 export default function ModalHost() {
   const { activeModal, closeModal } = useUIStore();
@@ -39,6 +20,7 @@ export default function ModalHost() {
   };
 
   let content: ReactNode = null;
+  let className: string | undefined;
   switch (activeModal) {
     case "brain":
       content = <BrainView />;
@@ -50,7 +32,20 @@ export default function ModalHost() {
       content = <LiveFocusView />;
       break;
     case "analytics":
-      content = <AnalyticsContent />;
+      content = <AnalyticsModal />;
+      className = "sm:max-w-md";
+      break;
+    case "tasks":
+      content = <TasksModal />;
+      className = "sm:max-w-lg";
+      break;
+    case "goals":
+      content = <GoalsModal />;
+      className = "sm:max-w-md";
+      break;
+    case "settings":
+      content = <SettingsModal />;
+      className = "p-0 sm:max-w-lg";
       break;
     case "more":
       content = <div>More</div>;
@@ -65,9 +60,10 @@ export default function ModalHost() {
       onOpenChange={(open) => {
         if (!open) handleClose();
       }}
-      modal={false}
     >
-      <DialogContent onEscapeKeyDown={handleClose}>{content}</DialogContent>
+      <DialogContent className={className} onEscapeKeyDown={handleClose}>
+        {content}
+      </DialogContent>
     </Dialog>
   );
 }
