@@ -32,15 +32,7 @@ export default function BottomDock() {
   }, []);
 
   return (
-    <div
-      ref={ref}
-      className="fixed left-0 right-0"
-      style={{
-        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom))`,
-        zIndex: "var(--z-hud)",
-        pointerEvents: "auto",
-      }}
-    >
+    <div ref={ref} className="w-full pointer-events-auto">
       <div className="mx-3 hud-panel hud-maple rounded-2xl px-4 py-3 flex flex-col gap-2 select-none">
         <div className="flex items-center gap-3 min-w-0">
           {avatarEnabled && <AuroraSphere size={44} />}
