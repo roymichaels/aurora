@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useProgressStore } from "@/state/progress";
-import { EvolvingSphere } from "@/components/avatar/EvolvingSphere";
+import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useVoiceStore } from "@/state/voice";
 
 type Props = { node: { id: string; label: string }; onExit: () => void };
@@ -20,7 +20,7 @@ export default function RewardRunner({ node, onExit }: Props) {
       <div>
         <h1 className="text-2xl font-semibold mb-2">{node.label}</h1>
         <p className="opacity-80 mb-6">You earned +20 XP</p>
-        <EvolvingSphere size={128} level={level} xpPct={(xp % 100)} mood="confident" speaking={isSpeaking} />
+        <AuroraSphere size={128} level={level} xpPct={xp % 100} mood="confident" speaking={isSpeaking} />
         <div className="mt-6">
           <button className="btn" onClick={onExit}>Back</button>
         </div>
