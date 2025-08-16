@@ -14,7 +14,7 @@ export default function HUDBar() {
       const target = e.target as HTMLElement | null
       if (target && (target.closest('input, textarea, [contenteditable="true"]'))) return
       const n = Number(e.key)
-      if (n >= 1 && n <= 6) run(quickSlots[n-1].action as any)
+      if (n >= 1 && n <= quickSlots.length) run(quickSlots[n-1].action as any)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)

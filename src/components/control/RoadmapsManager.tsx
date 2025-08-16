@@ -11,7 +11,6 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProgressBar } from "@/components/live/ProgressBar";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-import QuickAddTaskFAB from "@/components/tasks/QuickAddTaskFAB";
 import { setActiveRoadmap, fetchNextTask } from "@/modules/roadmaps";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
  
@@ -247,7 +246,6 @@ export default function RoadmapsManager() {
           <ProgressBar percent={percent} />
         </div>
       )}
-      <QuickAddTaskFAB roadmapId={selectedId} />
     </div>
   );
 }

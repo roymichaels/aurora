@@ -461,6 +461,7 @@ All colors MUST be HSL.
 .hud-glyph.note   { background: linear-gradient(hsl(0 0% 100%), hsl(0 0% 92%)); clip-path: polygon(20% 20%,80% 20%,80% 80%,20% 80%); }
 .hud-glyph.anlz   { background: linear-gradient(90deg, hsl(0 0% 100%) 40%, transparent 41%), radial-gradient(circle, hsl(0 0% 100%) 30%, transparent 31%); }
 .hud-glyph.portal { background: conic-gradient(from 0deg, hsl(var(--accent)) 0 25%, transparent 25% 50%, hsl(var(--accent)) 50% 75%, transparent 75% 100%); border-radius: 50%; }
+.hud-glyph.task   { background: linear-gradient(hsl(0 0% 100%), hsl(0 0% 92%)); clip-path: polygon(14% 53%,30% 70%,86% 14%,100% 27%,30% 97%,0% 66%); }
 
 /* Safe area helper for HUD */
 .pb-safe { padding-bottom: var(--edge-bottom); }
