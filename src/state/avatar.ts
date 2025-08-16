@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { bus } from "@/utils/bus";
 
 const AVATAR_ENABLE_KEY = "aurora.avatar.enabled";
 const AVATAR_COLOR_KEY = "aurora.avatar.color";
@@ -11,6 +12,7 @@ type AvatarState = {
   mood: AvatarMood;
   milestone: AvatarMilestone;
   streak: number;
+  progress: number;
   setEnabled: (v: boolean) => void;
   setColor: (c: string) => void;
   setAudio: (a: HTMLAudioElement | null) => void;
@@ -18,6 +20,7 @@ type AvatarState = {
   setMood: (m: AvatarMood) => void;
   setMilestone: (m: AvatarMilestone) => void;
   setStreak: (s: number) => void;
+  setProgress: (p: number) => void;
 };
 
 export type AvatarMood = "neutral" | "focused" | "relaxed";
@@ -37,6 +40,7 @@ export const useAvatarStore = create<AvatarState>((set) => ({
   mood: "neutral",
   milestone: "none",
   streak: 0,
+  progress: 0,
   setEnabled: (v) => {
     try {
       localStorage.setItem(AVATAR_ENABLE_KEY, String(v));
@@ -58,5 +62,9 @@ export const useAvatarStore = create<AvatarState>((set) => ({
   setMood: (mood) => set({ mood }),
   setMilestone: (milestone) => set({ milestone }),
   setStreak: (streak) => set({ streak }),
+  setProgress: (progress) => {
+    set({ progress });
+    bus.emit('sphere/progress:set', { progress });
+  },
 }));
 
