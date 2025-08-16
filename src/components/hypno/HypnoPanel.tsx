@@ -6,16 +6,20 @@ import { REWARDS } from "@/game/QuestEngine";
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/integrations/supabase/gameSync";
 
-export default function HypnoPanel() {
+type Props = {
+  onClose?: () => void;
+};
+
+export default function HypnoPanel({ onClose }: Props) {
   const [open, setOpen] = useState(false);
-  const awardXP = useGameStore(s => s.awardXP);
-  const completeQuest = useGameStore(s => s.completeQuest);
-  const mood = useGameStore(s => s.mood);
+  const awardXP = useGameStore((s) => s.awardXP);
+  const completeQuest = useGameStore((s) => s.completeQuest);
+  const mood = useGameStore((s) => s.mood);
 
   useEffect(() => {
     const h = () => setOpen(true);
-    window.addEventListener('open-hypno-panel', h as any);
-    return () => window.removeEventListener('open-hypno-panel', h as any);
+    window.addEventListener("open-hypno-panel", h as any);
+    return () => window.removeEventListener("open-hypno-panel", h as any);
   }, []);
 
   if (!open) return null;
@@ -39,18 +43,28 @@ export default function HypnoPanel() {
     }
   };
 
+  const handleClose = () => {
+    setOpen(false);
+    onClose?.();
+  };
+
   return (
-    <div className="fixed inset-x-0 bottom-0" style={{ zIndex: 'var(--z-modal)' }}>
+    <div className="fixed inset-x-0 bottom-0" style={{ zIndex: "var(--z-modal)" }}>
       <div className="glass-panel rounded-t-2xl p-4 elev">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Hypno Temple</h3>
-          <button className="rounded-full px-3 py-1 bg-secondary" onClick={()=>setOpen(false)}>Close</button>
+          <button className="rounded-full px-3 py-1 bg-secondary" onClick={handleClose}>Close</button>
         </div>
         <div className="mt-3">
           <HypnosisLauncher />
         </div>
         <div className="mt-2 flex justify-end">
-          <button className="rounded-full px-4 py-2 bg-primary text-primary-foreground" onClick={onStart}>Start Session</button>
+          <button
+            className="rounded-full px-4 py-2 bg-primary text-primary-foreground"
+            onClick={onStart}
+          >
+            Start Session
+          </button>
         </div>
       </div>
     </div>
