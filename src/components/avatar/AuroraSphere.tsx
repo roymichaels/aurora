@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { WebGPURenderer } from 'three/examples/jsm/renderers/webgpu/WebGPURenderer.js';
+// three@0.179 ships WebGPU in the core build under the `three/webgpu` entry.
+// Importing from examples would fail since that path is not packaged.
+import { WebGPURenderer } from 'three/webgpu';
 import { useAvatarStore } from '@/state/avatar';
 import { useVoiceStore } from '@/state/voice';
 
