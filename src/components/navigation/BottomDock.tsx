@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import QuickActionBar from "./QuickActionBar";
+import { QuickActionBar } from "./QuickActionBar";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { useAvatarStore } from "@/state/avatar";
