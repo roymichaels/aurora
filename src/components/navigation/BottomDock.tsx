@@ -21,7 +21,7 @@ export default function BottomDock() {
     <nav
       className="fixed left-0 right-0"
       style={{
-        bottom: `calc(var(--hud-h) + var(--kb-offset) + env(safe-area-inset-bottom))`,
+        bottom: `calc(var(--hud-h) + var(--kb-offset) + var(--safe-area-bottom))`,
         zIndex: "var(--z-hud)",
         height: "var(--dock-h)",
       }}

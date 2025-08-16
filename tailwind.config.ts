@@ -10,14 +10,30 @@ export default {
 	],
 	prefix: "",
 	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
-		},
-		extend: {
+                container: {
+                        center: true,
+                        padding: 'var(--space-2xl)',
+                        screens: {
+                                '2xl': '1400px'
+                        }
+                },
+                extend: {
+                        spacing: {
+                                xs: 'var(--space-xs)',
+                                sm: 'var(--space-sm)',
+                                md: 'var(--space-md)',
+                                lg: 'var(--space-lg)',
+                                xl: 'var(--space-xl)',
+                                '2xl': 'var(--space-2xl)',
+                                'safe-top': 'var(--safe-area-top)',
+                                'safe-right': 'var(--safe-area-right)',
+                                'safe-bottom': 'var(--safe-area-bottom)',
+                                'safe-left': 'var(--safe-area-left)',
+                                'edge-top': 'var(--edge-top)',
+                                'edge-right': 'var(--edge-right)',
+                                'edge-bottom': 'var(--edge-bottom)',
+                                'edge-left': 'var(--edge-left)',
+                        },
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',

@@ -2,9 +2,9 @@
 
 /* Clamp HUD within safe bottom rail and margins (overrides utility left/right) */
 .hud-readable {
-  left: clamp(12px, 2vw, 24px);
-  right: clamp(12px, 2vw, 24px);
-  bottom: max(env(safe-area-inset-bottom), 12px);
+  left: clamp(var(--space-md), 2vw, var(--space-xl));
+  right: clamp(var(--space-md), 2vw, var(--space-xl));
+  bottom: max(var(--safe-area-bottom), var(--space-md));
   z-index: 50;
 }
 

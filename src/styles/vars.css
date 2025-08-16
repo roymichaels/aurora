@@ -1,10 +1,30 @@
 /* Floating metrics for the app: right-side stack */
 :root {
+  /* Spacing scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Safe area insets */
+  --safe-area-top: env(safe-area-inset-top);
+  --safe-area-right: env(safe-area-inset-right);
+  --safe-area-bottom: env(safe-area-inset-bottom);
+  --safe-area-left: env(safe-area-inset-left);
+
+  /* Safe area offsets */
+  --edge-top: calc(var(--safe-area-top) + var(--space-md));
+  --edge-right: calc(var(--safe-area-right) + var(--space-md));
+  --edge-bottom: calc(var(--safe-area-bottom) + var(--space-md));
+  --edge-left: calc(var(--safe-area-left) + var(--space-md));
+
   --compass-size: 72px;
   --chatbar-h: 64px; /* chat bar */
   --dock-h: 56px; /* bottom dock */
   --fab-size: 56px;    /* new task */
-  --gap: 12px;
+  --gap: var(--space-md);
   --kb-offset: 0px; /* keyboard height offset */
   --compass-bottom: calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--chatbar-h) + var(--gap));
 }

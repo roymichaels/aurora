@@ -136,7 +136,7 @@ export function AnchoredChatBar() {
       <div
         className="fixed left-3 right-3 relative"
         style={{
-          bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--kb-offset) + env(safe-area-inset-bottom))`,
+          bottom: `calc(var(--hud-h) + var(--dock-h) + var(--hud-gap) + var(--kb-offset) + var(--safe-area-bottom))`,
           zIndex: "var(--z-hud)",
         }}
       >

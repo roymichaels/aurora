@@ -1,6 +1,6 @@
 export default function ActionButton({ label = "Action", onPress }: { label?: string; onPress: () => void }) {
   return (
-    <div className="fixed right-4 controls-safe" style={{ bottom: `calc(env(safe-area-inset-bottom) + 16px)` }}>
+    <div className="fixed right-4 controls-safe" style={{ bottom: `calc(var(--safe-area-bottom) + var(--space-lg))` }}>
       <button
         aria-label={label}
         onClick={onPress}

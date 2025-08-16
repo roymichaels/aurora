@@ -272,9 +272,9 @@ All colors MUST be HSL.
 @keyframes liquid-move { 0% { background-position: 0% 50% } 100% { background-position: 200% 50% } }
 
 /* Safe area helper */
-.dock-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
-.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
-.pt-safe { padding-top: calc(env(safe-area-inset-top) + 12px); }
+.dock-safe { padding-bottom: var(--edge-bottom); }
+.pb-safe { padding-bottom: var(--edge-bottom); }
+.pt-safe { padding-top: var(--edge-top); }
 
 /* Idle float for avatar */
 .idle-float { animation: idle-float 4s ease-in-out infinite; }
@@ -341,7 +341,7 @@ All colors MUST be HSL.
 .hint { position: absolute; bottom: calc(12% + 150px); left:50%; transform: translateX(-50%); font-size: 12px; color: hsl(var(--foreground)); background: hsl(var(--background) / 0.7); padding: 6px 10px; border-radius: 10px; border: 1px solid hsl(var(--border)); white-space: nowrap; }
 .player { position: absolute; bottom: calc(12% + 70px); width: 80px; height: 80px; }
 .parallax-foreground { position:absolute; inset:0; pointer-events:none; background-image: radial-gradient(6px 6px at 10% 90%, hsl(var(--accent) / 0.15), transparent 60%), radial-gradient(6px 6px at 90% 88%, hsl(var(--primary) / 0.15), transparent 60%); background-size: 200px 200px; opacity: 0.4; }
-.controls-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 16px); }
+.controls-safe { padding-bottom: calc(var(--safe-area-bottom) + var(--space-lg)); }
 
 /* HUD styles */
 .hud-shell {
@@ -458,7 +458,7 @@ All colors MUST be HSL.
 .hud-glyph.portal { background: conic-gradient(from 0deg, hsl(var(--accent)) 0 25%, transparent 25% 50%, hsl(var(--accent)) 50% 75%, transparent 75% 100%); border-radius: 50%; }
 
 /* Safe area helper for HUD */
-.pb-safe { padding-bottom: calc(env(safe-area-inset-bottom) + 12px); }
+.pb-safe { padding-bottom: var(--edge-bottom); }
 
 /* ===== EvolvingSphere (gooey liquid orb) ===== */
 

@@ -10,7 +10,7 @@ export default function ActionDock({
   onVoice?: () => void;
 }) {
   return (
-    <div className="fixed inset-x-0" style={{ bottom: `calc(env(safe-area-inset-bottom) + 12px)` }}>
+    <div className="fixed inset-x-0" style={{ bottom: `calc(var(--safe-area-bottom) + var(--space-md))` }}>
       <div className="mx-auto max-w-3xl px-4 pointer-events-none">
         <div className="pointer-events-auto glass-panel rounded-2xl p-2 elev flex flex-wrap gap-2 justify-center">
           <Button className="h-12 rounded-xl px-5" onClick={onStart}>Start Hypnosis Session</Button>
