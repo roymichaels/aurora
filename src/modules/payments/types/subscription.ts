@@ -41,4 +41,5 @@ export interface UsageStats {
   aiMessagesUsed: number;
   widgetsActive: number;
   teamSeatsUsed: number;
+  usedTimes?: number;
 }
