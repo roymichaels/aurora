@@ -94,31 +94,89 @@ export function AuroraSphere({
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     camera.position.z = 3;
 
-    let renderer: THREE.WebGLRenderer | WebGPURenderer;
-    if ('gpu' in navigator) {
-      renderer = new WebGPURenderer({ antialias: true, alpha: true });
-      (renderer as WebGPURenderer).init().catch(() => {});
-    } else {
-      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-      (renderer as THREE.WebGLRenderer).setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    }
-    renderer.setSize(size, size);
-    mount.appendChild((renderer as any).domElement);
+    let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
+    let geometry: THREE.IcosahedronGeometry | null = null;
+    let material: THREE.ShaderMaterial | null = null;
+    let disposed = false;
 
-    const geometry = new THREE.IcosahedronGeometry(1, 5);
+    const data = new Uint8Array(1024);
 
-    const uniforms = {
-      uTime: { value: 0 },
-      uSpeed: { value: shaderConfig.speed },
-      uNoiseDensity: { value: shaderConfig.noiseDensity },
-      uNoiseStrength: { value: shaderConfig.noiseStrength },
-      uFrequency: { value: shaderConfig.frequency },
-      uAmplitude: { value: shaderConfig.amplitude },
-      uIntensity: { value: shaderConfig.intensity },
+    const animate = () => {
+      frameRef.current = requestAnimationFrame(animate);
+      const mesh = meshRef.current;
+      const mat = materialRef.current;
+      const halo = haloRef.current;
+      if (!mesh || !mat || !halo) return;
+
+      let scale = 1;
+      let levelAmp = 0;
+      if (speakingRef.current && analyserRef.current) {
+        analyserRef.current.getByteTimeDomainData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
+        levelAmp = sum / data.length / 128;
+        scale += levelAmp;
+      } else {
+        // subtle idle breathing
+        scale = 1 + Math.sin(performance.now() * 0.005) * 0.05;
+      }
+      mesh.scale.setScalar(scale);
+      const haloScale = 1.2 + levelAmp * 0.6;
+      halo.scale.setScalar(haloScale);
+      (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
+
+      // shader time
+      (mat.uniforms.uTime as THREE.IUniform<number>).value =
+        performance.now() / 1000;
+
+      // slow rotation influenced by level
+      mesh.rotation.y += 0.002 * (levelRef.current || 1);
+
+      renderer?.render(scene, camera);
     };
 
-    // Kay blob vertex shader (periodic noise + rotateY banding)
-    const vertexShader = /* glsl */`
+    const start = async () => {
+      const usingCustomShader = true; // ShaderMaterial isn't WebGPU compatible
+      const canUseWebGPU = 'gpu' in navigator && !usingCustomShader;
+
+      if (canUseWebGPU) {
+        try {
+          const r = new WebGPURenderer({ antialias: true, alpha: true });
+          await r.init();
+          if (!r.backend) throw new Error('backend not ready');
+          renderer = r;
+        } catch {
+          renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+          (renderer as THREE.WebGLRenderer).setPixelRatio(
+            Math.min(window.devicePixelRatio || 1, 2)
+          );
+        }
+      } else {
+        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        (renderer as THREE.WebGLRenderer).setPixelRatio(
+          Math.min(window.devicePixelRatio || 1, 2)
+        );
+      }
+
+      if (disposed || !renderer) return;
+
+      renderer.setSize(size, size);
+      mount.appendChild(renderer.domElement);
+
+      geometry = new THREE.IcosahedronGeometry(1, 5);
+
+      const uniforms = {
+        uTime: { value: 0 },
+        uSpeed: { value: shaderConfig.speed },
+        uNoiseDensity: { value: shaderConfig.noiseDensity },
+        uNoiseStrength: { value: shaderConfig.noiseStrength },
+        uFrequency: { value: shaderConfig.frequency },
+        uAmplitude: { value: shaderConfig.amplitude },
+        uIntensity: { value: shaderConfig.intensity },
+      };
+
+      // Kay blob vertex shader (periodic noise + rotateY banding)
+      const vertexShader = /* glsl */`
       varying vec3 vNormal;
       varying float vDistort;
 
@@ -222,8 +280,8 @@ export function AuroraSphere({
       }
     `;
 
-    // CosPalette fragment shader (blue/orange ribbons look)
-    const fragmentShader = /* glsl */`
+      // CosPalette fragment shader (blue/orange ribbons look)
+      const fragmentShader = /* glsl */`
       varying float vDistort;
       uniform float uIntensity;
 
@@ -247,69 +305,45 @@ export function AuroraSphere({
       }
     `;
 
-    const material = new THREE.ShaderMaterial({
-      uniforms,
-      vertexShader,
-      fragmentShader,
-      transparent: false,
-    });
+      material = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader,
+        fragmentShader,
+        transparent: false,
+      });
 
-    const mesh = new THREE.Mesh(geometry, material);
-    meshRef.current = mesh;
-    materialRef.current = material;
-    scene.add(mesh);
+      const mesh = new THREE.Mesh(geometry, material);
+      meshRef.current = mesh;
+      materialRef.current = material;
+      scene.add(mesh);
 
-    const halo = createHalo();
-    haloRef.current = halo;
-    scene.add(halo);
+      const halo = createHalo();
+      haloRef.current = halo;
+      scene.add(halo);
 
-    const dir = new THREE.DirectionalLight(0xffffff, 1);
-    dir.position.set(0, 0, 4);
-    scene.add(dir);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+      const dir = new THREE.DirectionalLight(0xffffff, 1);
+      dir.position.set(0, 0, 4);
+      scene.add(dir);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
-    const data = new Uint8Array(1024);
-
-    const animate = () => {
-      frameRef.current = requestAnimationFrame(animate);
-      const mesh = meshRef.current;
-      const mat = materialRef.current;
-      const halo = haloRef.current;
-      if (!mesh || !mat || !halo) return;
-
-      let scale = 1;
-      let levelAmp = 0;
-      if (speakingRef.current && analyserRef.current) {
-        analyserRef.current.getByteTimeDomainData(data);
-        let sum = 0;
-        for (let i = 0; i < data.length; i++) sum += Math.abs(data[i] - 128);
-        levelAmp = sum / data.length / 128;
-        scale += levelAmp;
-      } else {
-        // subtle idle breathing
-        scale = 1 + Math.sin(performance.now() * 0.005) * 0.05;
-      }
-      mesh.scale.setScalar(scale);
-      const haloScale = 1.2 + levelAmp * 0.6;
-      halo.scale.setScalar(haloScale);
-      (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
-
-      // shader time
-      (mat.uniforms.uTime as any).value = performance.now() / 1000;
-
-      // slow rotation influenced by level
-      mesh.rotation.y += 0.002 * (levelRef.current || 1);
-
-      (renderer as any).render(scene, camera);
+      animate();
     };
-    animate();
+
+    start();
 
     return () => {
+      disposed = true;
       cancelAnimationFrame(frameRef.current);
-      try { (renderer as any).dispose?.(); } catch {}
-      mount.removeChild((renderer as any).domElement);
-      geometry.dispose();
-      material.dispose();
+      try {
+        renderer?.dispose?.();
+      } catch {
+        /* ignore */
+      }
+      if (renderer && mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
+      }
+      geometry?.dispose();
+      material?.dispose();
     };
   }, [size]);
 
@@ -317,7 +351,7 @@ export function AuroraSphere({
     <div
       ref={containerRef}
       className={`aurora-sphere-container ${className ?? ''}`}
-      style={{ width: size, height: size, ['--progress' as any]: progress }}
+      style={{ width: size, height: size, '--progress': progress } as React.CSSProperties}
     >
       <div className="aurora-sphere-ring" />
       <div ref={mountRef} className="aurora-sphere-mount" />
