@@ -1,11 +1,21 @@
 import { NavLink } from "react-router-dom";
-import { Brain, BookOpen, Home, MoreHorizontal, Radio } from "lucide-react";
+import {
+  Brain,
+  BookOpen,
+  Home,
+  MoreHorizontal,
+  Radio,
+  Target,
+  Sparkles,
+  NotebookPen,
+  Mic,
+} from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { useAvatarStore } from "@/state/avatar";
+import { useUIStore } from "@/state/ui";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
-import { QuickActionBar } from "./QuickActionBar";
 
 interface DockItem {
   to: string;
@@ -87,34 +97,63 @@ export default function BottomDock() {
             </div>
           </div>
         </div>
-        <div
-          role="region"
-          aria-label="Quick actions"
-          className="flex justify-around items-center"
-        >
-          <QuickActionBar />
+        <div className="flex items-center">
+          <div
+            role="region"
+            aria-label="Quick actions"
+            className="flex items-center gap-2"
+          >
+            <button
+              onClick={() => useUIStore.getState().openModal("focus")}
+              aria-label="Focus"
+              className="p-2 rounded-md hover:bg-accent"
+            >
+              <Target className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => useUIStore.getState().openModal("hypno")}
+              aria-label="Hypno"
+              className="p-2 rounded-md hover:bg-accent"
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => useUIStore.getState().openModal("notes")}
+              aria-label="Notes"
+              className="p-2 rounded-md hover:bg-accent"
+            >
+              <NotebookPen className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => useUIStore.getState().openModal("voice")}
+              aria-label="Voice"
+              className="p-2 rounded-md hover:bg-accent"
+            >
+              <Mic className="w-5 h-5" />
+            </button>
+          </div>
+          <nav aria-label="Main navigation" className="flex-1">
+            <ul className="flex justify-around items-center">
+              {items.map(({ to, label, icon: Icon }) => (
+                <li key={label}>
+                  <NavLink
+                    to={to}
+                    end={to === "/app"}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex flex-col items-center text-xs gap-1",
+                        isActive ? "text-primary" : "text-muted-foreground"
+                      )
+                    }
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{label}</span>
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
-        <nav aria-label="Main navigation">
-          <ul className="flex justify-around items-center">
-            {items.map(({ to, label, icon: Icon }) => (
-              <li key={label}>
-                <NavLink
-                  to={to}
-                  end={to === "/app"}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex flex-col items-center text-xs gap-1",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )
-                  }
-                >
-                  <Icon className="w-5 h-5" />
-                  <span>{label}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
       </div>
     </div>
   );
