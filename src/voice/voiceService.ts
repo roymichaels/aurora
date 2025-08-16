@@ -3,8 +3,6 @@ import { useVoiceStore } from '@/state/voice';
 import { useFeatureFlags } from '@/state/featureFlags';
 import { guardPremiumAction } from '@/modules/payments/guard';
 import { playClonedVoice } from '@/voice/voiceClone';
-import { ttsFallbackToast } from '@/voice/ttsFallbackToast';
-import { ttsAutoplayToast } from '@/voice/ttsAutoplayToast';
 
 const ELEVENLABS_DEFAULT_VOICE_ID =
   import.meta.env.VITE_ELEVENLABS_DEFAULT_VOICE_ID ||
@@ -91,7 +89,6 @@ class VoiceService {
             this.audios.add(audio);
             audio.play().catch((err) => {
               if ((err as { name?: string } | undefined)?.name === 'NotAllowedError') {
-                ttsAutoplayToast();
                 this.blocked = () => {
                   audio.play().catch(() => {});
                 };
@@ -154,7 +151,6 @@ class VoiceService {
     this.blocked = null;
     this.emitPlaybackBlocked(null);
     if (!this.enabled) {
-      ttsAutoplayToast();
       const resume = () => {
         window.removeEventListener('pointerdown', resume);
         window.removeEventListener('keydown', resume);
@@ -193,7 +189,10 @@ class VoiceService {
         if (result !== 'pro') {
           current = 'browser-tts';
           store.setMode('browser-tts', false);
-          ttsFallbackToast();
+          bus.emit('tts/pill', {
+            message:
+              'Using a default voice for now. You can retry cloning in Settings → Voice.',
+          });
           continue;
         }
         if (!voiceId) {
@@ -221,7 +220,6 @@ class VoiceService {
           this.audio = audio;
           this.audios.add(audio);
           if ((error as { name?: string } | undefined)?.name === 'NotAllowedError') {
-            ttsAutoplayToast();
             this.blocked = () => {
               audio.play().catch(() => {});
             };
@@ -231,7 +229,10 @@ class VoiceService {
         }
         const status = (error as { status?: number } | undefined)?.status;
         if (status === 401 || status === 429) {
-          ttsFallbackToast();
+          bus.emit('tts/pill', {
+            message:
+              'Using a default voice for now. You can retry cloning in Settings → Voice.',
+          });
           current = 'browser-tts';
           store.setMode('browser-tts', false);
           continue;
@@ -256,7 +257,10 @@ class VoiceService {
         if (result !== 'pro') {
           current = 'browser-tts';
           store.setMode('browser-tts', false);
-          ttsFallbackToast();
+          bus.emit('tts/pill', {
+            message:
+              'Using a default voice for now. You can retry cloning in Settings → Voice.',
+          });
           continue;
         }
         const { audio, error } = await playClonedVoice(
@@ -283,7 +287,6 @@ class VoiceService {
           this.audio = audio;
           this.audios.add(audio);
           if ((error as { name?: string } | undefined)?.name === 'NotAllowedError') {
-            ttsAutoplayToast();
             this.blocked = () => {
               audio.play().catch(() => {});
             };
@@ -291,7 +294,10 @@ class VoiceService {
           }
           return;
         }
-        ttsFallbackToast();
+        bus.emit('tts/pill', {
+          message:
+            'Using a default voice for now. You can retry cloning in Settings → Voice.',
+        });
         current = 'browser-tts';
         store.setMode('browser-tts', false);
         continue;
@@ -329,7 +335,6 @@ class VoiceService {
             window.speechSynthesis.speak(utter);
           } catch (err) {
             if ((err as { name?: string } | undefined)?.name === 'NotAllowedError') {
-              ttsAutoplayToast();
               this.blocked = () => {
                 window.speechSynthesis.speak(utter);
               };
