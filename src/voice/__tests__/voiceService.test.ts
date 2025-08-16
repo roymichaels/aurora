@@ -82,9 +82,10 @@ beforeEach(() => {
     value: { getUserMedia: jest.fn().mockResolvedValue(new MockMediaStream()) },
     configurable: true,
   });
-  (global as any).fetch = jest
-    .fn()
-    .mockResolvedValue({ json: async () => ({ sdp: 'answer', type: 'answer' }) });
+  (global as any).fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({ sdp: 'answer', type: 'answer' }),
+  });
 
   (window as any).speechSynthesis = {
     cancel: jest.fn(),
