@@ -22,7 +22,7 @@ export function AnchoredChatBar() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const pressStartRef = useRef<number | null>(null);
-  const barRef = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ref = inputRef.current;
@@ -36,23 +36,14 @@ export function AnchoredChatBar() {
   }, []);
 
   useEffect(() => {
-    if (typeof ResizeObserver === "undefined") return;
-    const bar = barRef.current;
-    if (!bar) return;
-
-    const setHeight = (h: number) => {
-      document.documentElement.style.setProperty("--chatbar-h", `${h}px`);
-    };
-
-    setHeight(bar.getBoundingClientRect().height);
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setHeight(entry.contentRect.height);
-      }
-    });
-    observer.observe(bar);
-    return () => observer.disconnect();
+    const el = ref.current;
+    if (!el) return;
+    const set = () =>
+      document.documentElement.style.setProperty("--chatbar-h", `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -147,8 +138,8 @@ export function AnchoredChatBar() {
     <div
       className="fixed inset-x-0 pointer-events-none"
       style={{
-        bottom: `calc(var(--dock-h) + var(--hud-gap) + var(--kb-offset) + var(--safe-area-bottom))`,
-        zIndex: "var(--z-hud)",
+        bottom: "calc(var(--kb-offset) + var(--safe-area-bottom))",
+        zIndex: 70,
       }}
     >
       {/* Visually hidden live region for screen reader announcements */}
@@ -159,7 +150,7 @@ export function AnchoredChatBar() {
       >
         {lastAssistant?.content}
       </div>
-      <div ref={barRef} className="pointer-events-auto relative mx-3">
+      <div ref={ref} className="pointer-events-auto relative mx-3">
       <div className="glass-panel rounded-2xl p-2 elev flex items-center gap-2">
 
         <Button
