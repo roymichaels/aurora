@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SoundControl } from "@/components/sounds/SoundControl";
 import { AuthMenu } from "@/components/auth/AuthMenu";
@@ -9,6 +9,7 @@ export default function AppHeader() {
   const { user, initializing } = useSupabaseAuth();
   const navigate = useNavigate();
   const [online, setOnline] = useState(true);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const update = () => setOnline(typeof navigator !== "undefined" ? navigator.onLine : true);
@@ -21,8 +22,19 @@ export default function AppHeader() {
     };
   }, []);
 
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const set = () =>
+      document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   return (
-    <header className="fixed top-0 inset-x-0 z-30">
+    <header ref={headerRef} className="fixed top-0 inset-x-0 z-30 pt-safe-top">
       <div className="px-4 sm:px-6">
         <div className="mt-3 glass-panel rounded-full px-3 py-2 elev flex items-center justify-between gap-3 animate-fade-in smooth">
           {/* Brand */}
