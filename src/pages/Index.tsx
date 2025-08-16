@@ -18,10 +18,7 @@ import LandingPage from './LandingPage';
 import { type PathNode } from '@/game/path/path.data';
 import HUDBar from '@/game/hud/HUDBar';
 import { QuickActionsBar } from '@/components/live/QuickActionsBar';
-import TasksModal from '@/components/overlays/TasksModal';
-import GoalsModal from '@/components/overlays/GoalsModal';
-import AnalyticsModal from '@/components/overlays/AnalyticsModal';
-import SettingsModal from '@/components/overlays/SettingsModal';
+import ModalHost from '@/components/modals/ModalHost';
 import FastTravel from '@/components/overlays/FastTravel';
 import HypnoPanel from '@/components/hypno/HypnoPanel';
 import { useGameStore } from '@/game/store';
@@ -632,10 +629,7 @@ const Index = () => {
       {/* Overlays */}
       <FastTravel />
       <HypnoPanel />
-      <TasksModal />
-      <GoalsModal />
-      <AnalyticsModal />
-      <SettingsModal />
+      <ModalHost />
     </div>
   );
 };
