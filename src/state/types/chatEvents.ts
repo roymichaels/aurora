@@ -6,4 +6,5 @@ export type ChatEvents = {
   'chat/stream:error': { id: string; error: unknown };
   'sphere/state:set': { state: 'thinking' | 'speaking' };
   'voice/state:set': { state: 'thinking' | 'speaking' };
+  'tts/pill': { message: string; action?: () => void };
 };
