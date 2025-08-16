@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
-import { AvatarSphere } from "@/components/avatar/AvatarSphere";
+import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { useGameStore } from "@/game/store";
 import QuickPodsRow from "@/components/quick/QuickPodsRow";
 
@@ -47,7 +47,7 @@ export default function HomeView() {
     <>
       <div className="min-h-svh bg-slate-950 text-foreground px-4 py-6 space-y-6">
         <div className="flex justify-center">
-          <AvatarSphere />
+          <ReactiveSphere />
         </div>
         {/* Mission card */}
         <div className="glass-panel rounded-xl p-6 flex items-start justify-between gap-4">

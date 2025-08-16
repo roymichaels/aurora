@@ -1,4 +1,3 @@
-import type { AuroraAgent } from "@/agent/AuroraAgent";
 
 interface SpeechRecognitionEvent extends Event {
   results: any;
@@ -22,8 +21,6 @@ interface SpeechRecognitionConstructor {
 
 declare global {
   interface Window {
-    __agent?: AuroraAgent;
-    __coachAgent?: AuroraAgent;
     chrome?: any;
     SpeechRecognition?: SpeechRecognitionConstructor;
     webkitSpeechRecognition?: SpeechRecognitionConstructor;

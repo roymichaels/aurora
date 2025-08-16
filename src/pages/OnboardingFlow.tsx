@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { EvolvingSphere } from "@/components/effects/EvolvingSphere";
+import { ReactiveSphere } from "@/components/avatar/ReactiveSphere";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import {
   buildProfile,
@@ -112,7 +112,7 @@ export default function OnboardingFlow() {
   const navigate = useNavigate();
 
   // SINGLE instance
-  const { speak, cancel, isSpeaking, blocked, resume } = useTextToSpeech();
+  const { speak, cancel, blocked, resume } = useTextToSpeech();
 
   const getInitialState = () => {
     if (typeof window === "undefined") return {};
@@ -404,7 +404,7 @@ export default function OnboardingFlow() {
       <div className="os-bg" />
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex-shrink-0 flex flex-col items-center gap-4 p-4">
-          <EvolvingSphere size={220} speaking={isSpeaking} />
+          <ReactiveSphere size={220} />
           {blocked && (
             <button
               type="button"
