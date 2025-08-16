@@ -5,7 +5,6 @@ import GameCanvas from "@/game/GameCanvas";
 import VirtualJoystick from "./VirtualJoystick";
 
 import WorldOverlayRouter, { type OverlayId } from "./WorldOverlayRouter";
-import { GameHUD } from "@/components/game/GameHUD";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useGameStore } from "@/game/store";
@@ -102,9 +101,6 @@ export default function MindWorldDashboard() {
         {/* Mobile controls */}
         {joyEnabled && <VirtualJoystick onChange={setVec} />}
         
-
-        {/* HUD overlay */}
-        <GameHUD />
 
         {/* World Overlays */}
         <WorldOverlayRouter id={overlay} onClose={() => setOverlay(null)} />
