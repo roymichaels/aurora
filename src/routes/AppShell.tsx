@@ -127,16 +127,8 @@ export default function AppShell() {
         </AnimatePresence>
 
         <ModalHost />
-        <div
-          className="fixed inset-x-0 pointer-events-none"
-          style={{
-            bottom: `calc(var(--kb-offset) + var(--safe-area-bottom))`,
-            zIndex: "var(--z-hud)",
-          }}
-        >
-          <AnchoredChatBar />
-          <BottomDock />
-        </div>
+        <AnchoredChatBar />
+        <BottomDock />
         <TimerHudChip />
       </div>
   );

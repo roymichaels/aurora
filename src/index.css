@@ -78,7 +78,7 @@ All colors MUST be HSL.
     --z-toast: 100;
 
     /* Layout gap */
-    --gap-h: 12px;           /* gap above dock/chat bar */
+    --hud-gap: 12px;           /* gap above dock/chat bar */
   }
 
   .light {
