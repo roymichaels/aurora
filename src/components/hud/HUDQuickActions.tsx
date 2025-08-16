@@ -5,6 +5,9 @@ import {
   Activity,
   BarChart3,
   MoreHorizontal,
+  ListTodo,
+  Flag,
+  Settings as SettingsIcon,
   type LucideIcon,
 } from "lucide-react";
 import { type ModalId, useUIStore } from "@/state/ui";
@@ -19,7 +22,10 @@ const actions: Action[] = [
   { id: "brain", label: "Brain", icon: Brain },
   { id: "journal", label: "Journal", icon: NotebookPen },
   { id: "live", label: "Live", icon: Activity },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "goals", label: "Goals", icon: Flag },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
   { id: "more", label: "More", icon: MoreHorizontal },
 ];
 

@@ -6,6 +6,7 @@ export type QuickActionKey =
   | 'openMap'
   | 'openBrowser'
   | 'openBrain'
+  | 'openTasks'
   | (string & {});
 
 export const character = {
@@ -27,6 +28,7 @@ const baseQuickSlots: QuickSlot[] = [
   { id:4, key:'4', action:'addNote',       label:'Notes',   icon:'note'  },
   { id:5, key:'5', action:'openBrowser',   label:'Browse',  icon:'portal'},
   { id:6, key:'6', action:'openBrain',     label:'Brain',   icon:'brain' },
+  { id:7, key:'7', action:'openTasks',     label:'Tasks',   icon:'task'  },
 ];
 
 export const quickSlots: QuickSlot[] = [...baseQuickSlots];

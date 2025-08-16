@@ -17,6 +17,7 @@ import AppShell from "@/routes/AppShell";
 import HomeView from "@/views/HomeView";
 import { views } from "@/views/registry";
 import LiveShell from "@/routes/live/LiveShell";
+import { TTSPill } from "@/voice/TTSPill";
 const queryClient = new QueryClient();
 
 function AppRoutesWithShell() {
@@ -80,6 +81,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <TTSPill />
         <BrowserRouter>
           {appShell ? <AppRoutesWithShell /> : <LegacyRoutes />}
         </BrowserRouter>
