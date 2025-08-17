@@ -1,5 +1,5 @@
-import os
 import io
+import os
 import tarfile
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
