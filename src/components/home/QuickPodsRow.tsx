@@ -12,7 +12,7 @@ import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
   { key: "hypno", label: "Hypno", icon: Waves },
-  { key: "notes", label: "Notes", icon: StickyNote },
+  { key: "journal", label: "Journal", icon: StickyNote },
   { key: "voice", label: "Voice", icon: Mic },
 ];
 
@@ -32,7 +32,7 @@ export function QuickPodsRow() {
     if (!open) focusChatInput();
   };
 
-  // Notes
+  // Journal
   const [noteOpen, setNoteOpen] = useState(false);
   const handleNoteOpenChange = (open: boolean) => {
     setNoteOpen(open);
@@ -130,7 +130,9 @@ export function QuickPodsRow() {
   const stopRecording = () => {
     try {
       recorder?.stop();
-    } catch {}
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Hypnosis
@@ -146,7 +148,7 @@ export function QuickPodsRow() {
     setPreOpen(open);
     if (!open) focusChatInput();
   };
-  const [mode, setMode] = useState<'focus' | 'calm' | 'confidence'>(() => (localStorage.getItem('hypnosis.mode') as any) || 'focus');
+  const [mode, setMode] = useState<'focus' | 'calm' | 'confidence'>(() => (localStorage.getItem('hypnosis.mode') as 'focus' | 'calm' | 'confidence' | null) || 'focus');
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
@@ -175,13 +177,15 @@ export function QuickPodsRow() {
       setCountdown((c) => {
         if (c <= 1) {
           window.clearInterval(id);
-          handlePreOpenChange(false);
-          setLibraryOpen(true);
-          (async () => {
-            try {
-              await awardXPRemote("hypnosis_session", 20, { mode });
-            } catch {}
-          })();
+            handlePreOpenChange(false);
+            setLibraryOpen(true);
+            (async () => {
+              try {
+                await awardXPRemote("hypnosis_session", 20, { mode });
+              } catch (err) {
+                console.error(err);
+              }
+            })();
           return 0;
         }
         return c - 1;
@@ -191,7 +195,11 @@ export function QuickPodsRow() {
   }, [preOpen]);
 
   useEffect(() => {
-    try { localStorage.setItem('hypnosis.mode', mode); } catch {}
+    try {
+      localStorage.setItem('hypnosis.mode', mode);
+    } catch (err) {
+      console.error(err);
+    }
   }, [mode]);
 
   return (
@@ -204,7 +212,7 @@ export function QuickPodsRow() {
             onClick={() => {
               if (p.key === 'focus') setFocusOpen(true);
               if (p.key === 'hypno') setPreOpen(true);
-              if (p.key === 'notes') setNoteOpen(true);
+              if (p.key === 'journal') setNoteOpen(true);
               if (p.key === 'voice') setVoiceOpen(true);
             }}
             className="glass-panel rounded-xl p-4 flex flex-col items-center gap-2 hover-scale"
@@ -298,7 +306,7 @@ export function QuickPodsRow() {
         </DialogContent>
       </Dialog>
 
-      {/* Notes */}
+      {/* Journal */}
       <Dialog open={noteOpen} onOpenChange={handleNoteOpenChange}>
         <DialogContent className="sm:max-w-md" onEscapeKeyDown={() => handleNoteOpenChange(false)}>
           <DialogHeader>

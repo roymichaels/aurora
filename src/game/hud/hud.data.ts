@@ -24,7 +24,7 @@ const baseQuickSlots: QuickSlot[] = [
   { id:1, key:'1', action:'startFocus',    label:'Focus',   icon:'focus' },
   { id:2, key:'2', action:'startHypnosis', label:'Hypno',   icon:'hypno' },
   { id:3, key:'3', action:'voiceNote',     label:'Voice',   icon:'mic'   },
-  { id:4, key:'4', action:'addNote',       label:'Notes',   icon:'note'  },
+  { id:4, key:'4', action:'addNote',       label:'Journal', icon:'note'  },
   { id:5, key:'5', action:'openBrowser',   label:'Browse',  icon:'portal'},
   { id:6, key:'6', action:'openBrain',     label:'Brain',   icon:'brain' },
   { id:7, key:'7', action:'openTasks',     label:'Tasks',   icon:'task'  },

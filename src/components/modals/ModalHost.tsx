@@ -74,7 +74,7 @@ export default function ModalHost() {
     case "hypno":
       content = <HypnoPanel onClose={closeModal} />;
       break;
-    case "notes":
+    case "journal":
       content = <JournalView />;
       break;
     case "voice":

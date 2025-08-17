@@ -5,7 +5,7 @@ import { useUIStore } from "@/state/ui";
 export function useHUDActions() {
   const run = (a: QuickActionKey) => {
     if (a === "addNote") {
-      useUIStore.getState().openModal("notes");
+      useUIStore.getState().openModal("journal");
       return;
     }
     if (a === "voiceNote") {
