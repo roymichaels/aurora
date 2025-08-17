@@ -18,7 +18,8 @@ export type ModalId =
   | "voice"
   | "inventory"
   | "map"
-  | "controls";
+  | "controls"
+  | "sphereFull";
 
 type UIState = {
   activeModal: ModalId | null;
