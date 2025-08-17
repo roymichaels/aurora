@@ -1,5 +1,4 @@
-// @ts-ignore
-import QuickSettingsPanel from "../../../frontend/components/QuickSettingsPanel.jsx";
+import QuickSettingsPanel from "../../../frontend/components/QuickSettingsPanel.tsx";
 import { useUIStore } from "@/state/ui";
 
 export default function SettingsModal() {
