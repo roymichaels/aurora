@@ -21,8 +21,6 @@ export function useHUDActions() {
       return;
     }
     const eventMap: Record<string, string> = {
-      startFocus: "startFocus",
-      startHypnosis: "startHypnosis",
       openBrowser: "openBrowser",
     };
     const name = eventMap[a] ?? a;
