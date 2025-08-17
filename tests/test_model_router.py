@@ -1,6 +1,9 @@
 from pathlib import Path
 import importlib.util
+import json
 import sys
+
+import pytest
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
@@ -55,3 +58,30 @@ def test_model_router_sanitizes_prompt_before_cloud(monkeypatch, tmp_path):
     assert result == "cloud"
     assert captured["cloud"] == "Email [REDACTED_EMAIL] or call [REDACTED_PHONE]"
     assert "local" not in captured
+
+
+def test_token_estimation_with_tiktoken(monkeypatch, tmp_path):
+    monkeypatch.setattr(router_module, "is_online", lambda: True)
+
+    gemini_calls: list[str] = []
+    chatgpt_calls: list[str] = []
+
+    def gemini_model(prompt: str) -> str:
+        gemini_calls.append(prompt)
+        return "gemini"
+
+    def chatgpt_model(prompt: str) -> str:
+        chatgpt_calls.append(prompt)
+        return "chatgpt"
+
+    config = RouterConfig(max_gemini_tokens=3, max_chatgpt_cost=1.0)
+    logger = UsageLogger(tmp_path / "usage.log")
+    router = ModelRouter(gemini_model, chatgpt_model, config=config, logger=logger)
+
+    router.route("Hello, world!")  # 4 tokens via tiktoken, 2 words via split
+
+    assert chatgpt_calls and not gemini_calls
+
+    record = json.loads((tmp_path / "usage.log").read_text().splitlines()[-1])
+    assert record["tokens"] == 4
+    assert record["cost"] == pytest.approx(4 * config.chatgpt_cost_per_token)
