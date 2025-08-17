@@ -358,7 +358,7 @@ export function AuroraSphere({
 
   const handleClick = () => {
     if (variant === 'inline') {
-      useUIStore.getState().openModal('brain');
+      useUIStore.getState().openModal('sphereFull');
     }
   };
 
