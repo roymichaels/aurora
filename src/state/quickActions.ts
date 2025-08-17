@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
+import { supabase } from "@/integrations/supabase/client";
 
 registerQuickAction({
   id: "notes",
@@ -27,7 +28,30 @@ registerQuickAction({
   id: "tasks",
   label: "Tasks",
   icon: ListTodo,
-  onClick: () => useUIStore.getState().openModal("tasks"),
+  onClick: async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    let roadmapId: string | undefined;
+
+    if (user) {
+      const { data } = await supabase
+        .from("roadmaps")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .order("position", { ascending: true, nullsFirst: true });
+
+      if (data) {
+        type Roadmap = { id: string; status: string };
+        const list = data as Roadmap[];
+        const active = list.find((r) => r.status === "active");
+        roadmapId = active?.id ?? list[0]?.id;
+      }
+    }
+
+    useUIStore.getState().openModal("tasks", { roadmapId });
+  },
 });
 
 registerQuickAction({
