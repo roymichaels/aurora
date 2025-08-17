@@ -12,8 +12,10 @@ import {
   rotate,
   triNoise3D,
 } from 'three/tsl';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { useAvatarStore } from '@/state/avatar';
 import { useVoiceStore } from '@/state/voice';
+import { useUIStore } from '@/state/ui';
 import { createHalo } from './auroraSphereHalo';
 import './aurora-sphere.css';
 
@@ -30,6 +32,8 @@ interface Props {
   noiseStrength?: number;
   amplitude?: number;
   intensity?: number;
+  variant?: 'inline' | 'full';
+  interactive?: boolean;
 }
 
 const defaultShaderConfig = {
@@ -57,6 +61,8 @@ export function AuroraSphere({
   noiseStrength = defaultShaderConfig.noiseStrength,
   amplitude = defaultShaderConfig.amplitude,
   intensity = defaultShaderConfig.intensity,
+  variant = 'inline',
+  interactive,
 }: Props) {
   const shaderConfig = useMemo(
     () => ({
@@ -67,6 +73,7 @@ export function AuroraSphere({
     }),
     [noiseStrength, amplitude, intensity]
   );
+  const isInteractive = interactive || variant === 'full';
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -75,6 +82,12 @@ export function AuroraSphere({
   const pointsRef = useRef<THREE.Points | null>(null);
   const pointsMaterialRef = useRef<THREE.PointsMaterial | null>(null);
   const materialRef = useRef<MeshBasicNodeMaterial | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | WebGPURenderer | null>(
+    null
+  );
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
   const frameRef = useRef<number>(0);
 
   // global stores
@@ -124,11 +137,14 @@ export function AuroraSphere({
   // renderer/scene
   useEffect(() => {
     const mount = mountRef.current;
-    if (!mount) return;
+    const container = containerRef.current;
+    if (!mount || !container) return;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
     camera.position.z = 3;
+    sceneRef.current = scene;
+    cameraRef.current = camera;
 
     let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
     let geometry: THREE.IcosahedronGeometry | null = null;
@@ -137,6 +153,7 @@ export function AuroraSphere({
     let particleMaterial: THREE.PointsMaterial | null = null;
 
     let disposed = false;
+    let resizeObserver: ResizeObserver | null = null;
 
     const data = new Uint8Array(1024);
 
@@ -147,7 +164,6 @@ export function AuroraSphere({
       const mat = materialRef.current;
       const ptsMat = pointsMaterialRef.current;
       if (!mesh || !halo) return;
-
 
       let scale = 1;
       let levelAmp = 0;
@@ -166,7 +182,6 @@ export function AuroraSphere({
       halo.scale.setScalar(haloScale);
       (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
 
-
       // shader time
       const time = performance.now() / 1000;
       if (mat?.uniforms?.uTime) {
@@ -178,9 +193,12 @@ export function AuroraSphere({
         ptsMat.opacity = 0.3 + Math.sin(time) * 0.2 + levelAmp * 0.5;
       }
 
-      // slow rotation influenced by level
-      mesh.rotation.y += 0.002 * (levelRef.current || 1);
+      if (!isInteractive) {
+        // slow rotation influenced by level
+        mesh.rotation.y += 0.002 * (levelRef.current || 1);
+      }
 
+      controlsRef.current?.update();
       renderer?.render(scene, camera);
     };
 
@@ -196,28 +214,35 @@ export function AuroraSphere({
           renderer = r;
         } catch {
           renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-          (renderer as THREE.WebGLRenderer).setPixelRatio(
-            Math.min(window.devicePixelRatio || 1, 2)
-          );
         }
       } else {
         renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        (renderer as THREE.WebGLRenderer).setPixelRatio(
-          Math.min(window.devicePixelRatio || 1, 2)
-        );
       }
 
       if (disposed || !renderer) return;
 
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       const debug = (renderer as THREE.WebGLRenderer).debug;
       if (debug) {
         debug.checkShaderErrors = true;
       }
 
-      renderer.setSize(size, size);
       mount.appendChild(renderer.domElement);
+      rendererRef.current = renderer;
 
-      geometry = new THREE.IcosahedronGeometry(1, 5);
+      const resize = () => {
+        const { clientWidth, clientHeight } = container;
+        renderer!.setSize(clientWidth, clientHeight);
+        camera.aspect = clientWidth / clientHeight;
+        camera.updateProjectionMatrix();
+      };
+      resize();
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(resize);
+        resizeObserver.observe(container);
+      }
+
+      geometry = new THREE.IcosahedronGeometry(1, variant === 'full' ? 7 : 5);
 
       material = new MeshBasicNodeMaterial();
       materialRef.current = material;
@@ -289,6 +314,13 @@ export function AuroraSphere({
       scene.add(dir);
       scene.add(new THREE.AmbientLight(0xffffff, 0.4));
 
+      if (isInteractive && renderer) {
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.enablePan = false;
+        controlsRef.current = controls;
+      }
+
       animate();
     };
 
@@ -297,6 +329,9 @@ export function AuroraSphere({
     return () => {
       disposed = true;
       cancelAnimationFrame(frameRef.current);
+      controlsRef.current?.dispose();
+      controlsRef.current = null;
+      resizeObserver?.disconnect();
       try {
         renderer?.dispose?.();
       } catch {
@@ -315,14 +350,28 @@ export function AuroraSphere({
       particleGeometry?.dispose();
       particleMaterial?.dispose();
       pointsMaterialRef.current = null;
+      rendererRef.current = null;
+      sceneRef.current = null;
+      cameraRef.current = null;
     };
-  }, [size, shaderConfig]);
+  }, [shaderConfig, isInteractive, variant]);
+
+  const handleClick = () => {
+    if (variant === 'inline') {
+      useUIStore.getState().openModal('sphereFull');
+    }
+  };
 
   return (
     <div
       ref={containerRef}
       className={`aurora-sphere-container ${className ?? ''}`}
-      style={{ width: size, height: size, '--progress': progress } as React.CSSProperties}
+      style={{
+        width: variant === 'inline' ? size : '100%',
+        height: variant === 'inline' ? size : '100%',
+        '--progress': progress,
+      } as React.CSSProperties}
+      onClick={handleClick}
     >
       <div className="aurora-sphere-ring" />
       <div ref={mountRef} className="aurora-sphere-mount" />
