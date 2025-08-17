@@ -48,6 +48,8 @@ export function AuroraSphere({
   const meshRef = useRef<THREE.Mesh | null>(null);
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   const haloRef = useRef<THREE.Mesh | null>(null);
+  const pointsRef = useRef<THREE.Points | null>(null);
+  const pointsMaterialRef = useRef<THREE.PointsMaterial | null>(null);
   const frameRef = useRef<number>(0);
 
   // global stores
@@ -97,6 +99,8 @@ export function AuroraSphere({
     let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
     let geometry: THREE.IcosahedronGeometry | null = null;
     let material: THREE.ShaderMaterial | null = null;
+    let particleGeometry: THREE.BufferGeometry | null = null;
+    let particleMaterial: THREE.PointsMaterial | null = null;
     let disposed = false;
 
     const data = new Uint8Array(1024);
@@ -106,6 +110,7 @@ export function AuroraSphere({
       const mesh = meshRef.current;
       const mat = materialRef.current;
       const halo = haloRef.current;
+      const ptsMat = pointsMaterialRef.current;
       if (!mesh || !mat || !halo) return;
 
       let scale = 1;
@@ -126,8 +131,13 @@ export function AuroraSphere({
       (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
 
       // shader time
-      (mat.uniforms.uTime as THREE.IUniform<number>).value =
-        performance.now() / 1000;
+      const time = performance.now() / 1000;
+      (mat.uniforms.uTime as THREE.IUniform<number>).value = time;
+
+      if (ptsMat) {
+        ptsMat.size = 0.02 + Math.sin(time * 2.0) * 0.005 + levelAmp * 0.03;
+        ptsMat.opacity = 0.3 + Math.sin(time) * 0.2 + levelAmp * 0.5;
+      }
 
       // slow rotation influenced by level
       mesh.rotation.y += 0.002 * (levelRef.current || 1);
@@ -160,10 +170,12 @@ export function AuroraSphere({
 
       if (disposed || !renderer) return;
 
-      const debug = (renderer as any).debug;
-      if (debug) {
-        debug.checkShaderErrors = true;
-      }
+        const debug = (
+          renderer as THREE.WebGLRenderer & { debug?: { checkShaderErrors: boolean } }
+        ).debug;
+        if (debug) {
+          debug.checkShaderErrors = true;
+        }
 
       renderer.setSize(size, size);
       mount.appendChild(renderer.domElement);
@@ -324,6 +336,35 @@ export function AuroraSphere({
       materialRef.current = material;
       scene.add(mesh);
 
+      // particle shell
+      const particleCount = 1000;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        const r = 1 + Math.random() * 0.2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = Math.random() * Math.PI * 2;
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+        positions.set([x, y, z], i * 3);
+      }
+      particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+      );
+      particleMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.02,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      pointsRef.current = particles;
+      pointsMaterialRef.current = particleMaterial;
+      scene.add(particles);
+
       const halo = createHalo();
       haloRef.current = halo;
       scene.add(halo);
@@ -351,6 +392,13 @@ export function AuroraSphere({
       }
       geometry?.dispose();
       material?.dispose();
+      if (pointsRef.current) {
+        scene.remove(pointsRef.current);
+        pointsRef.current = null;
+      }
+      particleGeometry?.dispose();
+      particleMaterial?.dispose();
+      pointsMaterialRef.current = null;
     };
   }, [size]);
 
