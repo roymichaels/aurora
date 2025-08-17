@@ -10,10 +10,10 @@ import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
 
 registerQuickAction({
-  id: "journal",
+  id: "notes",
   label: "Journal",
   icon: BookOpen,
-  onClick: () => useUIStore.getState().openModal("journal"),
+  onClick: () => useUIStore.getState().openModal("notes"),
 });
 
 registerQuickAction({

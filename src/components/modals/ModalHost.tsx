@@ -43,9 +43,6 @@ export default function ModalHost() {
     case "brain":
       content = <BrainView />;
       break;
-    case "journal":
-      content = <JournalView />;
-      break;
     case "focus":
       content = <FocusView />;
       break;
