@@ -160,6 +160,8 @@ export function AuroraSphere({
 
       if (disposed || !renderer) return;
 
+      (renderer as any)?.debug?.checkShaderErrors = true;
+
       renderer.setSize(size, size);
       mount.appendChild(renderer.domElement);
 
@@ -177,6 +179,7 @@ export function AuroraSphere({
 
       // Kay blob vertex shader (periodic noise + rotateY banding)
       const vertexShader = /* glsl */`
+      precision highp float;
       varying vec3 vNormal;
       varying float vDistort;
 
@@ -282,6 +285,7 @@ export function AuroraSphere({
 
       // CosPalette fragment shader (blue/orange ribbons look)
       const fragmentShader = /* glsl */`
+      precision highp float;
       varying float vDistort;
       uniform float uIntensity;
 
