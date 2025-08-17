@@ -169,7 +169,7 @@ export function AuroraSphere({
 
       // shader time
       const time = performance.now() / 1000;
-      if (mat) {
+      if (mat?.uniforms?.uTime) {
         (mat.uniforms.uTime as THREE.IUniform<number>).value = time;
       }
 
