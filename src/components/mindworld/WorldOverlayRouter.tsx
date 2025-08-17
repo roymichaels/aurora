@@ -5,6 +5,7 @@ import ArchivePanel from "@/components/archive/ArchivePanel";
 import { MoodCarousel } from "@/components/live/MoodCarousel";
 import HypnosisLauncher from "@/components/hypnosis/HypnosisLauncher";
 import AgentPanel from "@/components/agent/AgentPanel";
+import { Button } from "@/components/ui/button";
 
 export type OverlayId = "mentor" | "library" | "garden" | "focus" | "agent";
 
@@ -20,7 +21,7 @@ function OverlayShell({ title, children, onClose }: PropsWithChildren<{ title: s
         <section className="w-full max-w-4xl h-[80vh] glass-panel rounded-2xl elev overflow-hidden">
           <header className="px-4 py-3 flex items-center justify-between border-b border-border/60">
             <h1 className="text-lg font-semibold leading-none">{title}</h1>
-            <button onClick={onClose} className="text-sm text-muted-foreground hover:opacity-80">Close</button>
+            <Button type="button" onClick={onClose} className="text-sm text-muted-foreground hover:opacity-80">Close</Button>
           </header>
           <main className="p-4 h-[calc(80vh-56px)] overflow-auto">
             {children}

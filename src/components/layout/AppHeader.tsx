@@ -39,13 +39,14 @@ export default function AppHeader() {
         <div className="mt-3 glass-panel rounded-full px-3 py-2 elev flex items-center justify-between gap-3 animate-fade-in smooth">
           {/* Brand */}
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              type="button"
               className="text-sm font-semibold tracking-wide hover-scale"
               onClick={() => navigate("/")}
               aria-label="Go to Home"
             >
               MOS
-            </button>
+            </Button>
             <span className="hidden sm:inline text-xs text-muted-foreground">Mind Operating System</span>
           </div>
 

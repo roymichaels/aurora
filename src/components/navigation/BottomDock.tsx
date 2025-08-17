@@ -7,6 +7,7 @@ import { useAvatarStore } from "@/state/avatar";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { QuickActionBar } from "./QuickActionBar";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
+import { Button } from "@/components/ui/button";
 
 const DOCK_COLLAPSE_KEY = "ui:dock:collapsed";
 
@@ -65,7 +66,8 @@ export default function BottomDock() {
         pointerEvents: "auto",
       }}
     >
-      <button
+      <Button
+        type="button"
         aria-label={collapsed ? "Expand dock" : "Collapse dock"}
         onClick={onEdgeClick}
         className="absolute -top-2 left-0 right-0 h-3 rounded-t-2xl opacity-30 hover:opacity-60 focus:opacity-80 outline-none"

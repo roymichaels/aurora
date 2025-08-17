@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { MoodCarousel } from "@/components/live/MoodCarousel";
+import { Button } from "@/components/ui/button";
 
 function moodEmoji(k: string) {
   switch (k) {
@@ -27,9 +28,9 @@ export default function MoodButton() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button aria-label="Change mood" className="glass-panel rounded-full px-3 py-2 text-base">
+        <Button type="button" aria-label="Change mood" className="glass-panel rounded-full px-3 py-2 text-base">
           <span aria-hidden>{moodEmoji(mood)}</span>
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent sideOffset={8} className="w-[300px] p-2">
         <MoodCarousel />

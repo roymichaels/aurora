@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useWeeklyKpiEntry } from "@/hooks/useWeeklyKpiEntry";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   userId: string;
@@ -23,12 +24,13 @@ export function WeeklyKpiEntry({ userId, missionId, kpiId, name }: Props) {
         onChange={(e) => setValue(e.target.value)}
         className="border p-1 rounded w-full"
       />
-      <button
+      <Button
+        type="button"
         onClick={() => value && record(parseFloat(value), "manual")}
         className="px-3 py-1 bg-blue-500 text-white rounded"
       >
         Save
-      </button>
+      </Button>
     </div>
   );
 }

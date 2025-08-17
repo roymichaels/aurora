@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import FocusRunner from "@/nodes/FocusRunner";
 import { useHUDActions } from "@/game/hud/useHUDActions";
+import { Button } from "@/components/ui/button";
 
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
@@ -38,14 +39,15 @@ export function QuickPodsRow() {
     <div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {pods.map((p) => (
-          <button
+          <Button
             key={p.key}
+            type="button"
             onClick={() => handle(p.key)}
             className="glass-panel rounded-xl p-4 flex flex-col items-center gap-2 hover-scale"
           >
             <p.icon className="w-6 h-6" />
             <span className="text-sm font-medium">{p.label}</span>
-          </button>
+          </Button>
         ))}
       </div>
 

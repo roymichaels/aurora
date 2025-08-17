@@ -219,7 +219,7 @@ export function AnchoredChatBar() {
           <Send className="w-4 h-4" />
         </Button>
         {blocked ? (
-          <button
+          <Button
             type="button"
             onClick={() => {
               resume();
@@ -229,17 +229,17 @@ export function AnchoredChatBar() {
           >
             <Volume2 className="w-3 h-3" />
             Tap to play
-          </button>
+          </Button>
         ) : (
           lastAssistant && (
-            <button
+            <Button
               type="button"
               onClick={playLast}
               className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs flex items-center gap-1"
             >
               <Volume2 className="w-3 h-3" />
               Play
-            </button>
+            </Button>
           )
         )}
       </div>
@@ -261,20 +261,20 @@ export function AnchoredChatBar() {
             : "-top-6 opacity-0 pointer-events-none"
         }`}
       >
-        <button
+        <Button
           type="button"
           onClick={handleConfirm}
           className="action-chip px-3 py-1 text-xs transition-all duration-200"
         >
           Confirm
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={handleEdit}
           className="action-chip px-3 py-1 text-xs transition-all duration-200"
         >
           Edit
-        </button>
+        </Button>
       </div>
     </div>
   </div>

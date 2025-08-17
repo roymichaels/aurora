@@ -14,12 +14,13 @@ export default function VisionCard({ answers, onClose }: VisionCardProps) {
     <Card className="mx-auto w-full max-w-md">
       <CardHeader className="relative">
         <CardTitle>Your Vision</CardTitle>
-        <button
+        <Button
+          type="button"
           onClick={onClose}
           className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       </CardHeader>
       <CardContent className="space-y-3">
         {answers.map((answer, i) => (

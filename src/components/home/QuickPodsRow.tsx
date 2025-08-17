@@ -198,8 +198,9 @@ export function QuickPodsRow() {
     <div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {pods.map((p) => (
-          <button
+          <Button
             key={p.key}
+            type="button"
             onClick={() => {
               if (p.key === 'focus') setFocusOpen(true);
               if (p.key === 'hypno') setPreOpen(true);
@@ -210,7 +211,7 @@ export function QuickPodsRow() {
           >
             <p.icon className="w-6 h-6" />
             <span className="text-sm font-medium">{p.label}</span>
-          </button>
+          </Button>
         ))}
       </div>
 
