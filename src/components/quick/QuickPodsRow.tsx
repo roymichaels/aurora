@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
   { key: "hypno", label: "Hypno", icon: Waves },
-  { key: "notes", label: "Notes", icon: StickyNote },
+  { key: "journal", label: "Journal", icon: StickyNote },
   { key: "voice", label: "Voice", icon: Mic },
 ];
 
@@ -25,7 +25,7 @@ export function QuickPodsRow() {
       window.dispatchEvent(new CustomEvent("open-hypno-panel"));
       return;
     }
-    if (key === "notes") {
+    if (key === "journal") {
       run("addNote");
       return;
     }

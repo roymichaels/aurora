@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const fire = (type: string, payload?: any) => {
+const fire = (type: string, payload?: unknown) => {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
 };
 
@@ -9,17 +9,17 @@ const ZONES = [
   { key: 'focus', label: 'Training Grounds', type: 'startFocus' },
   { key: 'hypno', label: 'Hypno Temple', event: 'open-hypno-panel' },
   { key: 'voice', label: 'Sound Studio', type: 'voiceNote' },
-  { key: 'notes', label: 'Idea Forest', type: 'addNote' },
+  { key: 'journal', label: 'Idea Forest', type: 'addNote' },
 ];
 
 export default function FastTravel() {
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    const h = () => setOpen(true);
-    window.addEventListener('open-fast-travel', h as any);
-    return () => window.removeEventListener('open-fast-travel', h as any);
-  }, []);
+    useEffect(() => {
+      const h = () => setOpen(true);
+      window.addEventListener('open-fast-travel', h as EventListener);
+      return () => window.removeEventListener('open-fast-travel', h as EventListener);
+    }, []);
 
   if (!open) return null;
 

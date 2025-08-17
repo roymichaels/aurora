@@ -66,7 +66,7 @@ export default function AppShell() {
       }
       const map: Record<string, ViewId> = {
         voiceNote: 'voice',
-        addNote: 'notes',
+        addNote: 'journal',
         openBrain: 'brain',
       };
       const vid = t ? map[t] : undefined;

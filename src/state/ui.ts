@@ -13,7 +13,7 @@ export type ModalId =
   // supplemental panels
   | "focus"
   | "hypno"
-  | "notes"
+  | "journal"
   | "voice"
   | "sphereFull";
 

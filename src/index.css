@@ -469,7 +469,7 @@ All colors MUST be HSL.
 .room-focus { --primary: 222 87% 55%; --accent: 222 87% 55%; }
 .room-hypno { --primary: 270 75% 60%; --accent: 270 75% 60%; }
 .room-voice { --primary: 214 84% 56%; --accent: 214 84% 56%; }
-.room-notes { --primary: 35 95% 55%; --accent: 35 95% 55%; }
+.room-journal { --primary: 35 95% 55%; --accent: 35 95% 55%; }
 .room-browser { --primary: 210 90% 60%; --accent: 210 90% 60%; }
 .room-portal { --primary: 150 80% 50%; --accent: 150 80% 50%; }
 .room-archive { --primary: 260 60% 60%; --accent: 260 60% 60%; }

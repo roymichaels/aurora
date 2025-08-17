@@ -43,7 +43,7 @@ export default function BottomDock() {
     () => [
       { to: "/app", label: "Home", icon: Home },
       { to: "/app/brain", label: "Brain", icon: Brain },
-      { to: "/app/notes", label: "Journal", icon: BookOpen },
+      { to: "/app/journal", label: "Journal", icon: BookOpen },
       { to: "/app/live", label: "Live", icon: Radio },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],

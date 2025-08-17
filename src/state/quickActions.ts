@@ -11,10 +11,10 @@ import { useUIStore } from "@/state/ui";
 import { supabase } from "@/integrations/supabase/client";
 
 registerQuickAction({
-  id: "notes",
+  id: "journal",
   label: "Journal",
   icon: BookOpen,
-  onClick: () => useUIStore.getState().openModal("notes"),
+  onClick: () => useUIStore.getState().openModal("journal"),
 });
 
 registerQuickAction({
