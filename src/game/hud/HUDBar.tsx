@@ -48,35 +48,6 @@ export default function HUDBar() {
                 >
                   <span className="sr-only">Settings</span>
                 </button>
-                {/*
-                <button
-                  type="button"
-                  className="hud-icon bag hover-scale smooth hover:brightness-110 active:scale-95"
-                  aria-label="Inventory"
-                  title="Inventory"
-                  onClick={() => openModal('inventory')}
-                >
-                  <span className="sr-only">Inventory</span>
-                </button>
-                <button
-                  type="button"
-                  className="hud-icon map hover-scale smooth hover:brightness-110 active:scale-95"
-                  aria-label="Map"
-                  title="Map"
-                  onClick={() => openModal('map')}
-                >
-                  <span className="sr-only">Map</span>
-                </button>
-                <button
-                  type="button"
-                  className="hud-icon stick hover-scale smooth hover:brightness-110 active:scale-95"
-                  aria-label="Controls"
-                  title="Controls"
-                  onClick={() => openModal('controls')}
-                >
-                  <span className="sr-only">Controls</span>
-                </button>
-                */}
               </div>
 
               {/* Quick Slots: full width on small (second line), inline on large */}

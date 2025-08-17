@@ -20,18 +20,6 @@ export function useHUDActions() {
       useUIStore.getState().openModal("brain");
       return;
     }
-    if (a === "openMap") {
-      useUIStore.getState().openModal("map");
-      return;
-    }
-    if (a === "startFocus") {
-      useUIStore.getState().openModal("focus");
-      return;
-    }
-    if (a === "startHypnosis") {
-      useUIStore.getState().openModal("hypno");
-      return;
-    }
     const eventMap: Record<string, string> = {
       openBrowser: "openBrowser",
     };
