@@ -60,7 +60,6 @@ export default function AppShell() {
         startHypnosis: 'hypno',
         voiceNote: 'voice',
         addNote: 'notes',
-        openMap: 'portal',
         openBrain: 'brain',
       };
       const vid = t ? map[t] : undefined;
