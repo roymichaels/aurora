@@ -533,17 +533,12 @@ const Index = () => {
       awardXP(REWARDS.completeQuest);
       checkFullClear();
     };
-    const onMap = () => {
-      window.dispatchEvent(new CustomEvent('open-fast-travel'));
-    };
-
     const onMos = (e: any) => {
       const t = e.detail?.type;
       if (t === 'startFocus') onFocus();
       if (t === 'startHypnosis') onHypno();
       if (t === 'voiceNote') onVoice();
       if (t === 'addNote') onNote();
-      if (t === 'openMap') onMap();
     };
     window.addEventListener('mos', onMos as any);
     return () => {

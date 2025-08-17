@@ -71,7 +71,6 @@ export default function MindWorldDashboard() {
       if (t === 'startHypnosis') { set('mentor'); completeQuest('start-hypno'); awardXP(REWARDS.completeQuest); }
       if (t === 'voiceNote') { set('library'); completeQuest('record-voice'); awardXP(REWARDS.completeQuest); }
       if (t === 'addNote') { set('library'); completeQuest('add-note'); awardXP(REWARDS.completeQuest); }
-      if (t === 'openMap') { document.dispatchEvent(new CustomEvent('open-fast-travel')); }
     };
     window.addEventListener('mos', onMos as any);
     return () => window.removeEventListener('mos', onMos as any);
