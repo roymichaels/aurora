@@ -21,6 +21,9 @@ import TasksModal from "@/components/modals/TasksModal";
 import InventoryModal from "@/components/modals/InventoryModal";
 import MapModal from "@/components/modals/MapModal";
 import ControlsModal from "@/components/modals/ControlsModal";
+import { AuroraSphere } from "@/components/avatar/AuroraSphere";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 export default function ModalHost() {
   const { activeModal, closeModal } = useUIStore();
@@ -36,6 +39,31 @@ export default function ModalHost() {
     closeModal();
     focusChatInput();
   };
+
+  if (activeModal === "sphereFull") {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
+        onClick={handleClose}
+      >
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 right-4"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClose();
+          }}
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </Button>
+        <div onClick={(e) => e.stopPropagation()}>
+          <AuroraSphere variant="full" interactive />
+        </div>
+      </div>
+    );
+  }
 
   let content: ReactNode = null;
   let className: string | undefined;
