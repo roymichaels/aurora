@@ -56,14 +56,6 @@ export default function AppShell() {
         open('browser', { url: last });
         return;
       }
-      if (t === 'startFocus') {
-        useUIStore.getState().openModal('focus');
-        return;
-      }
-      if (t === 'startHypnosis') {
-        useUIStore.getState().openModal('hypno');
-        return;
-      }
       const map: Record<string, ViewId> = {
         voiceNote: 'voice',
         addNote: 'notes',
