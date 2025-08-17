@@ -231,7 +231,12 @@ export function AuroraSphere({
       rendererRef.current = renderer;
 
       const resize = () => {
+        if (disposed) return;
         const { clientWidth, clientHeight } = container;
+        if (clientWidth === 0 || clientHeight === 0) {
+          requestAnimationFrame(resize);
+          return;
+        }
         renderer!.setSize(clientWidth, clientHeight);
         camera.aspect = clientWidth / clientHeight;
         camera.updateProjectionMatrix();
