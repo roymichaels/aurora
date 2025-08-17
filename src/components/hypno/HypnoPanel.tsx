@@ -6,6 +6,7 @@ import { REWARDS } from "@/game/QuestEngine";
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/integrations/supabase/gameSync";
 import { DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   onClose?: () => void;
@@ -54,18 +55,19 @@ export default function HypnoPanel({ onClose }: Props) {
       <div className="glass-panel rounded-t-2xl p-4 elev">
         <div className="flex items-center justify-between">
           <DialogTitle className="text-base font-semibold">Hypno Temple</DialogTitle>
-          <button className="rounded-full px-3 py-1 bg-secondary" onClick={handleClose}>Close</button>
+          <Button className="rounded-full px-3 py-1 bg-secondary" type="button" onClick={handleClose}>Close</Button>
         </div>
         <div className="mt-3">
           <HypnosisLauncher />
         </div>
         <div className="mt-2 flex justify-end">
-          <button
+          <Button
+            type="button"
             className="rounded-full px-4 py-2 bg-primary text-primary-foreground"
             onClick={onStart}
           >
             Start Session
-          </button>
+          </Button>
         </div>
       </div>
     </div>

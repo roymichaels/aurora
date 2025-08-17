@@ -48,8 +48,9 @@ export function SoundControl({ label = "Sound", buttonVariant = "secondary", but
                 <div className="text-xs font-medium mb-2">{cat}</div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {list.map((s) => (
-                    <button
+                    <Button
                       key={s.id}
+                      type="button"
                       onClick={async () => {
                         await audio.pickSound(s as any);
                         await audio.play();
@@ -60,7 +61,7 @@ export function SoundControl({ label = "Sound", buttonVariant = "secondary", but
                     >
                       <div className="font-medium text-sm">{s.title}</div>
                       <div className="text-xs text-muted-foreground truncate">{s.audio_url}</div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

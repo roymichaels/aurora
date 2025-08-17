@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const fire = (type: string, payload?: any) => {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -33,26 +34,27 @@ export default function FastTravel() {
       <div className="glass-panel rounded-t-2xl md:rounded-2xl w-full md:w-[640px] p-4 elev">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Portal Plaza</h3>
-          <button className="rounded-full px-3 py-1 bg-secondary" onClick={()=>setOpen(false)}>Close</button>
+          <Button className="rounded-full px-3 py-1 bg-secondary" type="button" onClick={()=>setOpen(false)}>Close</Button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
           {ZONES.map(z => (
-            <button key={z.key}
+            <Button key={z.key}
+              type="button"
               onClick={() => onSelect(z)}
               className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left transition-colors"
             >
               <div className="font-medium">{z.label}</div>
               <div className="text-xs text-muted-foreground">{z.key}</div>
-            </button>
+            </Button>
           ))}
-          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect({ type: 'openMap' })}>
+          <Button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" type="button" onClick={() => onSelect({ type: 'openMap' })}>
             <div className="font-medium">Control</div>
             <div className="text-xs text-muted-foreground">Roadmaps & Tasks</div>
-          </button>
-          <button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" onClick={() => onSelect({ type: 'voiceNote' })}>
+          </Button>
+          <Button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" type="button" onClick={() => onSelect({ type: 'voiceNote' })}>
             <div className="font-medium">Archive</div>
             <div className="text-xs text-muted-foreground">Notes & Audio</div>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

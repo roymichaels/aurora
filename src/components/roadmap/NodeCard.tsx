@@ -1,5 +1,6 @@
 import type { RoadmapNode } from "@/data/roadmap";
 import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   node: RoadmapNode;
@@ -10,8 +11,8 @@ type Props = {
 
 export function NodeCard({ node, completed, unlocked, onClick }: Props) {
   const disabled = node.locked && !unlocked;
-  return (
-    <button
+    return (
+      <Button
       type="button"
       onClick={onClick}
       disabled={disabled}
@@ -38,9 +39,9 @@ export function NodeCard({ node, completed, unlocked, onClick }: Props) {
           <span className="text-xs opacity-80">Start</span>
         )}
       </div>
-    </button>
-  );
-}
+      </Button>
+    );
+  }
 
 function iconFor(t: RoadmapNode["type"]) {
   switch (t) {

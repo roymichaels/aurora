@@ -1,4 +1,5 @@
 import { Component, ReactNode } from 'react'
+import { Button } from "@/components/ui/button";
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -47,12 +48,13 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             </details>
           )}
           <div className="flex gap-4">
-            <button
+            <Button
+              type="button"
               className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
               onClick={this.handleReload}
             >
               Reload App
-            </button>
+            </Button>
             <a
               className="rounded border border-blue-600 px-4 py-2 text-blue-600 hover:bg-blue-50"
               href="https://github.com/AuroraInteractive/aurora/issues/new"
