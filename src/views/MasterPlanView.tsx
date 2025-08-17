@@ -273,12 +273,22 @@ export default function MasterPlanView() {
               <Button variant="ghost" size="sm" onClick={() => openEdit("habits")}>Edit</Button>
             </div>
             {habits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
-            {habits.map((h: any, i: number) => (
-              <div key={i} className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center gap-3">
+            {habits.map((h: PlanHabit, i: number) => (
+              <div
+                key={i}
+                className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center gap-3"
+              >
                 <div className="font-medium">{h.title}</div>
+                {h.frequency && (
+                  <div className="text-sm text-muted-foreground">{h.frequency}</div>
+                )}
+                {h.trigger && (
+                  <div className="text-sm text-muted-foreground sm:ml-auto">
+                    {h.trigger}
+                  </div>
+                )}
               </div>
             ))}
-            {/* TODO: render habits from generated plan */}
             <HabitTracker />
             {dbHabits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
             {dbHabits.map(h => (
