@@ -15,9 +15,6 @@ export type ModalId =
   | "hypno"
   | "notes"
   | "voice"
-  | "inventory"
-  | "map"
-  | "controls"
   | "sphereFull";
 
 type UIState = {

@@ -18,9 +18,6 @@ import AnalyticsModal from "@/components/modals/AnalyticsModal";
 import GoalsModal from "@/components/modals/GoalsModal";
 import SettingsModal from "@/components/modals/SettingsModal";
 import TasksModal from "@/components/modals/TasksModal";
-import InventoryModal from "@/components/modals/InventoryModal";
-import MapModal from "@/components/modals/MapModal";
-import ControlsModal from "@/components/modals/ControlsModal";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -112,18 +109,6 @@ export default function ModalHost() {
           <div>More</div>
         </>
       );
-      className = "sm:max-w-md";
-      break;
-    case "inventory":
-      content = <InventoryModal />;
-      className = "sm:max-w-md";
-      break;
-    case "map":
-      content = <MapModal />;
-      className = "sm:max-w-md";
-      break;
-    case "controls":
-      content = <ControlsModal />;
       className = "sm:max-w-md";
       break;
     default:
