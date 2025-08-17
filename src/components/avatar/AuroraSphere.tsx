@@ -74,6 +74,7 @@ export function AuroraSphere({
   const haloRef = useRef<THREE.Mesh | null>(null);
   const pointsRef = useRef<THREE.Points | null>(null);
   const pointsMaterialRef = useRef<THREE.PointsMaterial | null>(null);
+  const materialRef = useRef<MeshBasicNodeMaterial | null>(null);
   const frameRef = useRef<number>(0);
 
   // global stores
@@ -141,6 +142,8 @@ export function AuroraSphere({
       frameRef.current = requestAnimationFrame(animate);
       const mesh = meshRef.current;
       const halo = haloRef.current;
+      const mat = materialRef.current;
+      const ptsMat = pointsMaterialRef.current;
       if (!mesh || !halo) return;
 
 
@@ -164,7 +167,9 @@ export function AuroraSphere({
 
       // shader time
       const time = performance.now() / 1000;
-      (mat.uniforms.uTime as THREE.IUniform<number>).value = time;
+      if (mat) {
+        (mat.uniforms.uTime as THREE.IUniform<number>).value = time;
+      }
 
       if (ptsMat) {
         ptsMat.size = 0.02 + Math.sin(time * 2.0) * 0.005 + levelAmp * 0.03;
@@ -213,6 +218,7 @@ export function AuroraSphere({
       geometry = new THREE.IcosahedronGeometry(1, 5);
 
       material = new MeshBasicNodeMaterial();
+      materialRef.current = material;
 
       const t = time.mul(shaderConfig.speed);
       const noise = triNoise3D(
@@ -298,6 +304,7 @@ export function AuroraSphere({
         mount.removeChild(renderer.domElement);
       }
       geometry?.dispose();
+      materialRef.current = null;
       material?.dispose();
       if (pointsRef.current) {
         scene.remove(pointsRef.current);
