@@ -1,4 +1,5 @@
 import initSqlJs, { Database } from "sql.js";
+import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import { toast } from "@/hooks/use-toast";
 
 const DB_FILE = "brain.db";
@@ -148,19 +149,7 @@ async function idbSet(key: string, value: Uint8Array): Promise<void> {
 export async function openBrainDb(): Promise<BrainDatabase> {
   if (cachedDb) return cachedDb;
   try {
-    const importMetaUrl = (() => {
-      try {
-        return eval('import.meta.url') as string;
-      } catch {
-        return undefined;
-      }
-    })();
-    const SQL = await initSqlJs({
-      locateFile: (file: string) =>
-        importMetaUrl
-          ? new URL(`../../node_modules/sql.js/dist/${file}`, importMetaUrl).toString()
-          : `node_modules/sql.js/dist/${file}`,
-    });
+    const SQL = await initSqlJs({ locateFile: () => wasmUrl });
 
     let opfsHandle: FileSystemFileHandle | null = null;
     if (
