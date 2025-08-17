@@ -8,3 +8,6 @@ export default {
 
 export const Default = () => <AuroraSphere />;
 export const Speaking = () => <AuroraSphere speaking />;
+export const HighIntensity = () => (
+  <AuroraSphere noiseStrength={0.3} amplitude={0.6} intensity={1.8} />
+);

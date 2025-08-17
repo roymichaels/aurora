@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 // three@0.179 ships WebGPU in the core build under `three/webgpu`
 import { WebGPURenderer } from 'three/webgpu';
@@ -17,9 +17,12 @@ interface Props {
   mood?: AuroraMood;
   speaking?: boolean;
   progress?: number;
+  noiseStrength?: number;
+  amplitude?: number;
+  intensity?: number;
 }
 
-const shaderConfig = {
+const defaultShaderConfig = {
   speed: 0.6,
   noiseDensity: 2.0,
   noiseStrength: 0.15,
@@ -41,7 +44,19 @@ export function AuroraSphere({
   mood,
   speaking,
   progress = 0,
+  noiseStrength = defaultShaderConfig.noiseStrength,
+  amplitude = defaultShaderConfig.amplitude,
+  intensity = defaultShaderConfig.intensity,
 }: Props) {
+  const shaderConfig = useMemo(
+    () => ({
+      ...defaultShaderConfig,
+      noiseStrength,
+      amplitude,
+      intensity,
+    }),
+    [noiseStrength, amplitude, intensity]
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -59,6 +74,15 @@ export function AuroraSphere({
 
   useEffect(() => { speakingRef.current = speaking ?? voiceSpeaking; }, [speaking, voiceSpeaking]);
   useEffect(() => { levelRef.current = level; }, [level]);
+
+  useEffect(() => {
+    const mat = materialRef.current;
+    if (mat) {
+      (mat.uniforms.uNoiseStrength as THREE.IUniform<number>).value = noiseStrength;
+      (mat.uniforms.uAmplitude as THREE.IUniform<number>).value = amplitude;
+      (mat.uniforms.uIntensity as THREE.IUniform<number>).value = intensity;
+    }
+  }, [noiseStrength, amplitude, intensity]);
 
   // analyser for audio-driven scale
   useEffect(() => {
@@ -160,7 +184,7 @@ export function AuroraSphere({
 
       if (disposed || !renderer) return;
 
-      const debug = (renderer as any).debug;
+      const debug = (renderer as THREE.WebGLRenderer).debug;
       if (debug) {
         debug.checkShaderErrors = true;
       }
@@ -352,7 +376,7 @@ export function AuroraSphere({
       geometry?.dispose();
       material?.dispose();
     };
-  }, [size]);
+  }, [size, shaderConfig]);
 
   return (
     <div
