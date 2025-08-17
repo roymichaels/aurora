@@ -38,7 +38,7 @@ export default function HUDBar() {
               <div className="grow min-w-[260px]"><StatBars/></div>
 
               {/* Right: System icons always at far right */}
-              <div className="ml-auto flex items-center gap-2 sm:gap-3 order-3 sm:order-none">
+              <div className="ml-auto flex items-center order-3 sm:order-none">
                 <button
                   type="button"
                   className="hud-icon settings hover-scale smooth hover:brightness-110 active:scale-95"
@@ -48,6 +48,7 @@ export default function HUDBar() {
                 >
                   <span className="sr-only">Settings</span>
                 </button>
+                {/*
                 <button
                   type="button"
                   className="hud-icon bag hover-scale smooth hover:brightness-110 active:scale-95"
@@ -75,6 +76,7 @@ export default function HUDBar() {
                 >
                   <span className="sr-only">Controls</span>
                 </button>
+                */}
               </div>
 
               {/* Quick Slots: full width on small (second line), inline on large */}
