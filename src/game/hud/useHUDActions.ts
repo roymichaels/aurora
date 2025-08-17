@@ -20,10 +20,6 @@ export function useHUDActions() {
       useUIStore.getState().openModal("brain");
       return;
     }
-    if (a === "openMap") {
-      useUIStore.getState().openModal("map");
-      return;
-    }
     if (a === "startFocus") {
       useUIStore.getState().openModal("focus");
       return;

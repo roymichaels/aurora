@@ -382,19 +382,6 @@ All colors MUST be HSL.
   radial-gradient(circle at 50% 50%, hsl(0 0% 100%) 30%, transparent 31%),
   conic-gradient(hsl(0 0% 100%) 0 10%, transparent 10% 100%);
 }
-.hud-icon.bag { background:
-  linear-gradient(hsl(0 0% 100%), hsl(0 0% 92%));
-  clip-path: polygon(12% 30%,88% 30%,88% 85%,12% 85%);
-}
-.hud-icon.map { background:
-  linear-gradient(45deg, hsl(var(--accent)) 50%, hsl(var(--primary)) 50%);
-  clip-path: polygon(10% 80%,35% 20%,60% 75%,85% 30%,90% 80%,10% 80%);
-}
-.hud-icon.stick {
-  background: radial-gradient(circle, hsl(var(--primary)) 45%, transparent 46%);
-  box-shadow: inset 0 0 0 6px hsl(0 0% 100% / 0.27);
-  border-radius: 9999px;
-}
 
 /* HUD tokens and utilities */
 :root{

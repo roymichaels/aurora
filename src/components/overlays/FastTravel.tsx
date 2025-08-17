@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useUIStore } from "@/state/ui";
 
 const fire = (type: string, payload?: unknown) => {
   window.dispatchEvent(new CustomEvent('mos', { detail: { type, payload } }));
@@ -14,6 +15,7 @@ const ZONES = [
 
 export default function FastTravel() {
   const [open, setOpen] = useState(false);
+  const openModal = useUIStore.getState().openModal;
 
     useEffect(() => {
       const h = () => setOpen(true);
@@ -23,10 +25,13 @@ export default function FastTravel() {
 
   if (!open) return null;
 
-  const onSelect = (z: { type?: string; event?: string }) => {
+  const onSelect = (
+    z: { type?: string; event?: string; modal?: Parameters<typeof openModal>[0] }
+  ) => {
     setOpen(false);
     if (z.type) fire(z.type);
     else if (z.event) window.dispatchEvent(new CustomEvent(z.event));
+    else if (z.modal) openModal(z.modal);
   };
 
   return (
@@ -47,7 +52,11 @@ export default function FastTravel() {
               <div className="text-xs text-muted-foreground">{z.key}</div>
             </Button>
           ))}
-          <Button className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left" type="button" onClick={() => onSelect({ type: 'openMap' })}>
+          <Button
+            className="rounded-xl p-3 bg-white/10 hover:bg-white/15 text-left"
+            type="button"
+            onClick={() => onSelect({ modal: 'tasks' })}
+          >
             <div className="font-medium">Control</div>
             <div className="text-xs text-muted-foreground">Roadmaps & Tasks</div>
           </Button>
