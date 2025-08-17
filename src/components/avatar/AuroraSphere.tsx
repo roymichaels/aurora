@@ -160,7 +160,10 @@ export function AuroraSphere({
 
       if (disposed || !renderer) return;
 
-      (renderer as any)?.debug?.checkShaderErrors = true;
+      const debug = (renderer as any).debug;
+      if (debug) {
+        debug.checkShaderErrors = true;
+      }
 
       renderer.setSize(size, size);
       mount.appendChild(renderer.domElement);
