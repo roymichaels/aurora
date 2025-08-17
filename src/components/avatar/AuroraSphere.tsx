@@ -341,8 +341,14 @@ export function AuroraSphere({
         mount.removeChild(renderer.domElement);
       }
       geometry?.dispose();
+      if (material && (material as any).positionNode) {
+        try {
+          material.dispose();
+        } catch {
+          /* ignore */
+        }
+      }
       materialRef.current = null;
-      material?.dispose();
       if (pointsRef.current) {
         scene.remove(pointsRef.current);
         pointsRef.current = null;
