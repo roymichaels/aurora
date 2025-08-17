@@ -24,28 +24,36 @@ export default function StoreCreation() {
       const created = await mintStoreNFT({ name, owner: user.id });
       setStore(created);
       setName("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to create store."
+      );
     } finally {
       setCreating(false);
     }
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Store name"
-      />
-      <Button type="submit" disabled={creating || !name || !user}>
-        {creating ? "Creating..." : "Create Store"}
-      </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+    <>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Store name"
+        />
+        <Button type="submit" disabled={creating || !name || !user}>
+          {creating ? "Creating..." : "Create Store"}
+        </Button>
+      </form>
+      {error && (
+        <p className="mt-2 text-sm text-destructive">{error}</p>
+      )}
 
       {store && (
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground">
           Minted store NFT {store.nftId}
         </p>
       )}
-    </form>
+    </>
   );
 }
