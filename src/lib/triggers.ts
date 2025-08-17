@@ -59,8 +59,6 @@ async function fireTrigger(trigger: Trigger, email?: string) {
       const subject = encodeURIComponent('Task Reminder');
       const body = encodeURIComponent(trigger.message);
       window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
-    } else {
-      console.log('Email trigger:', trigger.message);
     }
   }
 }
