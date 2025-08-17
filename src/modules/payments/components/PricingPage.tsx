@@ -28,7 +28,7 @@ import { toast } from '@/hooks/use-toast'
  * TODO: Activate billing UI when payments module is ready.
  */
 export function PricingPage() {
-  return null;
+  return <PricingPageUI />;
 }
 
 export const PRICING_TIERS: PricingTier[] = [
