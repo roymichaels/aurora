@@ -133,6 +133,8 @@ export function AuroraSphere({
     let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
     let geometry: THREE.IcosahedronGeometry | null = null;
     let material: MeshBasicNodeMaterial | null = null;
+    let particleGeometry: THREE.BufferGeometry | null = null;
+    let particleMaterial: THREE.PointsMaterial | null = null;
 
     let disposed = false;
 
