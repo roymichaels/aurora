@@ -1,35 +1,54 @@
-import { ListTodo, Target, ChartBar, Settings as SettingsIcon } from "lucide-react";
+import {
+  ListTodo,
+  Target,
+  ChartBar,
+  Settings as SettingsIcon,
+  BookOpen,
+  Radio,
+} from "lucide-react";
 import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
 
-const uiStore = useUIStore.getState();
+registerQuickAction({
+  id: "journal",
+  label: "Journal",
+  icon: BookOpen,
+  onClick: () => useUIStore.getState().openModal("journal"),
+});
+
+registerQuickAction({
+  id: "live",
+  label: "Live",
+  icon: Radio,
+  onClick: () => useUIStore.getState().openModal("live"),
+});
 
 registerQuickAction({
   id: "tasks",
   label: "Tasks",
   icon: ListTodo,
-  onClick: () => uiStore.openModal("tasks"),
+  onClick: () => useUIStore.getState().openModal("tasks"),
 });
 
 registerQuickAction({
   id: "goals",
   label: "Goals",
   icon: Target,
-  onClick: () => uiStore.openModal("goals"),
+  onClick: () => useUIStore.getState().openModal("goals"),
 });
 
 registerQuickAction({
   id: "analytics",
   label: "Analytics",
   icon: ChartBar,
-  onClick: () => uiStore.openModal("analytics"),
+  onClick: () => useUIStore.getState().openModal("analytics"),
 });
 
 registerQuickAction({
   id: "settings",
   label: "Settings",
   icon: SettingsIcon,
-  onClick: () => uiStore.openModal("settings"),
+  onClick: () => useUIStore.getState().openModal("settings"),
 });
 
 export {}; // ensure this module is treated as a module
