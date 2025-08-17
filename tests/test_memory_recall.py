@@ -26,8 +26,13 @@ def _brain() -> BrainAgent:
 
 def test_similarity_recall(monkeypatch):
     """The store should return memories relevant to the query."""
-    mem.save_memory("My secret hobby is alpine-unicycling")
+    mem.cur.execute("DELETE FROM memories")
+    mem.conn.commit()
+    mem.vector_store.clear()
+
+    # Insert an unrelated memory first to ensure retrieval is similarity based
     mem.save_memory("Completely unrelated fact")
+    mem.save_memory("My secret hobby is alpine-unicycling")
 
     results = mem.query_memory("alpine-unicycling", k=1)
     assert results and "alpine-unicycling" in results[0]["text"]

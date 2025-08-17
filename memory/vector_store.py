@@ -80,8 +80,8 @@ class VectorStore:
     def _embed(self, text: str) -> np.ndarray:
         if self._embedder is not None:
             return np.array(self._embedder.encode(text))
-        # Fallback embedding using deterministic hash to avoid heavy deps
-        return np.array([float(abs(hash(text)) % 1_000_000)], dtype=float)
+        # Fallback embedding using lightweight hashing to approximate semantics
+        return self._basic_embed(text)
 
     # ------------------------------------------------------------------
     def embed(self, text: str) -> np.ndarray:
