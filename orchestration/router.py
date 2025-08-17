@@ -16,6 +16,13 @@ import socket
 
 from models import preload as preload_models
 
+try:  # pragma: no cover - import guard
+    import tiktoken
+    _ENCODING = tiktoken.get_encoding("cl100k_base")
+except Exception:  # pragma: no cover - graceful fallback
+    tiktoken = None
+    _ENCODING = None
+
 
 class Model(Protocol):
     """Callable interface for language models."""
@@ -124,8 +131,14 @@ class ModelRouter:
         self.logger = logger or UsageLogger()
 
     def _estimate_tokens(self, text: str) -> int:
-        """Return a rough token count for ``text``."""
+        """Return a token count for ``text``.
 
+        The router prefers ``tiktoken`` for accuracy but falls back to a
+        simple whitespace split when the library is unavailable.
+        """
+
+        if _ENCODING is not None:
+            return len(_ENCODING.encode(text))
         return len(text.split())
 
     def route(self, prompt: str, depth: int = 0) -> str:
