@@ -3,7 +3,6 @@ export type QuickActionKey =
   | 'startHypnosis'
   | 'voiceNote'
   | 'addNote'
-  | 'openMap'
   | 'openBrowser'
   | 'openBrain'
   | 'openTasks'
