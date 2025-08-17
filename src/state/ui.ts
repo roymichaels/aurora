@@ -4,7 +4,6 @@ import { track } from '@/utils/telemetry';
 
 export type ModalId =
   | "brain"
-  | "journal"
   | "live"
   | "analytics"
   | "tasks"
