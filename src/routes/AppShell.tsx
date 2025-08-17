@@ -15,6 +15,7 @@ import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import AppHeader from "@/components/layout/AppHeader";
+import { useUIStore } from "@/state/ui";
 
 export default function AppShell() {
   const { user, initializing } = useSupabaseAuth();
@@ -55,9 +56,15 @@ export default function AppShell() {
         open('browser', { url: last });
         return;
       }
+      if (t === 'startFocus') {
+        useUIStore.getState().openModal('focus');
+        return;
+      }
+      if (t === 'startHypnosis') {
+        useUIStore.getState().openModal('hypno');
+        return;
+      }
       const map: Record<string, ViewId> = {
-        startFocus: 'focus',
-        startHypnosis: 'hypno',
         voiceNote: 'voice',
         addNote: 'notes',
         openBrain: 'brain',
