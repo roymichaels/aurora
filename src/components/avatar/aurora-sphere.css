@@ -21,3 +21,7 @@
   transition: background var(--duration-fast) var(--ease-standard);
   pointer-events: none;
 }
+
+.aurora-sphere-container:active {
+  cursor: grabbing !important;
+}
