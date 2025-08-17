@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 // three@0.179 ships WebGPU in the core build under `three/webgpu`
 import { WebGPURenderer, MeshBasicNodeMaterial } from 'three/webgpu';
@@ -27,9 +27,12 @@ interface Props {
   mood?: AuroraMood;
   speaking?: boolean;
   progress?: number;
+  noiseStrength?: number;
+  amplitude?: number;
+  intensity?: number;
 }
 
-const shaderConfig = {
+const defaultShaderConfig = {
   speed: 0.6,
   noiseDensity: 2.0,
   noiseStrength: 0.15,
@@ -51,12 +54,26 @@ export function AuroraSphere({
   mood,
   speaking,
   progress = 0,
+  noiseStrength = defaultShaderConfig.noiseStrength,
+  amplitude = defaultShaderConfig.amplitude,
+  intensity = defaultShaderConfig.intensity,
 }: Props) {
+  const shaderConfig = useMemo(
+    () => ({
+      ...defaultShaderConfig,
+      noiseStrength,
+      amplitude,
+      intensity,
+    }),
+    [noiseStrength, amplitude, intensity]
+  );
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mountRef = useRef<HTMLDivElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const meshRef = useRef<THREE.Mesh | null>(null);
   const haloRef = useRef<THREE.Mesh | null>(null);
+  const pointsRef = useRef<THREE.Points | null>(null);
+  const pointsMaterialRef = useRef<THREE.PointsMaterial | null>(null);
   const frameRef = useRef<number>(0);
 
   // global stores
@@ -68,6 +85,15 @@ export function AuroraSphere({
 
   useEffect(() => { speakingRef.current = speaking ?? voiceSpeaking; }, [speaking, voiceSpeaking]);
   useEffect(() => { levelRef.current = level; }, [level]);
+
+  useEffect(() => {
+    const mat = materialRef.current;
+    if (mat) {
+      (mat.uniforms.uNoiseStrength as THREE.IUniform<number>).value = noiseStrength;
+      (mat.uniforms.uAmplitude as THREE.IUniform<number>).value = amplitude;
+      (mat.uniforms.uIntensity as THREE.IUniform<number>).value = intensity;
+    }
+  }, [noiseStrength, amplitude, intensity]);
 
   // analyser for audio-driven scale
   useEffect(() => {
@@ -106,6 +132,7 @@ export function AuroraSphere({
     let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
     let geometry: THREE.IcosahedronGeometry | null = null;
     let material: MeshBasicNodeMaterial | null = null;
+
     let disposed = false;
 
     const data = new Uint8Array(1024);
@@ -115,6 +142,7 @@ export function AuroraSphere({
       const mesh = meshRef.current;
       const halo = haloRef.current;
       if (!mesh || !halo) return;
+
 
       let scale = 1;
       let levelAmp = 0;
@@ -132,6 +160,16 @@ export function AuroraSphere({
       const haloScale = 1.2 + levelAmp * 0.6;
       halo.scale.setScalar(haloScale);
       (halo.material as THREE.MeshBasicMaterial).opacity = 0.25 + levelAmp * 0.5;
+
+
+      // shader time
+      const time = performance.now() / 1000;
+      (mat.uniforms.uTime as THREE.IUniform<number>).value = time;
+
+      if (ptsMat) {
+        ptsMat.size = 0.02 + Math.sin(time * 2.0) * 0.005 + levelAmp * 0.03;
+        ptsMat.opacity = 0.3 + Math.sin(time) * 0.2 + levelAmp * 0.5;
+      }
 
       // slow rotation influenced by level
       mesh.rotation.y += 0.002 * (levelRef.current || 1);
@@ -164,7 +202,7 @@ export function AuroraSphere({
 
       if (disposed || !renderer) return;
 
-      const debug = (renderer as any).debug;
+      const debug = (renderer as THREE.WebGLRenderer).debug;
       if (debug) {
         debug.checkShaderErrors = true;
       }
@@ -205,6 +243,35 @@ export function AuroraSphere({
       meshRef.current = mesh;
       scene.add(mesh);
 
+      // particle shell
+      const particleCount = 1000;
+      const positions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        const r = 1 + Math.random() * 0.2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = Math.random() * Math.PI * 2;
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+        positions.set([x, y, z], i * 3);
+      }
+      particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+      );
+      particleMaterial = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.02,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      });
+      const particles = new THREE.Points(particleGeometry, particleMaterial);
+      pointsRef.current = particles;
+      pointsMaterialRef.current = particleMaterial;
+      scene.add(particles);
+
       const halo = createHalo();
       haloRef.current = halo;
       scene.add(halo);
@@ -232,8 +299,15 @@ export function AuroraSphere({
       }
       geometry?.dispose();
       material?.dispose();
+      if (pointsRef.current) {
+        scene.remove(pointsRef.current);
+        pointsRef.current = null;
+      }
+      particleGeometry?.dispose();
+      particleMaterial?.dispose();
+      pointsMaterialRef.current = null;
     };
-  }, [size]);
+  }, [size, shaderConfig]);
 
   return (
     <div
