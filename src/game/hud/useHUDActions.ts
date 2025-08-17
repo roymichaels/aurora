@@ -1,11 +1,11 @@
 import type { QuickActionKey } from "./hud.data";
-import { addNote, startVoiceNote } from "@/utils/moments";
+import { startVoiceNote } from "@/utils/moments";
 import { useUIStore } from "@/state/ui";
 
 export function useHUDActions() {
   const run = (a: QuickActionKey) => {
     if (a === "addNote") {
-      addNote();
+      useUIStore.getState().openModal("journal");
       return;
     }
     if (a === "voiceNote") {
@@ -16,15 +16,15 @@ export function useHUDActions() {
       useUIStore.getState().openModal("tasks");
       return;
     }
+    if (a === "openBrain") {
+      useUIStore.getState().openModal("brain");
+      return;
+    }
     const eventMap: Record<string, string> = {
       startFocus: "startFocus",
       startHypnosis: "startHypnosis",
-      voiceNote: "voiceNote",
-      addNote: "addNote",
       openMap: "openMap",
       openBrowser: "openBrowser",
-      openBrain: "openBrain",
-      openTasks: "openTasks",
     };
     const name = eventMap[a] ?? a;
     window.dispatchEvent(new CustomEvent("mos", { detail: { type: name } }));
