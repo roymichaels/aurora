@@ -1,16 +1,21 @@
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import os
+
+from fastapi import Depends, FastAPI, Header, HTTPException, status
 from pydantic import BaseModel
 
-from memory.store import (
-    delete_memory,
-    list_memories,
-    save_memory,
-    update_memory,
-)
+from memory.store import delete_memory, list_memories, save_memory, update_memory
 
-app = FastAPI()
+
+def verify_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")) -> None:
+    """Ensure the provided API key matches the configured value."""
+    expected = os.getenv("MEMORY_API_KEY")
+    if expected is None or x_api_key != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+
+app = FastAPI(dependencies=[Depends(verify_api_key)])
 
 
 class Memory(BaseModel):
