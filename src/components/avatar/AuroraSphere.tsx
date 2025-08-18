@@ -356,10 +356,16 @@ export function AuroraSphere({
       materialRef.current = null;
       if (pointsRef.current) {
         scene.remove(pointsRef.current);
-        pointsRef.current = null;
       }
       particleGeometry?.dispose();
-      particleMaterial?.dispose();
+      if (!(renderer instanceof WebGPURenderer)) {
+        try {
+          particleMaterial?.dispose();
+        } catch {
+          /* ignore */
+        }
+      }
+      pointsRef.current = null;
       pointsMaterialRef.current = null;
       rendererRef.current = null;
       sceneRef.current = null;
