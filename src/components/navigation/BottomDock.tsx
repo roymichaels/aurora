@@ -95,7 +95,15 @@ export default function BottomDock() {
           {expanded && (
             <>
               <div className="flex items-center gap-3 min-w-0 mb-2">
-                {avatarEnabled && <AuroraSphere size={44} />}
+                {avatarEnabled && (
+                  <div
+                    style={{
+                      filter: 'drop-shadow(0 12px 28px rgba(0,0,0,.45))',
+                    }}
+                  >
+                    <AuroraSphere size={52} />
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="text-[13px] opacity-90 truncate">
                     Lv. {stats.level} • Streak {stats.streak}
