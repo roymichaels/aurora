@@ -39,7 +39,8 @@ export default function AppShell() {
 
   useEffect(() => {
     document.documentElement.style.setProperty("--hud-h", "0px");
-    document.documentElement.style.setProperty("--hud-gap", "8px");
+    document.documentElement.style.setProperty("--gap-h", "8px");
+    document.documentElement.style.setProperty("--hud-gap", "var(--gap-h)");
   }, []);
 
 
@@ -118,7 +119,7 @@ export default function AppShell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18 }}
-            className="aurora-app overflow-y-auto pt-[calc(var(--header-h)+var(--hud-gap))] pb-[calc(var(--dock-h)+var(--hud-gap)+var(--chatbar-h)+var(--kb-offset))]"
+            className="aurora-app overflow-y-auto pt-[calc(var(--header-h)+var(--gap-h))] pb-[calc(var(--dock-h)+var(--gap-h)+var(--chatbar-h)+var(--kb-offset)+var(--safe-area-bottom))]"
           >
             <Suspense fallback={<div className="p-6 opacity-70">Loading…</div>}>
               <Outlet />
@@ -127,8 +128,8 @@ export default function AppShell() {
         </AnimatePresence>
 
         <ModalHost />
-        <AnchoredChatBar />
         <BottomDock />
+        <AnchoredChatBar />
         <TimerHudChip />
       </div>
   );
