@@ -13,6 +13,7 @@ import {
   triNoise3D,
 } from 'three/tsl';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { useAvatarStore } from '@/state/avatar';
 import { useVoiceStore } from '@/state/voice';
 import { useUIStore } from '@/state/ui';
@@ -229,6 +230,16 @@ export function AuroraSphere({
 
       mount.appendChild(renderer.domElement);
       rendererRef.current = renderer;
+
+      if (variant === 'full') {
+        const pmrem = new THREE.PMREMGenerator(
+          renderer as THREE.WebGLRenderer
+        );
+        new RGBELoader().load('/env/hdr-small.hdr', (tex) => {
+          tex.mapping = THREE.EquirectangularReflectionMapping;
+          scene.environment = pmrem.fromEquirectangular(tex).texture;
+        });
+      }
 
       const resize = () => {
         if (disposed) return;
