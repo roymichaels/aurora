@@ -6,9 +6,6 @@ import {
   BookOpen,
   Radio,
   Settings,
-  ListTodo,
-  Target,
-  BarChart3,
   MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,15 +14,7 @@ import { useAvatarStore } from "@/state/avatar";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { Button } from "@/components/ui/button";
-
-const ACTIONS = [
-  { id: "journal", label: "Journal", icon: BookOpen },
-  { id: "live", label: "Live", icon: Radio },
-  { id: "tasks", label: "Tasks", icon: ListTodo },
-  { id: "goals", label: "Goals", icon: Target },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "settings", label: "Settings", icon: Settings },
-];
+import { QuickActionBar } from "./QuickActionBar";
 
 export default function BottomDock() {
   const stats = useGameStore((s) => s.stats);
@@ -143,32 +132,25 @@ export default function BottomDock() {
           )}
 
           <div className="flex items-center justify-between gap-3">
-            <ul className="flex items-center gap-3">
-              {ACTIONS.map(({ id, label, icon: Icon }) => (
-                <li key={id}>
-                  <Button
-                    type="button"
-                    className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2"
-                    aria-label={label}
-                    title={label}
-                  >
-                    <Icon className="w-5 h-5" />
-                    {expanded && <span className="text-xs">{label}</span>}
-                  </Button>
-                </li>
-              ))}
-              <li>
+            <div className="flex items-center gap-3">
+              <QuickActionBar compact={!expanded} />
+              <div className="qx-item">
                 <Button
                   type="button"
-                  className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2"
+                  className={cn(
+                    "flex px-2 py-1 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2",
+                    expanded
+                      ? "flex-col items-center gap-1"
+                      : "items-center justify-center"
+                  )}
                   aria-label="More"
                   title="More"
                 >
                   <MoreHorizontal className="w-5 h-5" />
                   {expanded && <span className="text-xs">More</span>}
                 </Button>
-              </li>
-            </ul>
+              </div>
+            </div>
 
             <nav aria-label="Main navigation">
               <ul className="flex gap-5">
