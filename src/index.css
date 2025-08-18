@@ -59,7 +59,9 @@ All colors MUST be HSL.
 
     /* Premium additions */
     --glass-bg: 240 3.7% 15.9% / 0.60;
-    --glass-border: 240 3.7% 30% / 0.35;
+    --glass-stroke: 240 3.7% 30% / 0.35;
+    --glass-border: var(--glass-stroke);
+    --glass-highlight: 0 0% 100% / 0.12;
     --shadow-elev: 0 16px 50px -16px hsl(var(--primary) / 0.35);
     --shadow-soft: 0 8px 30px -12px hsl(var(--foreground) / 0.08);
     --gradient-primary: linear-gradient(140deg, hsl(var(--primary) / 0.90), hsl(var(--primary) / 0.70));
@@ -73,12 +75,12 @@ All colors MUST be HSL.
     /* Layering */
     --z-bg: 0;
     --z-content: 10;
-    --z-hud: 40;
+    --z-hud: 80;
     --z-modal: 60;
     --z-toast: 100;
 
     /* Layout gap */
-    --hud-gap: 12px;           /* gap above dock/chat bar */
+    --gap-h: 12px;           /* gap above dock/chat bar */
   }
 
   .light {
@@ -105,7 +107,9 @@ All colors MUST be HSL.
     --input: 240 5.9% 90%;
     --ring: 240 5% 64.9%;
     --glass-bg: 0 0% 100% / 0.55;
-    --glass-border: 240 5% 64% / 0.35;
+    --glass-stroke: 240 5% 64% / 0.35;
+    --glass-border: var(--glass-stroke);
+    --glass-highlight: 0 0% 100% / 0.25;
     --gradient-surface: linear-gradient(180deg, hsl(0 0% 100% / 0.70), hsl(0 0% 100% / 0.60));
 
     --sidebar-background: 0 0% 98%;
@@ -143,7 +147,7 @@ All colors MUST be HSL.
     backdrop-filter: blur(16px) saturate(120%);
     -webkit-backdrop-filter: blur(16px) saturate(120%);
     box-shadow: var(--shadow-soft);
-    border: 1px solid hsl(var(--glass-border));
+    border: 1px solid hsl(var(--glass-stroke));
   }
 
   .elev {
@@ -349,7 +353,7 @@ All colors MUST be HSL.
 /* HUD styles */
 .hud-shell {
   background: var(--gradient-surface);
-  border: 1px solid hsl(var(--glass-border));
+  border: 1px solid hsl(var(--glass-stroke));
   border-radius: 18px;
   backdrop-filter: blur(12px) saturate(120%);
   -webkit-backdrop-filter: blur(12px) saturate(120%);
@@ -357,7 +361,7 @@ All colors MUST be HSL.
 }
 .hud-chip {
   background: hsl(var(--glass-bg));
-  border: 1px solid hsl(var(--glass-border));
+  border: 1px solid hsl(var(--glass-stroke));
 }
 .hud-dot {
   background: radial-gradient(circle at 40% 40%, hsl(var(--accent) / 0.9), hsl(var(--accent)));
@@ -375,7 +379,7 @@ All colors MUST be HSL.
 .hud-icon, .hud-fab {
   width: 36px; height: 36px; border-radius: 10px;
   background: hsl(var(--glass-bg));
-  border: 1px solid hsl(var(--glass-border));
+  border: 1px solid hsl(var(--glass-stroke));
 }
 /* Simple CSS-only glyphs for system icons */
 .hud-icon.settings { background:
@@ -404,6 +408,25 @@ All colors MUST be HSL.
   backdrop-filter: blur(14px) saturate(1.1);
 }
 
+/* Generic Maple glass surface */
+.glass-maple {
+  background: hsl(var(--glass-bg));
+  border: 1px solid hsl(var(--glass-stroke));
+  box-shadow:
+    inset 0 1px 0 hsl(var(--glass-highlight)),
+    var(--shadow-soft);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+}
+
+/* Enhanced Maple gauge bar */
+.maple-gauge__bar {
+  border: 1px solid hsl(var(--glass-stroke));
+}
+.maple-gauge__bar::before {
+  background: linear-gradient(180deg, hsl(var(--glass-highlight)), transparent);
+}
+
 /* soft light spot behind widgets */
 .hud-spot {
   position: absolute; inset: -40px -40px auto auto;
@@ -415,6 +438,28 @@ All colors MUST be HSL.
 /* bars */
 .bar { height: 10px; border-radius: 9999px; background: hsl(0 0% 100% / 0.12); overflow: hidden; }
 .bar > i { display:block; height:100%; border-radius: 9999px; }
+
+/* Quick action and navigation items */
+.qx-item,
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-h);
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  background: hsl(var(--glass-bg));
+  border: 1px solid hsl(var(--glass-stroke));
+  box-shadow: inset 0 1px 0 hsl(var(--glass-highlight));
+  backdrop-filter: blur(8px) saturate(120%);
+}
+
+.nav-item {
+  font-size: 14px;
+}
+
+.qx-item {
+  font-size: 13px;
+}
 
 /* white floor line under map */
 .world-floor-line {
