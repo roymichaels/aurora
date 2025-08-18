@@ -6,7 +6,6 @@ import {
   BookOpen,
   Radio,
   Settings,
-  MoreHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
@@ -14,7 +13,6 @@ import { useAvatarStore } from "@/state/avatar";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
 import { Button } from "@/components/ui/button";
-import { QuickActionBar } from "./QuickActionBar";
 
 export default function BottomDock() {
   const stats = useGameStore((s) => s.stats);
@@ -60,7 +58,7 @@ export default function BottomDock() {
         expanded ? "pb-3" : "pb-2"
       )}
       style={{
-        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom) + var(--chatbar-h) + var(--hud-gap))`,
+        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom) + var(--chatbar-h) + var(--gap-h))`,
         zIndex: 80,
         pointerEvents: "auto",
       }}
@@ -83,7 +81,7 @@ export default function BottomDock() {
         >
           {expanded && (
             <>
-              <div className="flex items-center gap-3 min-w-0 mb-2">
+              <div className="flex items-center gap-2 min-w-0 mb-2">
                 {avatarEnabled && (
                   <div
                     style={{
@@ -101,7 +99,7 @@ export default function BottomDock() {
                 </div>
               </div>
 
-              <div className="flex md:flex-row flex-col gap-2 md:items-center mb-1">
+              <div className="flex md:flex-row flex-col gap-1 md:items-center mb-2">
                 <div className="maple-gauge">
                   <div className="maple-gauge__top">
                     <span className="maple-gauge__label">HP</span>
@@ -138,54 +136,36 @@ export default function BottomDock() {
               </div>
             </>
           )}
-
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <QuickActionBar compact={!expanded} />
-              <div className="qx-item">
-                <Button
-                  type="button"
-                  className={cn(
-                    "flex px-2 py-1 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2",
-                    expanded
-                      ? "flex-col items-center gap-1"
-                      : "items-center justify-center"
-                  )}
-                  aria-label="More"
-                  title="More"
-                >
-                  <MoreHorizontal className="w-5 h-5" />
-                  {expanded && <span className="text-xs">More</span>}
-                </Button>
-              </div>
-            </div>
-
-            <nav aria-label="Main navigation">
-              <ul className="flex gap-5">
-                {items.map(({ to, label, icon: Icon }) => (
-                  <li key={label}>
-                    <NavLink
-                      to={to}
-                      end={to === "/app"}
-                      className={({ isActive }) =>
-                        cn(
-                          "flex flex-col items-center text-xs gap-1",
-                          isActive ? "text-primary" : "text-muted-foreground"
-                        )
-                      }
-                    >
-                      <Icon className="w-5 h-5" />
-                      {expanded ? (
-                        <span>{label}</span>
-                      ) : (
-                        <span className="sr-only">{label}</span>
-                      )}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
+          <nav aria-label="Main navigation">
+            <ul
+              className={cn(
+                "flex justify-center",
+                expanded ? "gap-4" : "gap-3",
+              )}
+            >
+              {items.map(({ to, label, icon: Icon }) => (
+                <li key={label}>
+                  <NavLink
+                    to={to}
+                    end={to === "/app"}
+                    aria-label={label}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex text-xs",
+                        expanded
+                          ? "flex-col items-center gap-1"
+                          : "items-center justify-center",
+                        isActive ? "text-primary" : "text-muted-foreground",
+                      )
+                    }
+                  >
+                    <Icon className="w-5 h-5" />
+                    {expanded && <span>{label}</span>}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
