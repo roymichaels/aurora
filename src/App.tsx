@@ -69,6 +69,7 @@ function LegacyRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/app" replace />} />
       <Route path="/app" element={<RequireRoadmap><AppShell /></RequireRoadmap>}>
+
         <Route index element={<HomeGalaxy />} />
         {views.filter((v) => v.id !== "home").map((v) => (
           <Route key={v.id} path={v.path || undefined} element={<v.component />} />

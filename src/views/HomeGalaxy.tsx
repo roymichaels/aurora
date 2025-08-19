@@ -232,6 +232,7 @@ export default function HomeGalaxy() {
       >
         <GalaxyScene />
       </Canvas>
+
     </div>
   );
 }
