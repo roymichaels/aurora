@@ -21,9 +21,11 @@ import TasksModal from "@/components/modals/TasksModal";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import OnboardingSheet from "@/components/modals/OnboardingSheet";
+import ConfirmSheet from "@/components/modals/ConfirmSheet";
 
 export default function ModalHost() {
-  const { activeModal, closeModal } = useUIStore();
+  const { activeModal, closeModal, modalArgs } = useUIStore();
   const focusChatInput = useChatInputFocus();
 
   useEffect(() => {
@@ -109,6 +111,14 @@ export default function ModalHost() {
           <div>More</div>
         </>
       );
+      className = "sm:max-w-md";
+      break;
+    case "onboarding":
+      content = <OnboardingSheet {...(modalArgs || {})} onClose={handleClose} />;
+      className = "sm:max-w-md";
+      break;
+    case "confirm":
+      content = <ConfirmSheet {...(modalArgs || {})} />;
       className = "sm:max-w-md";
       break;
     default:

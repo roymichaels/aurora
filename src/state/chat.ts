@@ -18,6 +18,8 @@ type ChatState = {
   sending: boolean;
   recall: string | null;
   send: (content: string) => Promise<void>;
+  pushSystem: (content: string) => void;
+  pushUser: (content: string) => void;
 };
 
 // VoiceService handles TTS internally
@@ -26,6 +28,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   sending: false,
   recall: null,
+  pushSystem(content) {
+    const msg: ChatEntry = { id: crypto.randomUUID(), role: "system", content };
+    set((state) => ({ messages: [...state.messages, msg] }));
+  },
+  pushUser(content) {
+    const msg: ChatEntry = { id: crypto.randomUUID(), role: "user", content };
+    set((state) => ({ messages: [...state.messages, msg] }));
+  },
   async send(content: string) {
     const text = content.trim();
     if (!text) return;

@@ -41,7 +41,8 @@ function AppRoutesWithShell() {
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/app" element={<RequireRoadmap><Outlet /></RequireRoadmap>}>
+        <Route path="/app" element={<Outlet />}>
+
           <Route index element={<HomeGalaxy />} />
           {views.filter((v) => v.id !== "home").map((v) => (
             <Route key={v.id} path={v.path || undefined} element={<v.component />} />
@@ -68,8 +69,7 @@ function LegacyRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/app" replace />} />
-      <Route path="/app" element={<RequireRoadmap><AppShell /></RequireRoadmap>}>
-
+      <Route path="/app" element={<AppShell />}>
         <Route index element={<HomeGalaxy />} />
         {views.filter((v) => v.id !== "home").map((v) => (
           <Route key={v.id} path={v.path || undefined} element={<v.component />} />

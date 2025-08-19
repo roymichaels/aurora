@@ -33,4 +33,26 @@ export class RoadmapBuilder {
   static markTaskDone(taskId: string) {
     useRoadmapStore.getState().markTaskDone(taskId);
   }
+
+  static async seedRoadmap(seed: { mood: string; goal: string }) {
+    const goal: Goal = {
+      id: `goal-${nanoid()}`,
+      title: seed.goal,
+      sprints: [
+        {
+          id: `sprint-${nanoid()}`,
+          title: "Sprint 1 (7 days)",
+          tasks: Array.from({ length: 7 }).map((_, i) => ({
+            id: `task-${nanoid()}`,
+            title: `Day ${i + 1}: ${seed.goal}`,
+            status: "todo",
+          })),
+        },
+      ],
+    };
+    useRoadmapStore.getState().setGoals([goal]);
+    localStorage.setItem("hasOnboarded", "1");
+    window.dispatchEvent(new CustomEvent("roadmap:updated"));
+  }
+
 }

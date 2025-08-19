@@ -12,6 +12,18 @@
     #0c0d10;
 }
 
+.sheet{
+  background:var(--glass-bg);
+  backdrop-filter:blur(18px);
+  border:1px solid var(--glass-stroke);
+  border-radius:20px;
+  padding:18px;
+}
+.sheet__title{font-weight:600;font-size:16px;margin-bottom:6px}
+.input{background:#111a;border:1px solid var(--glass-stroke);border-radius:12px;padding:10px 12px}
+.btn.primary{background:var(--primary);color:#fff;padding:10px 14px;border-radius:12px}
+.btn.ghost{background:transparent;border:1px solid var(--glass-stroke);padding:10px 14px;border-radius:12px}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

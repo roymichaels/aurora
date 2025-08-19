@@ -23,7 +23,19 @@ export function runAction(id: ActionId): void {
 }
 
 export async function confirmAndRun(id: ActionId, prompt: string): Promise<boolean> {
-  const ok = window.confirm(prompt);
+  const ok = await new Promise<boolean>((resolve) => {
+    useUIStore.getState().openModal("confirm", {
+      msg: prompt,
+      onYes: () => {
+        useUIStore.getState().closeModal();
+        resolve(true);
+      },
+      onNo: () => {
+        useUIStore.getState().closeModal();
+        resolve(false);
+      },
+    });
+  });
   if (ok) {
     runAction(id);
     return true;

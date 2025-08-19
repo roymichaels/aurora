@@ -14,25 +14,40 @@ const STORAGE_KEY = 'featureFlags';
 
 export const useFeatureFlags = create<FlagsState>((set) => {
   const raw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
-  const initial = raw
-    ? { hypnosisScripts: false, cloudRouting: false, voiceStorage: false, appShell: true, ...JSON.parse(raw) }
-    : { hypnosisScripts: false, cloudRouting: false, voiceStorage: false, appShell: true };
+  const base = {
+    hypnosisScripts: false,
+    cloudRouting: false,
+    voiceStorage: false,
+    appShell: true,
+    isPro: false,
+  };
+  const initial = raw ? { ...base, ...JSON.parse(raw) } : base;
   return {
     ...initial,
-    isPro: false,
     toggle: (key) =>
       set((state) => {
         const next = { ...state, [key]: !state[key] } as FlagsState;
         try {
-          const { hypnosisScripts, cloudRouting, voiceStorage, appShell } = next;
+          const { hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro } = next;
           localStorage.setItem(
             STORAGE_KEY,
-            JSON.stringify({ hypnosisScripts, cloudRouting, voiceStorage, appShell })
+            JSON.stringify({ hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro })
           );
         } catch {}
         return next;
       }),
-    setPro: (value) => set({ isPro: value }),
+    setPro: (value) =>
+      set((state) => {
+        const next = { ...state, isPro: value } as FlagsState;
+        try {
+          const { hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro } = next;
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({ hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro })
+          );
+        } catch {}
+        return next;
+      }),
   };
 });
 
