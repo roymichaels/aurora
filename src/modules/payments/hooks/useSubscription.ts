@@ -17,7 +17,7 @@ export function useSubscription() {
       const sub = (response as any).subscription as Subscription | null;
       setSubscription(sub);
       setUsage((response as any).usage);
-      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
+      useFeatureFlags.getState().setPro(!!sub && sub.planId !== 'freemium');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch subscription');
     } finally {
@@ -34,7 +34,7 @@ export function useSubscription() {
       const response = await cancelSubscription(cancelAtPeriodEnd);
       const sub = (response as any).subscription as Subscription | null;
       setSubscription(sub);
-      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
+      useFeatureFlags.getState().setPro(!!sub && sub.planId !== 'freemium');
       return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to cancel subscription');
@@ -47,7 +47,7 @@ export function useSubscription() {
       const response = await updateSubscription(priceId, billingCycle);
       const sub = (response as any).subscription as Subscription | null;
       setSubscription(sub);
-      useFeatureFlags.setState({ isPro: !!sub && sub.planId !== 'freemium' });
+      useFeatureFlags.getState().setPro(!!sub && sub.planId !== 'freemium');
       return response;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update subscription');
