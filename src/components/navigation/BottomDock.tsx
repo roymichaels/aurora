@@ -136,7 +136,7 @@ export default function BottomDock() {
               </div>
             </>
           )}
-          <nav aria-label="Main navigation">
+          <nav aria-label="Main navigation" className="dock-nav">
             <ul
               className={cn(
                 "flex justify-center",
@@ -151,11 +151,11 @@ export default function BottomDock() {
                     aria-label={label}
                     className={({ isActive }) =>
                       cn(
-                        "flex text-xs",
+                        "flex text-xs text-muted-foreground",
                         expanded
                           ? "flex-col items-center gap-1"
                           : "items-center justify-center",
-                        isActive ? "text-primary" : "text-muted-foreground",
+                        isActive && "active",
                       )
                     }
                   >
