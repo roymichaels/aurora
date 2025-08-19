@@ -14,7 +14,7 @@ import StackPage from "./pages/Stack";
 import AccountPlanPage from "./pages/AccountPlan";
 import HomeSnapshot from "./pages/HomeSnapshot";
 import AppShell from "@/routes/AppShell";
-import HomeView from "@/views/HomeView";
+import HomeGalaxy from "@/views/HomeGalaxy";
 import { views } from "@/views/registry";
 import LiveShell from "@/routes/live/LiveShell";
 import { TTSPill } from "@/voice/TTSPill";
@@ -26,7 +26,7 @@ function AppRoutesWithShell() {
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/app" replace />} />
         <Route path="/app">
-          <Route index element={<HomeView />} />
+          <Route index element={<HomeGalaxy />} />
           {views.filter((v) => v.id !== "home").map((v) => (
             <Route key={v.id} path={v.path || undefined} element={<v.component />} />
           ))}
@@ -53,7 +53,7 @@ function LegacyRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/app" replace />} />
       <Route path="/app" element={<AppShell />}>
-        <Route index element={<HomeView />} />
+        <Route index element={<HomeGalaxy />} />
         {views.filter((v) => v.id !== "home").map((v) => (
           <Route key={v.id} path={v.path || undefined} element={<v.component />} />
         ))}
