@@ -1,13 +1,12 @@
 
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, OrbitControls, Stars, useCursor, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
-import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-import { useChatStore } from "@/state/chat";
-import { useUIStore } from "@/state/ui";
+import { useOnboardingStore } from "@/state/onboarding";
+import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
@@ -193,16 +192,7 @@ function GalaxyScene() {
 }
 
 export default function HomeGalaxy() {
-  const progress = useRoadmapProgress();
-  const pushed = useRef(false);
-  useEffect(() => {
-    if (progress.items.length || pushed.current) return;
-    pushed.current = true;
-    const push = useChatStore.getState().pushSystem;
-    push("👋 I’m your mentor. Let’s craft your roadmap together. I’ll ask a couple of tiny questions and build the first sprint for you.");
-    push("First—how are you feeling today, and what’s one thing you want to improve?");
-    useUIStore.getState().openModal("onboarding");
-  }, [progress.items.length]);
+  const hasRoadmap = useOnboardingStore((s) => s.hasRoadmap);
 
   // Full-bleed, frosted-dusk background that matches your dark theme
   return (
@@ -222,6 +212,7 @@ export default function HomeGalaxy() {
       >
         <GalaxyScene />
       </Canvas>
+        {!hasRoadmap && <OnboardingOverlay />}
     </div>
   );
 }
