@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useFeatureFlags } from "@/state/featureFlags";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
@@ -14,7 +14,7 @@ import StackPage from "./pages/Stack";
 import AccountPlanPage from "./pages/AccountPlan";
 import HomeSnapshot from "./pages/HomeSnapshot";
 import AppShell from "@/routes/AppShell";
-import HomeView from "@/views/HomeView";
+import HomeGalaxy from "@/views/HomeGalaxy";
 import { views } from "@/views/registry";
 import LiveShell from "@/routes/live/LiveShell";
 import { TTSPill } from "@/voice/TTSPill";
@@ -25,8 +25,8 @@ function AppRoutesWithShell() {
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/app">
-          <Route index element={<HomeView />} />
+        <Route path="/app" element={<Outlet />}>
+          <Route index element={<HomeGalaxy />} />
           {views.filter((v) => v.id !== "home").map((v) => (
             <Route key={v.id} path={v.path || undefined} element={<v.component />} />
           ))}
@@ -53,7 +53,7 @@ function LegacyRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/app" replace />} />
       <Route path="/app" element={<AppShell />}>
-        <Route index element={<HomeView />} />
+        <Route index element={<HomeGalaxy />} />
         {views.filter((v) => v.id !== "home").map((v) => (
           <Route key={v.id} path={v.path || undefined} element={<v.component />} />
         ))}
