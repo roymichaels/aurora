@@ -8,6 +8,7 @@ import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useOnboardingStore } from "@/state/onboarding";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
+import { milestoneColor } from "@/game/galaxy/palette";
 
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
@@ -18,9 +19,6 @@ type MapNode = {
   status: NodeStatus;
   color?: string;
 };
-
-// Luxe pastel palette
-const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
 
 // Build nodes with a simple default set so the home galaxy works
 // even when roadmap progress is unavailable
@@ -34,7 +32,7 @@ function useMapNodes(): { nodes: MapNode[]; currentIndex: number } {
     return stub.map((n, i) => ({
       ...n,
       status: i === 0 ? "current" : "locked",
-      color: palette[i % palette.length],
+      color: milestoneColor(i),
     }));
   }, []);
 

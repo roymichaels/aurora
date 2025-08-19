@@ -1,14 +1,12 @@
-import React, { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import React, { useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, OrbitControls, Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import PlanetNode, { NodeStatus } from "@/components/roadmap/PlanetNode";
 import { useRoadmapStore } from "@/state/roadmapStore";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-
-// Luxe pastel palette reused from HomeGalaxy
-const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
+import { milestoneColor } from "@/game/galaxy/palette";
 
 function useSpiralPositions(count: number) {
   return useMemo(() => {
@@ -74,7 +72,7 @@ function useTaskNodes() {
             : index === progress.currentIndex
             ? "current"
             : "locked";
-        const color = new THREE.Color(palette[taskNodes.length % palette.length]);
+        const color = new THREE.Color(milestoneColor(taskNodes.length));
         taskNodes.push({ id: t.id, title: t.title, position: taskPos, status, color });
       });
     });
