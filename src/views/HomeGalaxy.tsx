@@ -215,9 +215,8 @@ export default function HomeGalaxy() {
       }}
     >
       <Canvas
-        shadows
-        gl={{ antialias: true, alpha: true }}
-        camera={{ fov: 50, near: 0.1, far: 100, position: [0, 1.6, 5.2] }}
+        gl={{ antialias: true }}
+        camera={{ fov: 60, position: [0, 0, 8] }}
         style={{ width: "100%", height: "64svh" }}
       >
         <GalaxyScene />
