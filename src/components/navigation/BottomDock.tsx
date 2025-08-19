@@ -2,10 +2,10 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Home,
-  Brain,
   BookOpen,
-  Radio,
   Settings,
+  Grid3X3,
+  Route,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
@@ -39,9 +39,9 @@ export default function BottomDock() {
   const items = useMemo(
     () => [
       { to: "/app", label: "Home", icon: Home },
-      { to: "/app/brain", label: "Brain", icon: Brain },
+      { to: "/app/actions", label: "Actions", icon: Grid3X3 },
       { to: "/app/journal", label: "Journal", icon: BookOpen },
-      { to: "/app/live", label: "Live", icon: Radio },
+      { to: "/app/roadmap", label: "Roadmap", icon: Route },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
     []
@@ -88,7 +88,7 @@ export default function BottomDock() {
                       filter: 'drop-shadow(0 12px 28px rgba(0,0,0,.45))',
                     }}
                   >
-                    <AuroraSphere size={52} />
+                    <AuroraSphere size={56} />
                   </div>
                 )}
                 <div className="min-w-0">
