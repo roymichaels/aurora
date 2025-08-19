@@ -1,158 +1,238 @@
-import { useEffect, useRef } from "react";
+import React, { useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Environment, OrbitControls, Stars, useCursor } from "@react-three/drei";
 import * as THREE from "three";
-import AuroraSphere from "@/components/avatar/AuroraSphere";
-// If you already have this hook, we’ll use it; otherwise we fall back to 0.1 progress.
-let useRoadmapProgress: undefined | (() => { progress: number });
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  useRoadmapProgress = require("@/hooks/useRoadmapProgress").useRoadmapProgress;
-} catch {}
+import { useNavigate } from "react-router-dom";
+import { AuroraSphere } from "@/components/avatar/AuroraSphere";
+import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 
-export default function HomeGalaxy() {
-  const mountRef = useRef<HTMLDivElement | null>(null);
-  const sphereAnchorRef = useRef<HTMLDivElement | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const curveRef = useRef<THREE.CatmullRomCurve3 | null>(null);
-  const frameRef = useRef<number>(0);
+// ----- Types -----
+type NodeStatus = "locked" | "current" | "done";
+type MapNode = {
+  id: string;
+  label: string;
+  route: string;
+  status: NodeStatus;
+  color?: string;
+};
 
-  const progress = (useRoadmapProgress ? useRoadmapProgress() : { progress: 0.1 }).progress ?? 0.1;
+// Luxe pastel palette
+const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
 
-  useEffect(() => {
-    const mount = mountRef.current!;
-    const width = mount.clientWidth;
-    const height = mount.clientHeight;
-
-    // Scene
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
-
-    // Camera
-    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 200);
-    camera.position.set(0, 2.2, 6);
-    cameraRef.current = camera;
-
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(width, height);
-    rendererRef.current = renderer;
-    mount.appendChild(renderer.domElement);
-
-    // Galaxy background (very light – looks classy on your dark UI)
-    const starsGeo = new THREE.BufferGeometry();
-    const starCount = 1000;
-    const positions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount; i++) {
-      positions[i * 3 + 0] = (Math.random() - 0.5) * 50;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 30;
-      positions[i * 3 + 2] = (Math.random() - 0.2) * 60 - 10;
+// Build nodes from real roadmap data with a safe fallback
+function useMapNodes(): { nodes: MapNode[]; currentIndex: number; empty: boolean } {
+  const progress = (() => {
+    try {
+      return useRoadmapProgress();
+    } catch {
+      return null;
     }
-    starsGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const starsMat = new THREE.PointsMaterial({ size: 0.05, color: 0x9fb3ff, opacity: 0.75, transparent: true });
-    const stars = new THREE.Points(starsGeo, starsMat);
-    scene.add(stars);
+  })();
 
-    // Path curve (Catmull-Rom). We can swap this with content-driven waypoints later.
-    const pts = [
-      new THREE.Vector3(-2.5, -1.0, -2.0),
-      new THREE.Vector3(-1.0, -0.4, -0.8),
-      new THREE.Vector3(0.2, 0.2, 0.0),
-      new THREE.Vector3(1.2, 0.6, 0.6),
-      new THREE.Vector3(2.0, 0.2, 1.8),
-      new THREE.Vector3(2.5, -0.2, 3.0),
+  // Fallback when hook is absent or not ready
+  if (!progress || !progress.items || progress.items.length === 0) {
+    const stub = [
+      { id: "journal", label: "Journal", route: "/app/journal" },
+      { id: "live", label: "Live", route: "/app/live" },
+      { id: "settings", label: "Settings", route: "/app/settings" },
     ];
-    const curve = new THREE.CatmullRomCurve3(pts, false, "catmullrom", 0.5);
-    curveRef.current = curve;
+    const nodes = stub.map((n, i) => ({
+      ...n,
+      status: i === 0 ? "current" : "locked",
+      color: palette[i % palette.length],
+    })) as MapNode[];
+    return { nodes, currentIndex: 0, empty: true };
+  }
 
-    // Tube for the “road”
-    const tube = new THREE.TubeGeometry(curve, 200, 0.12, 16, false);
-    const tubeMat = new THREE.MeshStandardMaterial({
-      color: new THREE.Color("#6ea8ff"),
-      roughness: 0.35,
-      metalness: 0.65,
-      emissive: new THREE.Color("#1c2a52"),
-      emissiveIntensity: 0.4,
-    });
-    const tubeMesh = new THREE.Mesh(tube, tubeMat);
-    scene.add(tubeMesh);
-
-    // Soft lighting
-    const hemi = new THREE.HemisphereLight(0xaabbee, 0x222233, 0.9);
-    scene.add(hemi);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.6);
-    dir.position.set(2, 3, 2);
-    scene.add(dir);
-
-    // Resize
-    const onResize = () => {
-      if (!rendererRef.current || !cameraRef.current) return;
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      rendererRef.current.setSize(w, h);
-      cameraRef.current.aspect = w / h;
-      cameraRef.current.updateProjectionMatrix();
+  const { items, currentIndex } = progress as any;
+  const nodes: MapNode[] = items.map((it: any, i: number) => {
+    const status: NodeStatus = i < currentIndex ? "done" : i === currentIndex ? "current" : "locked";
+    return {
+      id: it.id ?? `step-${i}`,
+      label: it.title ?? it.name ?? `Step ${i + 1}`,
+      route: it.route ?? it.href ?? "/app",
+      status,
+      color: palette[i % palette.length],
     };
-    const ro = new ResizeObserver(onResize);
-    ro.observe(mount);
+  });
+  return { nodes, currentIndex, empty: false };
+}
 
-    // Project a 3D point on the path to 2D and place the sphere anchor
-    const placeSphere = (t: number) => {
-      if (!curveRef.current || !cameraRef.current || !rendererRef.current || !sphereAnchorRef.current) return;
-      const point = curveRef.current.getPointAt(t % 1); // keep in [0,1)
-      const ndc = point.clone().project(cameraRef.current);
-      const { clientWidth: w, clientHeight: h } = mount;
-      const x = (ndc.x * 0.5 + 0.5) * w;
-      const y = (-ndc.y * 0.5 + 0.5) * h;
-      sphereAnchorRef.current.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`;
-    };
+// ----- Spiral layout -----
+function useSpiralPositions(count: number) {
+  return useMemo(() => {
+    const pts: THREE.Vector3[] = [];
+    const turns = 1.5;
+    const rise = -0.35; // down the screen
+    const baseR = 1.1;
+    for (let i = 0; i < count; i++) {
+      const t = i / Math.max(1, count - 1);
+      const ang = t * turns * Math.PI * 2;
+      const r = baseR + t * 1.25;
+      const x = Math.cos(ang) * r;
+      const z = Math.sin(ang) * r;
+      const y = t * rise * count; // sink a bit
+      pts.push(new THREE.Vector3(x, y, z));
+    }
+    return pts;
+  }, [count]);
+}
 
-    // Animate
-    const start = performance.now();
-    const tick = () => {
-      frameRef.current = requestAnimationFrame(tick);
-      const t = (performance.now() - start) * 0.00005; // slow drift
-      stars.rotation.y += 0.0006;
-      // Ease toward real progress so it animates when user completes tasks
-      const eased = THREE.MathUtils.damp(t % 1, progress, 0.05, 1 / 60);
-      placeSphere(eased);
-      renderer.render(scene, camera);
-    };
-    tick();
+// ----- Planet Node -----
+function Planet({
+  node,
+  position,
+  onClick,
+}: {
+  node: MapNode;
+  position: THREE.Vector3;
+  onClick: (n: MapNode) => void;
+}) {
+  const ref = useRef<THREE.Mesh>(null!);
+  const [hovered, setHovered] = useState(false);
+  const glow = node.status !== "locked";
+  const isLocked = node.status === "locked";
+  const isDone = node.status === "done";
+  useCursor(hovered && !isLocked, 'pointer', 'not-allowed');
+  useFrame((_, dt) => {
+    ref.current.rotation.y += dt * 0.4;
+  });
 
-    return () => {
-      cancelAnimationFrame(frameRef.current);
-      ro.disconnect();
-      renderer.dispose();
-      mount.removeChild(renderer.domElement);
-      starsGeo.dispose();
-      tube.dispose();
-    };
-  }, [progress]);
-
-  const openSphere = () => {
-    // Reuse your ModalHost wiring. If you use an event bus, replace this with it.
-    window.dispatchEvent(new CustomEvent("ui:openModal", { detail: "sphere-full" }));
-  };
+  const color = new THREE.Color(node.color!);
+  const emissive = color.clone().multiplyScalar(node.status === "current" ? 0.25 : glow ? 0.12 : 0.02);
 
   return (
-    <div className="galaxy-home h-full w-full relative overflow-hidden">
-      {/* THREE mount */}
-      <div ref={mountRef} className="absolute inset-0" />
-      {/* AuroraSphere pinned to curve (HTML overlay) */}
-      <div
-        ref={sphereAnchorRef}
-        className="absolute top-0 left-0 will-change-transform z-[5] cursor-pointer"
-        onClick={openSphere}
+    <group position={position}>
+      <mesh
+        ref={ref}
+        onClick={() => !isLocked && onClick(node)}
+        castShadow
+        receiveShadow
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
       >
-        <AuroraSphere size={64} />
-      </div>
+        <sphereGeometry args={[0.28, 48, 48]} />
+        <meshStandardMaterial color={color} metalness={0.35} roughness={0.35} emissive={emissive} />
+      </mesh>
 
-      {/* Optional: title card or CTA at top */}
-      <div className="pointer-events-none absolute left-4 right-4 top-4 z-[4] flex justify-between">
-        <h1 className="text-lg md:text-xl font-semibold opacity-90">Your Roadmap</h1>
-      </div>
+      {/* tiny ring for “premium” feel */}
+      <mesh rotation={[Math.PI / 2.5, 0, 0]} position={[0, -0.02, 0]}>
+        <torusGeometry args={[0.38, 0.006, 16, 64]} />
+        <meshBasicMaterial
+          color={color.clone().offsetHSL(0, -0.2, 0.15)}
+          opacity={isLocked ? 0.35 : isDone ? 0.5 : 0.55}
+          transparent
+        />
+      </mesh>
+    </group>
+  );
+}
+
+// ----- Aurora follower (DOM overlay that tracks a 3D point) -----
+function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vector3 | null> }) {
+  const { camera, size } = useThree();
+  const [style, setStyle] = useState<React.CSSProperties>({ position: "absolute", left: -9999, top: -9999 });
+
+  useFrame(() => {
+    if (!target.current) return;
+    const p = target.current.clone().project(camera);
+    const x = (p.x * 0.5 + 0.5) * size.width;
+    const y = (-p.y * 0.5 + 0.5) * size.height;
+    setStyle({
+      position: "absolute",
+      left: x - 32, // center for size=64
+      top: y - 32,
+      pointerEvents: "auto",
+    });
+  });
+
+  return (
+    <div
+      style={style}
+      onClick={() => window.dispatchEvent(new CustomEvent("ui:openModal", { detail: "sphere-full" }))}
+    >
+      <AuroraSphere size={64} />
+    </div>
+  );
+}
+
+// ----- Scene -----
+function GalaxyScene() {
+  const { nodes, currentIndex } = useMapNodes();
+  const positions = useSpiralPositions(nodes.length);
+  const navigate = useNavigate();
+
+  // Track the current node’s world position for the Aurora overlay
+  const currentRef = useRef<THREE.Vector3 | null>(null);
+  currentRef.current = positions[Math.max(0, currentIndex)] ?? positions[0];
+
+  const onNodeClick = (n: MapNode) => {
+    if (n.status === "locked") return;
+    navigate(n.route);
+  };
+
+  // subtle floating camera motion
+  const group = useRef<THREE.Group>(null!);
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    if (group.current) {
+      group.current.position.y = Math.sin(t * 0.25) * 0.05;
+    }
+  });
+
+  return (
+    <>
+      {/* Lights with a luxe, gamey vibe */}
+      <ambientLight intensity={0.35} />
+      <pointLight position={[2.5, 2, 2.5]} intensity={1.2} color="#7bc4ff" />
+      <pointLight position={[-3, -2, -2]} intensity={0.8} color="#ff9eb8" />
+
+      {/* Starfield & env */}
+      <Stars radius={50} depth={40} count={1200} factor={3} saturation={0.2} fade speed={0.4} />
+      <Environment preset="night" />
+
+      <group ref={group}>
+        {nodes.map((n, i) => (
+          <Planet key={n.id} node={n} position={positions[i]} onClick={onNodeClick} />
+        ))}
+      </group>
+
+      <OrbitControls
+        makeDefault
+        enablePan={false}
+        enableZoom
+        zoomSpeed={0.6}
+        rotateSpeed={0.6}
+        minDistance={3.2}
+        maxDistance={8}
+      />
+
+      {/* Overlay that reuses your existing AuroraSphere */}
+      <AuroraFollower target={currentRef} />
+    </>
+  );
+}
+
+export default function HomeGalaxy() {
+  // Full-bleed, frosted-dusk background that matches your dark theme
+  return (
+    <div
+      className="relative min-h-[60svh] rounded-2xl overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(80% 60% at 50% 0%, rgba(104,118,175,.20) 0%, rgba(20,22,28,.92) 60%, rgba(14,14,18,1) 100%)",
+        boxShadow: "0 20px 60px -20px rgba(0,0,0,.45)",
+      }}
+    >
+      <Canvas
+        shadows
+        gl={{ antialias: true, alpha: true }}
+        camera={{ fov: 50, near: 0.1, far: 100, position: [0, 1.6, 5.2] }}
+        style={{ width: "100%", height: "64svh" }}
+      >
+        <GalaxyScene />
+      </Canvas>
+
     </div>
   );
 }
