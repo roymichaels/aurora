@@ -3,9 +3,9 @@ import { NavLink } from "react-router-dom";
 import {
   Home,
   BookOpen,
-  Radio,
   Settings,
   Grid3X3,
+  Route,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
@@ -41,7 +41,7 @@ export default function BottomDock() {
       { to: "/app", label: "Home", icon: Home },
       { to: "/app/actions", label: "Actions", icon: Grid3X3 },
       { to: "/app/journal", label: "Journal", icon: BookOpen },
-      { to: "/app/live", label: "Live", icon: Radio },
+      { to: "/app/roadmap", label: "Roadmap", icon: Route },
       { to: "/app/settings", label: "Settings", icon: Settings },
     ],
     []

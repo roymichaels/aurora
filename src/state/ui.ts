@@ -15,12 +15,15 @@ export type ModalId =
   | "hypno"
   | "journal"
   | "voice"
-  | "sphereFull";
+  | "sphereFull"
+  | "onboarding"
+  | "confirm";
 
 type UIState = {
   activeModal: ModalId | null;
   tasksRoadmapId: string | null;
-  openModal: (id: ModalId, options?: { roadmapId?: string }) => void;
+  modalArgs: any;
+  openModal: (id: ModalId, options?: { roadmapId?: string; [key: string]: any }) => void;
   closeModal: () => void;
 };
 
@@ -28,18 +31,20 @@ type UIState = {
 export const useUIStore = create<UIState>((set) => ({
   activeModal: null,
   tasksRoadmapId: null,
+  modalArgs: null,
   openModal: (id, options) =>
     set(() => {
       track('ui/modal_open', { id });
       return {
         activeModal: id,
+        modalArgs: options ?? null,
         ...(id === "tasks" ? { tasksRoadmapId: options?.roadmapId ?? null } : {}),
       };
     }),
   closeModal: () =>
     set((s) => {
       track('ui/modal_close', { id: s.activeModal });
-      return { activeModal: null, tasksRoadmapId: null };
+      return { activeModal: null, tasksRoadmapId: null, modalArgs: null };
     }),
 }));
 
