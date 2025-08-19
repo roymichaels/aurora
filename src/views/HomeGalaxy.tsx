@@ -9,6 +9,7 @@ import { useOnboardingStore } from "@/state/onboarding";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
+
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
 type MapNode = {
@@ -18,9 +19,6 @@ type MapNode = {
   status: NodeStatus;
   color?: string;
 };
-
-// Luxe pastel palette
-const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
 
 // Build nodes with a simple default set so the home galaxy works
 // even when roadmap progress is unavailable
@@ -34,7 +32,7 @@ function useMapNodes(): { nodes: MapNode[]; currentIndex: number } {
     return stub.map((n, i) => ({
       ...n,
       status: i === 0 ? "current" : "locked",
-      color: palette[i % palette.length],
+      color: milestoneColor(i),
     }));
   }, []);
 
@@ -222,9 +220,8 @@ export default function HomeGalaxy() {
       }}
     >
       <Canvas
-        shadows
-        gl={{ antialias: true, alpha: true }}
-        camera={{ fov: 50, near: 0.1, far: 100, position: [0, 1.6, 5.2] }}
+        gl={{ antialias: true }}
+        camera={{ fov: 60, position: [0, 0, 8] }}
         style={{ width: "100%", height: "64svh" }}
       >
         <GalaxyScene />

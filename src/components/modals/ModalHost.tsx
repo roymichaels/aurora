@@ -132,9 +132,15 @@ export default function ModalHost() {
         if (!open) handleClose();
       }}
     >
-      <DialogContent className={className} onEscapeKeyDown={handleClose}>
-        {content}
-      </DialogContent>
+      {activeModal && (
+        <DialogContent className={className} onEscapeKeyDown={handleClose}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Modal</DialogTitle>
+            <DialogDescription>Modal content</DialogDescription>
+          </DialogHeader>
+          {content}
+        </DialogContent>
+      )}
     </Dialog>
   );
 }

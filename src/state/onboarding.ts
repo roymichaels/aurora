@@ -73,6 +73,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
     set({ draft: nextDraft, hasRoadmap: true, suggestion: null });
     await finalizeMilestone(nextDraft);
   },
+
   skip: () =>
     set((s) => ({
       hasRoadmap: true,
