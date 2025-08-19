@@ -8,7 +8,6 @@ import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useOnboardingStore } from "@/state/onboarding";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
-import { milestoneColor } from "@/game/galaxy/palette";
 
 
 // ----- Types -----
