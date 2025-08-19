@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars } from "@react-three/drei";
+import { Environment, OrbitControls, Stars, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import PlanetNode, { NodeStatus } from "@/components/roadmap/PlanetNode";
@@ -86,15 +86,12 @@ function useTaskNodes() {
 }
 
 function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vector3 | null> }) {
-  const { camera, size } = useThree();
-  const [style, setStyle] = useState<React.CSSProperties>({ position: "absolute", left: -9999, top: -9999 });
+  const groupRef = useRef<THREE.Group>(null);
 
   useFrame(() => {
-    if (!target.current) return;
-    const p = target.current.clone().project(camera);
-    const x = (p.x * 0.5 + 0.5) * size.width;
-    const y = (-p.y * 0.5 + 0.5) * size.height;
-    setStyle({ position: "absolute", left: x - 32, top: y - 32, pointerEvents: "auto" });
+    if (groupRef.current && target.current) {
+      groupRef.current.position.copy(target.current);
+    }
   });
 
   const open = () => {
@@ -102,9 +99,13 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
   };
 
   return (
-    <div style={style} onClick={open}>
-      <AuroraSphere size={64} />
-    </div>
+    <group ref={groupRef}>
+      <Html center>
+        <div onClick={open} style={{ pointerEvents: "auto" }}>
+          <AuroraSphere size={64} />
+        </div>
+      </Html>
+    </group>
   );
 }
 
