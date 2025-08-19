@@ -459,6 +459,15 @@ All colors MUST be HSL.
 
 .qx-item {
   font-size: 13px;
+  display: none;
+}
+
+.dock-nav a {
+  text-decoration: none;
+}
+
+.dock-nav .active {
+  color: var(--primary);
 }
 
 /* white floor line under map */
