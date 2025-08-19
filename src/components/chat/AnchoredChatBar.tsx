@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mic, Send, Volume2 } from "lucide-react";
 import { useChatStore } from "@/state/chat";
+import { useOnboardingStore } from "@/state/onboarding";
 import { useTextToSpeech } from "@/voice/useTextToSpeech";
 import { setChatInputRef } from "@/hooks/useChatInputFocus";
 import { useVoiceStore } from "@/state/voice";
@@ -12,7 +13,12 @@ import {
 } from "@/voice/listenHelpers";
 
 export function AnchoredChatBar() {
-  const { send, sending, messages, recall } = useChatStore();
+  const { hasRoadmap, send: obSend, sending: obSending, messages: obMessages } = useOnboardingStore((s) => ({ hasRoadmap: s.hasRoadmap, send: s.send, sending: s.sending, messages: s.messages }));
+  const { send: chatSend, sending: chatSending, messages: chatMessages, recall: chatRecall } = useChatStore();
+  const recall = hasRoadmap ? chatRecall : null;
+  const send = hasRoadmap ? chatSend : obSend;
+  const sending = hasRoadmap ? chatSending : obSending;
+  const messages = hasRoadmap ? chatMessages : obMessages;
   const { speak, blocked, resume } = useTextToSpeech();
 
   const [input, setInput] = useState("");

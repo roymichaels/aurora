@@ -11,9 +11,11 @@ interface FlagsState {
 }
 
 const STORAGE_KEY = 'featureFlags';
+const PRO_KEY = 'aurora:isPro';
 
 export const useFeatureFlags = create<FlagsState>((set) => {
   const raw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+  const persistedPro = typeof window !== 'undefined' ? localStorage.getItem(PRO_KEY) : null;
   const base = {
     hypnosisScripts: false,
     cloudRouting: false,
@@ -22,6 +24,7 @@ export const useFeatureFlags = create<FlagsState>((set) => {
     isPro: false,
   };
   const initial = raw ? { ...base, ...JSON.parse(raw) } : base;
+  if (persistedPro === '1') initial.isPro = true;
   return {
     ...initial,
     toggle: (key) =>
@@ -33,6 +36,9 @@ export const useFeatureFlags = create<FlagsState>((set) => {
             STORAGE_KEY,
             JSON.stringify({ hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro })
           );
+          if (key === 'isPro') {
+            localStorage.setItem(PRO_KEY, next.isPro ? '1' : '0');
+          }
         } catch {}
         return next;
       }),
@@ -45,6 +51,7 @@ export const useFeatureFlags = create<FlagsState>((set) => {
             STORAGE_KEY,
             JSON.stringify({ hypnosisScripts, cloudRouting, voiceStorage, appShell, isPro })
           );
+          localStorage.setItem(PRO_KEY, value ? '1' : '0');
         } catch {}
         return next;
       }),
