@@ -88,7 +88,7 @@ export default function BottomDock() {
                       filter: 'drop-shadow(0 12px 28px rgba(0,0,0,.45))',
                     }}
                   >
-                    <AuroraSphere size={52} />
+                    <AuroraSphere size={56} />
                   </div>
                 )}
                 <div className="min-w-0">

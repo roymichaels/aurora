@@ -15,7 +15,8 @@ export type ViewMeta = {
 
 export const views: ViewMeta[] = [
 
-  { id: "home",    label: "Home",    path: "",            component: lazy(() => import("./HomeView")) },
+
+  { id: "home",    label: "Home",    path: "",            component: lazy(() => import("./HomeGalaxy")) },
   { id: "actions", label: "Actions", path: "actions",     component: lazy(() => import("./ActionsView")) },
   { id: "focus",   label: "Focus",   path: "focus",      component: lazy(() => import("./FocusView")) },
   { id: "hypno",   label: "Hypno",   path: "hypno",      component: lazy(() => import("./HypnoView")) },
