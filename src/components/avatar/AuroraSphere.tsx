@@ -361,14 +361,6 @@ export function AuroraSphere({
       controlsRef.current?.dispose();
       controlsRef.current = null;
       resizeObserver?.disconnect();
-      try {
-        renderer?.dispose?.();
-      } catch {
-        /* ignore */
-      }
-      if (renderer && mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement);
-      }
       geometry?.dispose();
       material?.dispose();
       materialRef.current = null;
@@ -382,6 +374,14 @@ export function AuroraSphere({
         } catch {
           /* ignore */
         }
+      }
+      try {
+        renderer?.dispose?.();
+      } catch {
+        /* ignore */
+      }
+      if (renderer && mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
       }
       pointsRef.current = null;
       pointsMaterialRef.current = null;
