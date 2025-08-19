@@ -4,6 +4,7 @@ import { useOnboardingStore } from "@/state/onboarding";
 
 export default function OnboardingOverlay() {
   const { messages, sending, lockStep, skip, suggestion } = useOnboardingStore();
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
