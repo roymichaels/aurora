@@ -1,9 +1,10 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars } from "@react-three/drei";
+import { Environment, OrbitControls, Stars, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
+import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
@@ -15,18 +16,46 @@ type MapNode = {
   color?: string;
 };
 
-// ----- Data (quick start; wire to real progress later) -----
+// Luxe pastel palette
 const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
 
-function useMapNodes(): MapNode[] {
-  // Map your real modules/chapters here; these routes already exist in your app
-  return [
-    { id: "home", label: "Home", route: "/app", status: "done" },
-    { id: "brain", label: "Brain", route: "/app/brain", status: "done" },
-    { id: "journal", label: "Journal", route: "/app/journal", status: "current" },
-    { id: "live", label: "Live", route: "/app/live", status: "locked" },
-    { id: "settings", label: "Settings", route: "/app/settings", status: "locked" },
-  ].map((n, i) => ({ ...n, color: palette[i % palette.length] }));
+// Build nodes from real roadmap data with a safe fallback
+function useMapNodes(): { nodes: MapNode[]; currentIndex: number; empty: boolean } {
+  const progress = (() => {
+    try {
+      return useRoadmapProgress();
+    } catch {
+      return null;
+    }
+  })();
+
+  // Fallback when hook is absent or not ready
+  if (!progress || !progress.items || progress.items.length === 0) {
+    const stub = [
+      { id: "journal", label: "Journal", route: "/app/journal" },
+      { id: "live", label: "Live", route: "/app/live" },
+      { id: "settings", label: "Settings", route: "/app/settings" },
+    ];
+    const nodes = stub.map((n, i) => ({
+      ...n,
+      status: i === 0 ? "current" : "locked",
+      color: palette[i % palette.length],
+    })) as MapNode[];
+    return { nodes, currentIndex: 0, empty: true };
+  }
+
+  const { items, currentIndex } = progress as any;
+  const nodes: MapNode[] = items.map((it: any, i: number) => {
+    const status: NodeStatus = i < currentIndex ? "done" : i === currentIndex ? "current" : "locked";
+    return {
+      id: it.id ?? `step-${i}`,
+      label: it.title ?? it.name ?? `Step ${i + 1}`,
+      route: it.route ?? it.href ?? "/app",
+      status,
+      color: palette[i % palette.length],
+    };
+  });
+  return { nodes, currentIndex, empty: false };
 }
 
 // ----- Spiral layout -----
@@ -60,7 +89,11 @@ function Planet({
   onClick: (n: MapNode) => void;
 }) {
   const ref = useRef<THREE.Mesh>(null!);
+  const [hovered, setHovered] = useState(false);
   const glow = node.status !== "locked";
+  const isLocked = node.status === "locked";
+  const isDone = node.status === "done";
+  useCursor(hovered && !isLocked, 'pointer', 'not-allowed');
   useFrame((_, dt) => {
     ref.current.rotation.y += dt * 0.4;
   });
@@ -70,7 +103,14 @@ function Planet({
 
   return (
     <group position={position}>
-      <mesh ref={ref} onClick={() => onClick(node)} castShadow receiveShadow>
+      <mesh
+        ref={ref}
+        onClick={() => !isLocked && onClick(node)}
+        castShadow
+        receiveShadow
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
         <sphereGeometry args={[0.28, 48, 48]} />
         <meshStandardMaterial color={color} metalness={0.35} roughness={0.35} emissive={emissive} />
       </mesh>
@@ -80,7 +120,7 @@ function Planet({
         <torusGeometry args={[0.38, 0.006, 16, 64]} />
         <meshBasicMaterial
           color={color.clone().offsetHSL(0, -0.2, 0.15)}
-          opacity={0.55}
+          opacity={isLocked ? 0.35 : isDone ? 0.5 : 0.55}
           transparent
         />
       </mesh>
@@ -118,13 +158,13 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
 
 // ----- Scene -----
 function GalaxyScene() {
-  const nodes = useMapNodes();
+  const { nodes, currentIndex } = useMapNodes();
   const positions = useSpiralPositions(nodes.length);
   const navigate = useNavigate();
 
   // Track the current node’s world position for the Aurora overlay
   const currentRef = useRef<THREE.Vector3 | null>(null);
-  currentRef.current = positions[nodes.findIndex((n) => n.status === "current")] ?? positions[0];
+  currentRef.current = positions[Math.max(0, currentIndex)] ?? positions[0];
 
   const onNodeClick = (n: MapNode) => {
     if (n.status === "locked") return;
