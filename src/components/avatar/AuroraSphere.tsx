@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 // three@0.179 ships WebGPU in the core build under `three/webgpu`
-import { WebGPURenderer, MeshBasicNodeMaterial } from 'three/webgpu';
+import { WebGPURenderer, MeshStandardNodeMaterial } from 'three/webgpu';
 import {
   vec3,
   float,
@@ -11,6 +11,9 @@ import {
   normalLocal,
   rotate,
   triNoise3D,
+  cameraPosition,
+  positionWorld,
+  normalWorld,
 } from 'three/tsl';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
@@ -82,7 +85,7 @@ export function AuroraSphere({
   const haloRef = useRef<THREE.Mesh | null>(null);
   const pointsRef = useRef<THREE.Points | null>(null);
   const pointsMaterialRef = useRef<THREE.PointsMaterial | null>(null);
-  const materialRef = useRef<MeshBasicNodeMaterial | null>(null);
+  const materialRef = useRef<MeshStandardNodeMaterial | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | WebGPURenderer | null>(
     null
   );
@@ -149,7 +152,7 @@ export function AuroraSphere({
 
     let renderer: THREE.WebGLRenderer | WebGPURenderer | null = null;
     let geometry: THREE.IcosahedronGeometry | null = null;
-    let material: MeshBasicNodeMaterial | null = null;
+    let material: MeshStandardNodeMaterial | null = null;
     let particleGeometry: THREE.BufferGeometry | null = null;
     let particleMaterial: THREE.PointsMaterial | null = null;
 
@@ -178,6 +181,7 @@ export function AuroraSphere({
         // subtle idle breathing
         scale = 1 + Math.sin(performance.now() * 0.005) * 0.05;
       }
+      // keep uniform scaling (avoid "pancake")
       mesh.scale.setScalar(scale);
       const haloScale = 1.2 + levelAmp * 0.6;
       halo.scale.setScalar(haloScale);
@@ -260,7 +264,7 @@ export function AuroraSphere({
 
       geometry = new THREE.IcosahedronGeometry(1, variant === 'full' ? 7 : 5);
 
-      material = new MeshBasicNodeMaterial();
+      material = new MeshStandardNodeMaterial();
       materialRef.current = material;
 
       const t = time.mul(shaderConfig.speed);
@@ -287,6 +291,14 @@ export function AuroraSphere({
             .cos()
         )
       );
+
+      const viewDir = cameraPosition.sub(positionWorld).normalize();
+      const rim = float(1)
+        .sub(normalWorld.normalize().dot(viewDir).max(float(0)))
+        .pow(float(3));
+      material.emissiveNode = vec3(0xb6 / 255, 0xe1 / 255, 1.0)
+        .mul(rim)
+        .mul(float(0.8));
 
       const mesh = new THREE.Mesh(geometry, material);
       meshRef.current = mesh;
@@ -325,10 +337,11 @@ export function AuroraSphere({
       haloRef.current = halo;
       scene.add(halo);
 
-      const dir = new THREE.DirectionalLight(0xffffff, 1);
-      dir.position.set(0, 0, 4);
+      // physically sensible lights
+      const dir = new THREE.DirectionalLight(0xffffff, 1.2);
+      dir.position.set(2, 3, 4);
       scene.add(dir);
-      scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+      scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
       if (isInteractive && renderer) {
         const controls = new OrbitControls(camera, renderer.domElement);
@@ -348,22 +361,8 @@ export function AuroraSphere({
       controlsRef.current?.dispose();
       controlsRef.current = null;
       resizeObserver?.disconnect();
-      try {
-        renderer?.dispose?.();
-      } catch {
-        /* ignore */
-      }
-      if (renderer && mount.contains(renderer.domElement)) {
-        mount.removeChild(renderer.domElement);
-      }
       geometry?.dispose();
-      if (material && (material as any).positionNode) {
-        try {
-          material.dispose();
-        } catch {
-          /* ignore */
-        }
-      }
+      material?.dispose();
       materialRef.current = null;
       if (pointsRef.current) {
         scene.remove(pointsRef.current);
@@ -375,6 +374,14 @@ export function AuroraSphere({
         } catch {
           /* ignore */
         }
+      }
+      try {
+        renderer?.dispose?.();
+      } catch {
+        /* ignore */
+      }
+      if (renderer && mount.contains(renderer.domElement)) {
+        mount.removeChild(renderer.domElement);
       }
       pointsRef.current = null;
       pointsMaterialRef.current = null;
