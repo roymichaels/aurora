@@ -5,6 +5,13 @@
 @tailwind components;
 @tailwind utilities;
 
+.galaxy-home {
+  background:
+    radial-gradient(1200px 600px at 50% -20%, rgba(110, 168, 255, 0.10), transparent 60%),
+    radial-gradient(800px 400px at 80% 120%, rgba(177, 133, 255, 0.10), transparent 70%),
+    #0c0d10;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
