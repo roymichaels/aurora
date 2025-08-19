@@ -5,7 +5,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Pencil } from "lucide-react";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useGameStore } from "@/game/store";
-import QuickPodsRow from "@/components/quick/QuickPodsRow";
 
 function ProgressRing({ value }: { value: number }) {
   return (
@@ -111,7 +110,7 @@ export default function HomeView() {
         </div>
 
         {/* Quick pods */}
-        <QuickPodsRow />
+        {/* Quick actions moved to /app/actions */}
 
         {/* Recent changes */}
         <div className="glass-panel rounded-xl p-6">
