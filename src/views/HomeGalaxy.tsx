@@ -1,11 +1,12 @@
 
 import React, { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, useCursor, Html } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, OrbitControls, Stars, useCursor, Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useOnboardingStore } from "@/state/onboarding";
+import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
 // ----- Types -----
@@ -136,26 +137,41 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
 
 // ----- Scene -----
 function GalaxyScene() {
-  const { nodes, currentIndex } = useMapNodes();
-  const positions = useSpiralPositions(nodes.length);
+  const { nodes } = useMapNodes();
+  const pathPoints = useSpiralPositions(20);
+  const nodePositions = useMemo(
+    () =>
+      nodes.map((_, i) =>
+        pathPoints[
+          Math.floor((i / Math.max(1, nodes.length - 1)) * (pathPoints.length - 1))
+        ]
+      ),
+    [nodes, pathPoints]
+  );
+  const curve = useMemo(() => new THREE.CatmullRomCurve3(pathPoints), [pathPoints]);
+  const curvePoints = useMemo(() => curve.getPoints(200), [curve]);
   const navigate = useNavigate();
 
-  // Track the current node’s world position for the Aurora overlay
-  const currentRef = useRef<THREE.Vector3 | null>(null);
-  currentRef.current = positions[Math.max(0, currentIndex)] ?? positions[0];
+  // Track the sphere’s world position for the Aurora overlay
+  const sphereRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  const { percent } = useRoadmapProgress();
+  const progressRef = useRef(0);
 
   const onNodeClick = (n: MapNode) => {
     if (n.status === "locked") return;
     navigate(n.route);
   };
 
-  // subtle floating camera motion
+  // subtle floating camera motion and sphere progress
   const group = useRef<THREE.Group>(null!);
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
+  useFrame(({ clock }, dt) => {
+    const time = clock.getElapsedTime();
     if (group.current) {
-      group.current.position.y = Math.sin(t * 0.25) * 0.05;
+      group.current.position.y = Math.sin(time * 0.25) * 0.05;
     }
+    const target = percent / 100;
+    progressRef.current += (target - progressRef.current) * Math.min(1, dt * 3);
+    curve.getPointAt(progressRef.current, sphereRef.current);
   });
 
   return (
@@ -170,8 +186,9 @@ function GalaxyScene() {
       <Environment preset="night" />
 
       <group ref={group}>
+        <Line points={curvePoints} color="#fff" lineWidth={2} transparent opacity={0.35} />
         {nodes.map((n, i) => (
-          <Planet key={n.id} node={n} position={positions[i]} onClick={onNodeClick} />
+          <Planet key={n.id} node={n} position={nodePositions[i]} onClick={onNodeClick} />
         ))}
       </group>
 
@@ -186,7 +203,7 @@ function GalaxyScene() {
       />
 
       {/* Overlay that reuses your existing AuroraSphere */}
-      <AuroraFollower target={currentRef} />
+      <AuroraFollower target={sphereRef} />
     </>
   );
 }
