@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { PricingTier } from '@/modules/payments/types/subscription'
 import { createCheckoutSession } from '@/modules/payments/api/subscription'
 import { useSubscription } from '@/modules/payments/hooks/useSubscription'
 import { toast } from '@/hooks/use-toast'
+import { useFeatureFlags } from '@/state/featureFlags';
 
 /**
  * TODO: Activate billing UI when payments module is ready.
@@ -142,7 +143,17 @@ function PricingPageUI() {
   const [isYearly, setIsYearly] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [isLoading, setIsLoading] = useState<string | null>(null);
-  const { subscription } = useSubscription();
+  const { subscription, refetch } = useSubscription();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('session_id')) {
+      useFeatureFlags.getState().setPro(true);
+      localStorage.setItem('aurora:isPro', '1');
+      refetch();
+    }
+  }, [refetch]);
 
   const handleSubscribe = async (tier: PricingTier) => {
     if (tier.id === 'freemium') {
