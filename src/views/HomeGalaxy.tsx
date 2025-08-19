@@ -1,7 +1,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, useCursor } from "@react-three/drei";
+import { Environment, OrbitControls, Stars, useCursor, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
