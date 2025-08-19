@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useFeatureFlags } from "@/state/featureFlags";
 import NotFound from "./pages/NotFound";
 import AuthPage from "./pages/Auth";
@@ -16,9 +16,25 @@ import HomeSnapshot from "./pages/HomeSnapshot";
 import AppShell from "@/routes/AppShell";
 import HomeGalaxy from "@/views/HomeGalaxy";
 import { views } from "@/views/registry";
+import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import LiveShell from "@/routes/live/LiveShell";
 import { TTSPill } from "@/voice/TTSPill";
 const queryClient = new QueryClient();
+
+function RequireRoadmap({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  let hasRoadmap = true;
+  try {
+    const p = useRoadmapProgress();
+    hasRoadmap = !!p?.items?.length;
+  } catch {
+    hasRoadmap = true;
+  }
+  if (!hasRoadmap && !location.pathname.startsWith("/app/actions")) {
+    return <Navigate to="/app/actions" replace />;
+  }
+  return <>{children}</>;
+}
 
 function AppRoutesWithShell() {
   return (
@@ -26,6 +42,7 @@ function AppRoutesWithShell() {
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/app" replace />} />
         <Route path="/app" element={<Outlet />}>
+
           <Route index element={<HomeGalaxy />} />
           {views.filter((v) => v.id !== "home").map((v) => (
             <Route key={v.id} path={v.path || undefined} element={<v.component />} />
