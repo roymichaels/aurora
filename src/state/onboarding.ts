@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { finalizeMilestone, proposeNextStep } from "@/services/aiRoadmap";
 
 export interface RoadmapDraft {
   id?: string;
@@ -19,8 +20,9 @@ interface OnboardingState {
   messages: OnboardingMessage[];
   draft: RoadmapDraft;
   sending: boolean;
+  suggestion: { id: string; title: string; tasks: string[] } | null;
   send: (text: string) => Promise<void>;
-  lockStep: () => void;
+  lockStep: () => Promise<void>;
   skip: () => void;
 }
 
@@ -29,7 +31,7 @@ const initialAssistant = [
   "First—how are you feeling today, and what’s one thing you want to improve?",
 ];
 
-export const useOnboardingStore = create<OnboardingState>((set) => ({
+export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   hasRoadmap: false,
   threadId: crypto.randomUUID(),
   messages: initialAssistant.map((content) => ({
@@ -39,33 +41,39 @@ export const useOnboardingStore = create<OnboardingState>((set) => ({
   })),
   draft: { milestones: [], confidence: 0 },
   sending: false,
+  suggestion: null,
   send: async (text: string) => {
     const userMsg: OnboardingMessage = {
       id: crypto.randomUUID(),
       role: "user",
       content: text,
     };
-    set((s) => ({ messages: [...s.messages, userMsg], sending: true }));
-    setTimeout(() => {
-      const assistantMsg: OnboardingMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: "Noted.",
-      };
-      set((s) => ({ messages: [...s.messages, assistantMsg], sending: false }));
-    }, 600);
-  },
-  lockStep: () =>
+    const current = get();
+    const pending = [...current.messages, userMsg];
+    set({ messages: pending, sending: true });
+    const update = await proposeNextStep(current.threadId, pending);
+    const assistantMsg: OnboardingMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: update.message,
+    };
     set((s) => ({
-      hasRoadmap: true,
-      draft: {
-        ...s.draft,
-        milestones: [
-          ...s.draft.milestones,
-          { id: crypto.randomUUID(), title: "First step", tasks: [] },
-        ],
-      },
-    })),
+      messages: [...s.messages, assistantMsg],
+      sending: false,
+      suggestion: update.milestone,
+    }));
+  },
+  lockStep: async () => {
+    const { suggestion, draft } = get();
+    if (!suggestion) return;
+    const nextDraft: RoadmapDraft = {
+      ...draft,
+      milestones: [...draft.milestones, suggestion],
+    };
+    set({ draft: nextDraft, hasRoadmap: true, suggestion: null });
+    await finalizeMilestone(nextDraft);
+  },
+
   skip: () =>
     set((s) => ({
       hasRoadmap: true,

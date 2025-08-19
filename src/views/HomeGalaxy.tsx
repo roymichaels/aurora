@@ -10,6 +10,7 @@ import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 import { milestoneColor } from "@/game/galaxy/palette";
 
+
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
 type MapNode = {
