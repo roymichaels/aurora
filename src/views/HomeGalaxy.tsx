@@ -1,10 +1,9 @@
 import React, { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, useCursor } from "@react-three/drei";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, Html, OrbitControls, Stars, useCursor } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
-import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
@@ -19,43 +18,23 @@ type MapNode = {
 // Luxe pastel palette
 const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
 
-// Build nodes from real roadmap data with a safe fallback
-function useMapNodes(): { nodes: MapNode[]; currentIndex: number; empty: boolean } {
-  const progress = (() => {
-    try {
-      return useRoadmapProgress();
-    } catch {
-      return null;
-    }
-  })();
-
-  // Fallback when hook is absent or not ready
-  if (!progress || !progress.items || progress.items.length === 0) {
+// Build nodes with a simple default set so the home galaxy works
+// even when roadmap progress is unavailable
+function useMapNodes(): { nodes: MapNode[]; currentIndex: number } {
+  const nodes = useMemo(() => {
     const stub = [
       { id: "journal", label: "Journal", route: "/app/journal" },
       { id: "live", label: "Live", route: "/app/live" },
       { id: "settings", label: "Settings", route: "/app/settings" },
     ];
-    const nodes = stub.map((n, i) => ({
+    return stub.map((n, i) => ({
       ...n,
       status: i === 0 ? "current" : "locked",
       color: palette[i % palette.length],
-    })) as MapNode[];
-    return { nodes, currentIndex: 0, empty: true };
-  }
+    }));
+  }, []);
 
-  const { items, currentIndex } = progress as any;
-  const nodes: MapNode[] = items.map((it: any, i: number) => {
-    const status: NodeStatus = i < currentIndex ? "done" : i === currentIndex ? "current" : "locked";
-    return {
-      id: it.id ?? `step-${i}`,
-      label: it.title ?? it.name ?? `Step ${i + 1}`,
-      route: it.route ?? it.href ?? "/app",
-      status,
-      color: palette[i % palette.length],
-    };
-  });
-  return { nodes, currentIndex, empty: false };
+  return { nodes, currentIndex: 0 };
 }
 
 // ----- Spiral layout -----
@@ -130,29 +109,25 @@ function Planet({
 
 // ----- Aurora follower (DOM overlay that tracks a 3D point) -----
 function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vector3 | null> }) {
-  const { camera, size } = useThree();
-  const [style, setStyle] = useState<React.CSSProperties>({ position: "absolute", left: -9999, top: -9999 });
+  const groupRef = useRef<THREE.Group | null>(null);
 
   useFrame(() => {
-    if (!target.current) return;
-    const p = target.current.clone().project(camera);
-    const x = (p.x * 0.5 + 0.5) * size.width;
-    const y = (-p.y * 0.5 + 0.5) * size.height;
-    setStyle({
-      position: "absolute",
-      left: x - 32, // center for size=64
-      top: y - 32,
-      pointerEvents: "auto",
-    });
+    if (groupRef.current && target.current) {
+      groupRef.current.position.copy(target.current);
+    }
   });
 
   return (
-    <div
-      style={style}
-      onClick={() => window.dispatchEvent(new CustomEvent("ui:openModal", { detail: "sphere-full" }))}
-    >
-      <AuroraSphere size={64} />
-    </div>
+    <group ref={groupRef}>
+      <Html center transform>
+        <div
+          onClick={() => window.dispatchEvent(new CustomEvent("ui:openModal", { detail: "sphere-full" }))}
+          style={{ pointerEvents: "auto" }}
+        >
+          <AuroraSphere size={64} />
+        </div>
+      </Html>
+    </group>
   );
 }
 
