@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useProgressStore } from "@/state/progress";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useVoiceStore } from "@/state/voice";
+import { award } from "@/game/gamification/award";
 
 type Props = { node: { id: string; label: string }; onExit: () => void };
 
@@ -11,6 +12,7 @@ export default function RewardRunner({ node, onExit }: Props) {
 
   useEffect(() => {
     awardXP(20, { activity: "reward", nodeId: node.id });
+    award({ xp: 20 });
     complete(node.id);
   }, [awardXP, complete, node.id]);
 

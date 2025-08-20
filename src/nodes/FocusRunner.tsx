@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
 import { awardXPRemote } from "@/integrations/supabase/gameSync";
+import { award } from "@/game/gamification/award";
 
 type Props = { node: { id: string; label: string; minutes?: number; induction?: number }; onExit: () => void };
 
@@ -37,6 +38,7 @@ export default function FocusRunner({ node, onExit }: Props) {
     pause();
     setEnded(true);
     awardXP(40, { activity: "focus", nodeId: node.id });
+    award({ xp: 40 });
     await awardXPRemote("focus", 40, { nodeId: node.id }).catch(() => {});
     complete(node.id);
   };
