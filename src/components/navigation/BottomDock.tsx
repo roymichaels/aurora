@@ -6,13 +6,13 @@ import {
   Settings,
   Grid3X3,
   Route,
+  ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
 import { useAvatarStore } from "@/state/avatar";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
-import { Button } from "@/components/ui/button";
 
 export default function BottomDock() {
   const stats = useGameStore((s) => s.stats);
@@ -64,13 +64,14 @@ export default function BottomDock() {
       }}
     >
       <div className="relative">
-        <Button
+        <button
           type="button"
           aria-label={expanded ? "Collapse dock" : "Expand dock"}
           onClick={toggle}
-          className="absolute -top-2 left-0 right-0 h-3 rounded-t-2xl opacity-30 hover:opacity-60 focus:opacity-80 outline-none"
-          style={{ WebkitTapHighlightColor: "transparent" }}
-        />
+          className={cn("drawer-grabber hud-dock-grabber", expanded && "open")}
+        >
+          <ChevronUp className="drawer-grabber-icon" />
+        </button>
 
         <div
           className={cn(
