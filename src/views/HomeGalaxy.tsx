@@ -6,6 +6,7 @@ import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import AuroraBallR3F from "@/components/avatar/AuroraBallR3F";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
+import { milestoneColor } from "@/game/galaxy/palette";
 
 
 // ----- Types -----
@@ -17,10 +18,6 @@ type MapNode = {
   status: NodeStatus;
   color?: string;
 };
-
-// Luxe pastel palette
-const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
-const milestoneColor = (i: number) => palette[i % palette.length];
 
 // Build nodes with a simple default set so the home galaxy works
 // even when roadmap progress is unavailable
