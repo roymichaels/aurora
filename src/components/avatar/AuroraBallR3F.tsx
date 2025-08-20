@@ -8,6 +8,7 @@ export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> &
   size?: number;
 };
 
+
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
   ({ size = 1, children, ...restProps }, ref) => {
     const matRef = useRef<THREE.ShaderMaterial>(null!);
