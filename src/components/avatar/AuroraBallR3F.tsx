@@ -1,25 +1,37 @@
 import * as THREE from 'three';
-import { forwardRef, useMemo } from 'react';
+
+
+import { useMemo, useRef, forwardRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
 export type AuroraBallProps = JSX.IntrinsicElements['group'] & { size?: number };
 
-function AuroraBallR3F({ size = 1, ...props }: AuroraBallProps, ref: React.Ref<THREE.Group>) {
-  const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 5), []);
+const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
+  ({ size = 1, ...rest }, ref) => {
+    const matRef = useRef<THREE.ShaderMaterial>(null!);
 
-  const material = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        uniforms: {
-          uTime: { value: 0 },
-          uSpeed: { value: 0.6 },
-          uNoiseDensity: { value: 2.0 },
-          uNoiseStrength: { value: 0.15 },
-          uFrequency: { value: 6.0 },
-          uAmplitude: { value: 0.3 },
-          uIntensity: { value: 1.0 },
-        },
-        vertexShader: /* glsl */ `
+    const uniforms = useMemo(
+      () => ({
+        uTime: { value: 0 },
+        uSpeed: { value: 0.6 },
+        uNoiseDensity: { value: 2.0 },
+        uNoiseStrength: { value: 0.15 },
+        uFrequency: { value: 6.0 },
+        uAmplitude: { value: 0.3 },
+        uIntensity: { value: 1.0 },
+      }),
+      []
+    );
+
+    useFrame(({ clock }) => {
+      if (matRef.current) {
+        matRef.current.uniforms.uTime.value = clock.getElapsedTime();
+      }
+    });
+
+    const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 5), []);
+
+    const vertexShader = `
 uniform float uTime;
 uniform float uSpeed;
 uniform float uNoiseDensity;
@@ -54,8 +66,11 @@ void main(){
   pos += normal * n * uNoiseStrength;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
-`,
-        fragmentShader: /* glsl */ `
+
+
+`;
+
+    const fragmentShader = `
 uniform float uFrequency;
 uniform float uIntensity;
 
@@ -73,24 +88,25 @@ void main(){
   vec3 color = cosPalette(vNoise * uFrequency) * uIntensity;
   gl_FragColor = vec4(color,1.0);
 }
-`,
-      }),
-    []
-  );
+`;
 
-  useFrame(({ clock }) => {
-    (material.uniforms.uTime as THREE.IUniform<number>).value = clock.getElapsedTime();
-  });
+    return (
+      <group ref={ref} {...rest} scale={size}>
+        <mesh geometry={geometry}>
+          <shaderMaterial
+            ref={matRef}
+            uniforms={uniforms}
+            vertexShader={vertexShader}
+            fragmentShader={fragmentShader}
+          />
+        </mesh>
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[1.05, 1.08, 64]} />
+          <meshBasicMaterial opacity={0.2} transparent />
+        </mesh>
+      </group>
+    );
+  }
+);
 
-  return (
-    <group ref={ref} scale={size} {...props}>
-      <mesh geometry={geometry} material={material} />
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.05, 1.08, 64]} />
-        <meshBasicMaterial opacity={0.2} transparent />
-      </mesh>
-    </group>
-  );
-}
-
-export default forwardRef<THREE.Group, AuroraBallProps>(AuroraBallR3F);
+export default AuroraBallR3F;
