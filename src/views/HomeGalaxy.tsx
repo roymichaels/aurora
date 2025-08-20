@@ -1,13 +1,13 @@
 
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, useCursor, Html } from "@react-three/drei";
+import React, { useMemo, useRef, useState } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Environment, OrbitControls, Stars, useCursor, Html, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
+import { useOnboardingStore } from "@/state/onboarding";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-import { useChatStore } from "@/state/chat";
-import { useUIStore } from "@/state/ui";
+import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
 // ----- Types -----
 type NodeStatus = "locked" | "current" | "done";
@@ -21,6 +21,7 @@ type MapNode = {
 
 // Luxe pastel palette
 const palette = ["#8ab4ff", "#a987ff", "#ffb3a7", "#9ff3e0", "#ffd479", "#e6a8ff"];
+const milestoneColor = (i: number) => palette[i % palette.length];
 
 // Build nodes with a simple default set so the home galaxy works
 // even when roadmap progress is unavailable
@@ -34,7 +35,7 @@ function useMapNodes(): { nodes: MapNode[]; currentIndex: number } {
     return stub.map((n, i) => ({
       ...n,
       status: i === 0 ? "current" : "locked",
-      color: palette[i % palette.length],
+      color: milestoneColor(i),
     }));
   }, []);
 
@@ -137,26 +138,41 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
 
 // ----- Scene -----
 function GalaxyScene() {
-  const { nodes, currentIndex } = useMapNodes();
-  const positions = useSpiralPositions(nodes.length);
+  const { nodes } = useMapNodes();
+  const pathPoints = useSpiralPositions(20);
+  const nodePositions = useMemo(
+    () =>
+      nodes.map((_, i) =>
+        pathPoints[
+          Math.floor((i / Math.max(1, nodes.length - 1)) * (pathPoints.length - 1))
+        ]
+      ),
+    [nodes, pathPoints]
+  );
+  const curve = useMemo(() => new THREE.CatmullRomCurve3(pathPoints), [pathPoints]);
+  const curvePoints = useMemo(() => curve.getPoints(200), [curve]);
   const navigate = useNavigate();
 
-  // Track the current node’s world position for the Aurora overlay
-  const currentRef = useRef<THREE.Vector3 | null>(null);
-  currentRef.current = positions[Math.max(0, currentIndex)] ?? positions[0];
+  // Track the sphere’s world position for the Aurora overlay
+  const sphereRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  const { percent } = useRoadmapProgress();
+  const progressRef = useRef(0);
 
   const onNodeClick = (n: MapNode) => {
     if (n.status === "locked") return;
     navigate(n.route);
   };
 
-  // subtle floating camera motion
+  // subtle floating camera motion and sphere progress
   const group = useRef<THREE.Group>(null!);
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
+  useFrame(({ clock }, dt) => {
+    const time = clock.getElapsedTime();
     if (group.current) {
-      group.current.position.y = Math.sin(t * 0.25) * 0.05;
+      group.current.position.y = Math.sin(time * 0.25) * 0.05;
     }
+    const target = percent / 100;
+    progressRef.current += (target - progressRef.current) * Math.min(1, dt * 3);
+    curve.getPointAt(progressRef.current, sphereRef.current);
   });
 
   return (
@@ -171,8 +187,9 @@ function GalaxyScene() {
       <Environment preset="night" />
 
       <group ref={group}>
+        <Line points={curvePoints} color="#fff" lineWidth={2} transparent opacity={0.35} />
         {nodes.map((n, i) => (
-          <Planet key={n.id} node={n} position={positions[i]} onClick={onNodeClick} />
+          <Planet key={n.id} node={n} position={nodePositions[i]} onClick={onNodeClick} />
         ))}
       </group>
 
@@ -187,22 +204,13 @@ function GalaxyScene() {
       />
 
       {/* Overlay that reuses your existing AuroraSphere */}
-      <AuroraFollower target={currentRef} />
+      <AuroraFollower target={sphereRef} />
     </>
   );
 }
 
 export default function HomeGalaxy() {
-  const progress = useRoadmapProgress();
-  const pushed = useRef(false);
-  useEffect(() => {
-    if (progress.items.length || pushed.current) return;
-    pushed.current = true;
-    const push = useChatStore.getState().pushSystem;
-    push("👋 I’m your mentor. Let’s craft your roadmap together. I’ll ask a couple of tiny questions and build the first sprint for you.");
-    push("First—how are you feeling today, and what’s one thing you want to improve?");
-    useUIStore.getState().openModal("onboarding");
-  }, [progress.items.length]);
+  const hasRoadmap = useOnboardingStore((s) => s.hasRoadmap);
 
   // Full-bleed, frosted-dusk background that matches your dark theme
   return (
@@ -222,6 +230,7 @@ export default function HomeGalaxy() {
       >
         <GalaxyScene />
       </Canvas>
+        {!hasRoadmap && <OnboardingOverlay />}
     </div>
   );
 }
