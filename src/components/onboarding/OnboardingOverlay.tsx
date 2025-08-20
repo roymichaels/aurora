@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useOnboardingStore } from "@/state/onboarding";
 
 export default function OnboardingOverlay() {
-  const { messages, sending, lockStep, skip } = useOnboardingStore();
+
+  const { messages, sending, lockStep, skip, suggestion } = useOnboardingStore();
+
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,7 +40,9 @@ export default function OnboardingOverlay() {
         <div ref={bottomRef} />
       </div>
       <div className="pointer-events-auto flex gap-2 mb-4">
-        <Button onClick={lockStep}>Lock step</Button>
+        <Button onClick={lockStep} disabled={!suggestion || sending}>
+          Lock step
+        </Button>
         <Button variant="ghost" onClick={skip}>
           Skip for now
         </Button>
