@@ -10,6 +10,7 @@ import {
 import { saveMemory, queryMemory } from "@/memory/store";
 import { mergeAndExplainMemories, formatMemoryContext } from "@/memory/relevance";
 import { bus } from "@/utils/bus";
+import { runAgentCommand } from "@/services/aiBridge";
 
 export type ChatEntry = ChatMessage & { id: string };
 
@@ -92,12 +93,27 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       });
 
+      let finalText = fullText;
+      try {
+        const parsed = JSON.parse(fullText);
+        if (parsed?.content) finalText = parsed.content;
+        if (parsed?.tool_call) {
+          await runAgentCommand(parsed.tool_call);
+        }
+      } catch {}
+
+      set(state => ({
+        messages: state.messages.map(m =>
+          m.id === responseId ? { ...m, content: finalText } : m
+        ),
+      }));
+
       useAvatarStore.getState().setSentiment(sentiment);
       bus.emit('chat/stream:end', { id: responseId });
       set({ sending: false });
-      void voiceService.speak(fullText);
-      memoryStore.add("episodic", "assistant", fullText).catch(() => {});
-      saveMemory(fullText, { role: "assistant" }).catch(() => {});
+      void voiceService.speak(finalText);
+      memoryStore.add("episodic", "assistant", finalText).catch(() => {});
+      saveMemory(finalText, { role: "assistant" }).catch(() => {});
     } catch (error) {
       set(state => ({
         messages: state.messages.map(m =>
