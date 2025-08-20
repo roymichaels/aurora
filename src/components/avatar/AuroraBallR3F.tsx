@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 
+
 import { useMemo, useRef, forwardRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
 export type AuroraBallProps = JSX.IntrinsicElements['group'] & { size?: number };
-
 
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
   ({ size = 1, ...rest }, ref) => {
@@ -66,6 +66,7 @@ void main(){
   pos += normal * n * uNoiseStrength;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos,1.0);
 }
+
 
 `;
 
