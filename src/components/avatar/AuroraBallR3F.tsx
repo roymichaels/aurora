@@ -4,11 +4,23 @@ import * as THREE from 'three';
 import { useMemo, useRef, forwardRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 
-export type AuroraBallProps = JSX.IntrinsicElements['group'] & { size?: number };
+export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> & {
+  size?: number;
+};
 
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
-  ({ size = 1, ...rest }, ref) => {
+  ({ size = 1, children, ...restProps }, ref) => {
     const matRef = useRef<THREE.ShaderMaterial>(null!);
+
+    const groupProps = useMemo(() => {
+      const entries = Object.entries(restProps as Record<string, unknown>).filter(
+        ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
+      );
+      return Object.fromEntries(entries) as Omit<
+        JSX.IntrinsicElements['group'],
+        'children'
+      >;
+    }, [restProps]);
 
     const uniforms = useMemo(
       () => ({
@@ -91,7 +103,7 @@ void main(){
 `;
 
     return (
-      <group ref={ref} {...rest} scale={size}>
+      <group ref={ref} {...groupProps} scale={size}>
         <mesh geometry={geometry}>
           <shaderMaterial
             ref={matRef}
@@ -104,6 +116,7 @@ void main(){
           <ringGeometry args={[1.05, 1.08, 64]} />
           <meshBasicMaterial opacity={0.2} transparent />
         </mesh>
+        {children}
       </group>
     );
   }
