@@ -1,13 +1,11 @@
 
 import React, { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, useCursor, Html, Line } from "@react-three/drei";
+import { Environment, OrbitControls, Stars, useCursor, Line } from "@react-three/drei";
 import * as THREE from "three";
 import { useNavigate } from "react-router-dom";
-import { AuroraSphere } from "@/components/avatar/AuroraSphere";
-import { useOnboardingStore } from "@/state/onboarding";
+import AuroraBallR3F from "@/components/avatar/AuroraBallR3F";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
-import OnboardingOverlay from "@/components/onboarding/OnboardingOverlay";
 
 
 // ----- Types -----
@@ -113,30 +111,6 @@ function Planet({
   );
 }
 
-// ----- Aurora follower (DOM overlay that tracks a 3D point) -----
-function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vector3 | null> }) {
-  const groupRef = useRef<THREE.Group | null>(null);
-
-  useFrame(() => {
-    if (groupRef.current && target.current) {
-      groupRef.current.position.copy(target.current);
-    }
-  });
-
-  return (
-    <group ref={groupRef}>
-      <Html center transform>
-        <div
-          onClick={() => window.dispatchEvent(new CustomEvent("ui:openModal", { detail: "sphere-full" }))}
-          style={{ pointerEvents: "auto" }}
-        >
-          <AuroraSphere size={64} />
-        </div>
-      </Html>
-    </group>
-  );
-}
-
 // ----- Scene -----
 function GalaxyScene() {
   const { nodes } = useMapNodes();
@@ -154,8 +128,9 @@ function GalaxyScene() {
   const curvePoints = useMemo(() => curve.getPoints(200), [curve]);
   const navigate = useNavigate();
 
-  // Track the sphere’s world position for the Aurora overlay
-  const sphereRef = useRef<THREE.Vector3>(new THREE.Vector3());
+  // Track the sphere’s world position
+  const sphereRef = useRef<THREE.Group>(null!);
+  const tempVec = useRef(new THREE.Vector3());
   const { percent } = useRoadmapProgress();
   const progressRef = useRef(0);
 
@@ -173,7 +148,10 @@ function GalaxyScene() {
     }
     const target = percent / 100;
     progressRef.current += (target - progressRef.current) * Math.min(1, dt * 3);
-    curve.getPointAt(progressRef.current, sphereRef.current);
+    curve.getPointAt(progressRef.current, tempVec.current);
+    if (sphereRef.current) {
+      sphereRef.current.position.copy(tempVec.current);
+    }
   });
 
   return (
@@ -204,15 +182,12 @@ function GalaxyScene() {
         maxDistance={8}
       />
 
-      {/* Overlay that reuses your existing AuroraSphere */}
-      <AuroraFollower target={sphereRef} />
+      <AuroraBallR3F ref={sphereRef} size={0.9} />
     </>
   );
 }
 
 export default function HomeGalaxy() {
-  const hasRoadmap = useOnboardingStore((s) => s.hasRoadmap);
-
   // Full-bleed, frosted-dusk background that matches your dark theme
   return (
     <div
@@ -230,7 +205,6 @@ export default function HomeGalaxy() {
       >
         <GalaxyScene />
       </Canvas>
-        {!hasRoadmap && <OnboardingOverlay />}
     </div>
   );
 }

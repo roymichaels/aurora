@@ -3,6 +3,7 @@ import { useLocation, Navigate, Outlet } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { views, type ViewId } from "@/views/registry";
 import { AnchoredChatBar } from "@/components/chat/AnchoredChatBar";
+import { ChatDrawer } from "@/components/chat/ChatDrawer";
 import BottomDock from "@/components/navigation/BottomDock";
 import { TimerHudChip } from "@/components/navigation/TimerHudChip";
 import ModalHost from "@/components/modals/ModalHost";
@@ -129,6 +130,7 @@ export default function AppShell() {
 
         <ModalHost />
         <BottomDock />
+        <ChatDrawer />
         <AnchoredChatBar />
         <TimerHudChip />
       </div>
