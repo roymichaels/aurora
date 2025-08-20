@@ -8,19 +8,23 @@ export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> &
   size?: number;
 };
 
-const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>((props, ref) => {
-  const { size = 1, children, ...restProps } = props;
-  const matRef = useRef<THREE.ShaderMaterial>(null!);
 
-  const groupProps = useMemo(() => {
-    const entries = Object.entries(restProps as Record<string, unknown>).filter(
-      ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
-    );
-    return Object.fromEntries(entries) as Omit<
-      JSX.IntrinsicElements['group'],
-      'children'
-    >;
-  }, [restProps]);
+const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
+  ({ size = 1, children, ...restProps }, ref) => {
+    const matRef = useRef<THREE.ShaderMaterial>(null!);
+
+    const groupProps = useMemo(() => {
+      const entries = Object.entries(restProps as Record<string, unknown>).filter(
+
+        ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
+      );
+      return Object.fromEntries(entries) as Omit<
+        JSX.IntrinsicElements['group'],
+        'children'
+      >;
+
+    }, [props]);
+
 
     const uniforms = useMemo(
       () => ({
