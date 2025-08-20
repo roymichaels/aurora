@@ -9,7 +9,9 @@ export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> &
 };
 
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
-  ({ size = 1, children, ...props }, ref) => {
+
+  ({ size = 1, children, ...rest }, ref) => {
+
     const matRef = useRef<THREE.ShaderMaterial>(null!);
 
     const groupProps = useMemo(() => {
