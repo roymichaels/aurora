@@ -535,3 +535,51 @@ All colors MUST be HSL.
 .room-archive { --primary: 260 60% 60%; --accent: 260 60% 60%; }
 .room-settings { --primary: 215 20% 60%; --accent: 215 20% 60%; }
 .room-agent { --primary: 290 70% 60%; --accent: 290 70% 60%; }
+
+/* Chat drawer and HUD grabbers */
+.drawer-grabber {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--chatbar-h) + var(--gap-h) + var(--safe-area-bottom));
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  z-index: var(--z-hud);
+}
+.drawer-grabber-icon {
+  width: 20px;
+  height: 20px;
+  color: hsl(var(--foreground) / 0.6);
+  transition: transform 0.2s ease;
+}
+.drawer-grabber.open .drawer-grabber-icon {
+  transform: rotate(180deg);
+}
+.chat-drawer {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--chatbar-h) + var(--gap-h) + var(--safe-area-bottom));
+  max-height: 70vh;
+  border-radius: 16px;
+  overflow: hidden;
+  transform: translateY(12px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.chat-drawer.open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+.hud-dock-grabber {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  bottom: auto;
+}
