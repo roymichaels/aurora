@@ -8,6 +8,7 @@ import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import { usePersonaStore } from "@/state/persona";
 import type { UserProfile } from "@/data/profile";
+import { milestoneColor } from "./palette";
 
 function makeCurve() {
   const pts = [
@@ -34,7 +35,7 @@ export default function GalaxyPath() {
     for (let i = 0; i < count; i++) {
       const t = i / (count - 1);
       const position = curve.getPointAt(t);
-      const color = new THREE.Color().setHSL(0.6 + t * 0.2, 0.6, 0.5);
+      const color = new THREE.Color(milestoneColor(i));
       samples.push({ position, color });
     }
     return samples;
