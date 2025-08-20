@@ -15,15 +15,13 @@ const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
 
     const groupProps = useMemo(() => {
       const entries = Object.entries(restProps as Record<string, unknown>).filter(
-
         ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
       );
       return Object.fromEntries(entries) as Omit<
         JSX.IntrinsicElements['group'],
         'children'
       >;
-
-    }, [props]);
+    }, [restProps]);
 
 
     const uniforms = useMemo(
