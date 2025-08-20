@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useGameStore } from "@/game/store";
 import { REWARDS } from "@/game/QuestEngine";
+import { award } from "@/game/gamification/award";
 
 export default function MindWorldDashboard() {
   const [vec, setVec] = useState({ x: 0, y: 0 });
@@ -21,7 +22,6 @@ export default function MindWorldDashboard() {
   const [joyEnabled, setJoyEnabled] = useLocalStorage<boolean>("joystick.enabled", isMobile);
 
   // Game store actions
-  const awardXP = useGameStore(s => s.awardXP);
   const completeQuest = useGameStore(s => s.completeQuest);
 
   // Toggle joystick via global event and persist
@@ -67,14 +67,14 @@ export default function MindWorldDashboard() {
     const set = (id: OverlayId | null) => setOverlay(id);
     const onMos = (e: any) => {
       const t = e.detail?.type;
-      if (t === 'startFocus') { set('focus'); completeQuest('pick-focus'); awardXP(REWARDS.completeQuest); }
-      if (t === 'startHypnosis') { set('mentor'); completeQuest('start-hypno'); awardXP(REWARDS.completeQuest); }
-      if (t === 'voiceNote') { set('library'); completeQuest('record-voice'); awardXP(REWARDS.completeQuest); }
-      if (t === 'addNote') { set('library'); completeQuest('add-note'); awardXP(REWARDS.completeQuest); }
+      if (t === 'startFocus') { set('focus'); completeQuest('pick-focus'); award({ xp: REWARDS.completeQuest }); }
+      if (t === 'startHypnosis') { set('mentor'); completeQuest('start-hypno'); award({ xp: REWARDS.completeQuest }); }
+      if (t === 'voiceNote') { set('library'); completeQuest('record-voice'); award({ xp: REWARDS.completeQuest }); }
+      if (t === 'addNote') { set('library'); completeQuest('add-note'); award({ xp: REWARDS.completeQuest }); }
     };
     window.addEventListener('mos', onMos as any);
     return () => window.removeEventListener('mos', onMos as any);
-  }, [awardXP, completeQuest]);
+  }, [completeQuest]);
 
   // Close overlay with Escape key
   useEffect(() => {

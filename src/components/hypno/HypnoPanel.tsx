@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import HypnosisLauncher from "@/components/hypnosis/HypnosisLauncher";
 import { useGameStore } from "@/game/store";
 import { REWARDS } from "@/game/QuestEngine";
+import { award } from "@/game/gamification/award";
 import { supabase } from "@/integrations/supabase/client";
 import { logEvent } from "@/integrations/supabase/gameSync";
 import { DialogTitle } from "@/components/ui/dialog";
@@ -14,7 +15,6 @@ type Props = {
 
 export default function HypnoPanel({ onClose }: Props) {
   const [open, setOpen] = useState(false);
-  const awardXP = useGameStore((s) => s.awardXP);
   const completeQuest = useGameStore((s) => s.completeQuest);
   const mood = useGameStore((s) => s.mood);
 
@@ -29,7 +29,7 @@ export default function HypnoPanel({ onClose }: Props) {
   const onStart = async () => {
     // Local: complete quest + award XP
     completeQuest('start-hypno');
-    awardXP(REWARDS.completeQuest);
+    award({ xp: REWARDS.completeQuest });
 
     // Server: create a session start row (if signed-in)
     const { data } = await supabase.auth.getUser();

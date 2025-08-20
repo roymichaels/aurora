@@ -19,6 +19,8 @@ import FastTravel from '@/components/overlays/FastTravel';
 import HypnoPanel from '@/components/hypno/HypnoPanel';
 import { useGameStore } from '@/game/store';
 import { REWARDS, DAILY_QUESTS } from '@/game/QuestEngine';
+import { award } from '@/game/gamification/award';
+import { useGamificationStore } from '@/game/gamification/store';
 type PanelKey = 'live' | 'archive' | 'control' | 'create';
 
 const panelMap: Record<
@@ -399,9 +401,8 @@ const Index = () => {
   const { user, initializing } = useSupabaseAuth();
 
   const completeQuest = useGameStore((s) => s.completeQuest);
-  const awardXP = useGameStore((s) => s.awardXP);
   const resetDaily = useGameStore((s) => s.resetDaily);
-  const incStreak = useGameStore((s) => s.incStreak);
+  const checkIn = useGamificationStore((s) => s.checkIn);
 
   // Signature moment: soft reactive spotlight following pointer
   const glowRef = useRef<HTMLDivElement>(null);
@@ -502,8 +503,8 @@ const Index = () => {
         (q) => (useGameStore.getState().quests as any)[q.id]
       );
       if (allDone && localStorage.getItem('mos.fullclear') !== today) {
-        awardXP(REWARDS.fullClear);
-        incStreak();
+        award({ xp: REWARDS.fullClear });
+        checkIn();
         try {
           localStorage.setItem('mos.fullclear', today);
         } catch {}
@@ -513,7 +514,7 @@ const Index = () => {
     const onFocus = () => {
       go('live', 'Focus', 'Starting focus session…');
       completeQuest('pick-focus');
-      awardXP(REWARDS.completeQuest);
+      award({ xp: REWARDS.completeQuest });
       checkFullClear();
     };
     const onHypno = () => {
@@ -524,13 +525,13 @@ const Index = () => {
     const onVoice = () => {
       go('archive', 'Voice', 'Opening voice notes…');
       completeQuest('record-voice');
-      awardXP(REWARDS.completeQuest);
+      award({ xp: REWARDS.completeQuest });
       checkFullClear();
     };
     const onNote = () => {
       go('create', 'Notes', 'Capture a quick note');
       completeQuest('add-note');
-      awardXP(REWARDS.completeQuest);
+      award({ xp: REWARDS.completeQuest });
       checkFullClear();
     };
     const onMos = (e: any) => {
@@ -544,7 +545,7 @@ const Index = () => {
     return () => {
       window.removeEventListener('mos', onMos as any);
     };
-  }, [gotoPanel, completeQuest, awardXP, incStreak]);
+  }, [gotoPanel, completeQuest, checkIn]);
 
   if (!initializing && !user) {
     return <LandingPage />;
