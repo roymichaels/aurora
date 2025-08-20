@@ -31,6 +31,7 @@ const initialAssistant = [
   "First—how are you feeling today, and what’s one thing you want to improve?",
 ];
 
+
 export const useOnboardingStore = create<OnboardingState>((set, get) => ({
   hasRoadmap: false,
   threadId: crypto.randomUUID(),
@@ -48,6 +49,7 @@ export const useOnboardingStore = create<OnboardingState>((set, get) => ({
       role: "user",
       content: text,
     };
+
     const current = get();
     const pending = [...current.messages, userMsg];
     set({ messages: pending, sending: true });
