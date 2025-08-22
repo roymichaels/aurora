@@ -20,8 +20,9 @@ export function useRoadmapProgress(_userId?: string | null, _roadmapId?: string 
   return useMemo(() => {
     const total = items.length || 1;
     const done = items.filter((t) => t.status === "done").length;
-    const currentIndex = items.findIndex((t) => t.status !== "done");
-    const percent = Math.round((done / total) * 100);
-    return { items, currentIndex, percent } as const;
+    const activeIndex = items.findIndex((t) => t.status !== "done");
+    const progressT = done / total;
+    const percent = Math.round(progressT * 100);
+    return { items, activeIndex, progressT, percent } as const;
   }, [items]);
 }
