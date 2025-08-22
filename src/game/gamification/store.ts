@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { db } from '@/data/db';
+import { db, type Stat } from '@/data/db';
 import { levelForXp } from './model';
 
 export type GamificationState = {
@@ -52,13 +52,14 @@ export const useGamificationStore = create<GamificationState>()(
           get().persistStats();
         },
         persistStats: async () => {
-          const { xp, level, streak } = get();
+          const { xp, level, streak, lastCheckIn } = get();
           const now = new Date().toISOString();
           await db.stats.put({
             id: 'local',
             xp,
             level,
             streak,
+            lastCheckIn,
             created_at: now,
             updated_at: now,
           });
@@ -77,3 +78,12 @@ export const useGamificationStore = create<GamificationState>()(
     }
   )
 );
+
+export function initializeGamificationStore(stat?: Stat) {
+  useGamificationStore.setState({
+    xp: stat?.xp ?? 0,
+    level: levelForXp(stat?.xp ?? 0),
+    streak: stat?.streak ?? 0,
+    lastCheckIn: stat?.lastCheckIn ?? null,
+  });
+}
