@@ -1,6 +1,7 @@
 import React, { useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars, Html } from "@react-three/drei";
+import { Environment, Stars, Html } from "@react-three/drei";
+import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import * as THREE from "three";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import PlanetNode, { NodeStatus } from "@/components/roadmap/PlanetNode";
@@ -129,7 +130,15 @@ function GalaxyScene() {
       {taskNodes.map((n) => (
         <PlanetNode key={n.id} position={n.position} color={n.color} status={n.status} onClick={() => onClick(n)} />
       ))}
-      <OrbitControls makeDefault enablePan={false} enableZoom zoomSpeed={0.6} rotateSpeed={0.6} minDistance={3.2} maxDistance={12} />
+      <PassiveOrbitControls
+        makeDefault
+        enablePan={false}
+        enableZoom
+        zoomSpeed={0.6}
+        rotateSpeed={0.6}
+        minDistance={3.2}
+        maxDistance={12}
+      />
       <AuroraFollower target={currentRef} />
     </>
   );
