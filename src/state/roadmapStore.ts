@@ -26,26 +26,13 @@ interface RoadmapState {
   setGoals: (goals: Goal[]) => void;
   addGoal: (goal: Goal) => void;
   addSprint: (goalId: string, sprint: Sprint) => void;
-  addTask: (goalId: string, sprintId: string, task: Task) => void;
+  addTask: (
+    goalId: string,
+    sprintId: string,
+    task: Task,
+    persist?: boolean
+  ) => void;
   markTaskDone: (taskId: string) => void;
-}
-
-function collectTasks(goals: Goal[]): TaskRecord[] {
-  const list: TaskRecord[] = [];
-  goals.forEach((g) =>
-    g.sprints.forEach((s) =>
-      s.tasks.forEach((t) =>
-        list.push({
-          ...t,
-          goalId: g.id,
-          goalTitle: g.title,
-          sprintId: s.id,
-          sprintTitle: s.title,
-        })
-      )
-    )
-  );
-  return list;
 }
 
 export const useRoadmapStore = create<RoadmapState>((set, get) => {
@@ -68,23 +55,15 @@ export const useRoadmapStore = create<RoadmapState>((set, get) => {
     set({ goals: Array.from(goalsMap.values()) });
   }
 
-  async function save() {
-    const tasks = collectTasks(get().goals);
-    await db.tasks.clear();
-    await db.tasks.bulkPut(tasks);
-  }
-
   void load();
 
   return {
     goals: [],
     setGoals: (goals) => {
       set({ goals });
-      void save();
     },
     addGoal: (goal) => {
       set({ goals: [...get().goals, goal] });
-      void save();
     },
     addSprint: (goalId, sprint) => {
       set({
@@ -92,9 +71,8 @@ export const useRoadmapStore = create<RoadmapState>((set, get) => {
           g.id === goalId ? { ...g, sprints: [...g.sprints, sprint] } : g
         ),
       });
-      void save();
     },
-    addTask: (goalId, sprintId, task) => {
+    addTask: (goalId, sprintId, task, persist = true) => {
       set({
         goals: get().goals.map((g) =>
           g.id === goalId
@@ -107,7 +85,17 @@ export const useRoadmapStore = create<RoadmapState>((set, get) => {
             : g
         ),
       });
-      void save();
+      if (persist) {
+        const goal = get().goals.find((g) => g.id === goalId);
+        const sprint = goal?.sprints.find((s) => s.id === sprintId);
+        void db.tasks.put({
+          ...task,
+          goalId,
+          goalTitle: goal?.title ?? "",
+          sprintId,
+          sprintTitle: sprint?.title ?? "",
+        });
+      }
     },
     markTaskDone: (taskId) => {
       set({
@@ -142,6 +130,7 @@ export async function createTask(goalId: string, sprintId: string, title: string
     sprintId,
     sprintTitle: sprint?.title ?? "",
   });
-  state.addTask(goalId, sprintId, task);
+  state.addTask(goalId, sprintId, task, false);
   return task;
 }
+
