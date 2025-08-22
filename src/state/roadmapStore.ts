@@ -212,12 +212,15 @@ export async function createTask(
   useRoadmapStore.getState().addTask(goalId, sprintId, task);
 }
 
-export const flattenRoadmap = (goals: Goal[]): Task[] => {
-  const tasks: Task[] = [];
-  goals.forEach((g) =>
-    g.sprints.forEach((s) => {
-      tasks.push(...s.tasks);
-    })
-  );
-  return tasks;
+export const flattenRoadmap = async (goals: Goal[]): Promise<Task[]> => {
+  const records = (await db.tasks.toArray()) as unknown as DBTask[];
+  const goalIds = new Set(goals.map((g) => g.id));
+  return records
+    .filter((r) => !r.goal_id || goalIds.has(r.goal_id))
+    .map((r) => ({
+      id: r.id,
+      title: r.title,
+      status: r.status as TaskStatus,
+      notes: r.notes ?? r.description ?? undefined,
+    }));
 };
