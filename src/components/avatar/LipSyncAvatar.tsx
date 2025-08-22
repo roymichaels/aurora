@@ -25,12 +25,15 @@ export function LipSyncAvatar({ size = 96 }: Props) {
     const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true, antialias: true });
     renderer.setSize(size, size);
 
+    const headGeom = new THREE.SphereGeometry(1, 32, 32);
     const headMat = new THREE.MeshStandardMaterial({ color });
     matRef.current = headMat;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), headMat);
+    const head = new THREE.Mesh(headGeom, headMat);
     scene.add(head);
 
-    const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.2, 0.1), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+    const mouthGeom = new THREE.BoxGeometry(0.6, 0.2, 0.1);
+    const mouthMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+    const mouth = new THREE.Mesh(mouthGeom, mouthMat);
     mouth.position.y = -0.3;
     head.add(mouth);
     mouthRef.current = mouth;
@@ -56,9 +59,25 @@ export function LipSyncAvatar({ size = 96 }: Props) {
       }
       renderer.render(scene, camera);
     };
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      cancelAnimationFrame(frame);
+    };
+    const handleContextRestored = () => {
+      frame = requestAnimationFrame(animate);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
+    renderer.domElement.addEventListener('webglcontextrestored', handleContextRestored);
     animate();
     return () => {
       cancelAnimationFrame(frame);
+      renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', handleContextRestored);
+      headGeom.dispose();
+      headMat.dispose();
+      mouthGeom.dispose();
+      mouthMat.dispose();
       renderer.dispose();
     };
   }, [color, size]);

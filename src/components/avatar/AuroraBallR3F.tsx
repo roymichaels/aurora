@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 
-import { useMemo, useRef, forwardRef } from 'react';
+import { useMemo, useRef, forwardRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 
 export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> & {
@@ -45,6 +45,7 @@ const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
     });
 
     const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 5), []);
+    useEffect(() => () => geometry.dispose(), [geometry]);
 
     const vertexShader = `
 uniform float uTime;

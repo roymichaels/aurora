@@ -38,10 +38,22 @@ export function HypnoSphere({ size = 256, className = "" }: Props) {
       renderer.render(scene, camera);
       frameId = requestAnimationFrame(animate);
     };
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      cancelAnimationFrame(frameId);
+    };
+    const handleContextRestored = () => {
+      frameId = requestAnimationFrame(animate);
+    };
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
+    renderer.domElement.addEventListener('webglcontextrestored', handleContextRestored);
     animate();
 
     return () => {
       cancelAnimationFrame(frameId);
+      renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
+      renderer.domElement.removeEventListener('webglcontextrestored', handleContextRestored);
       geometry.dispose();
       material.dispose();
       renderer.dispose();
