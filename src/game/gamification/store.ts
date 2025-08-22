@@ -13,25 +13,39 @@ export type GamificationState = {
 
 export const useGamificationStore = create<GamificationState>()(
   persist(
-    (set, get) => ({
-      xp: 0,
-      level: 1,
-      streak: 0,
-      lastCheckIn: null,
-      addXp: (amount) =>
+    (set, get) => {
+      const updateStats = (
+        updater: (state: GamificationState) => Partial<GamificationState>
+      ) =>
         set((state) => {
-          const xp = state.xp + Math.max(0, amount);
+          const partial = updater(state);
+          const xp = partial.xp ?? state.xp;
           const level = levelForXp(xp);
-          return { xp, level };
-        }),
-      checkIn: () =>
-        set((state) => {
-          const today = new Date().toDateString();
-          if (state.lastCheckIn === today) return {} as any;
-          const streak = state.streak + 1;
-          return { streak, lastCheckIn: today };
-        }),
-    }),
+          const lastCheckIn = partial.lastCheckIn ?? state.lastCheckIn;
+          let streak = state.streak;
+          if (partial.lastCheckIn && partial.lastCheckIn !== state.lastCheckIn) {
+            streak = state.streak + 1;
+          }
+          return { xp, level, streak, lastCheckIn };
+        });
+
+      return {
+        xp: 0,
+        level: 1,
+        streak: 0,
+        lastCheckIn: null,
+        addXp: (amount) =>
+          updateStats((state) => ({
+            xp: state.xp + Math.max(0, amount),
+          })),
+        checkIn: () =>
+          updateStats((state) => {
+            const today = new Date().toDateString();
+            if (state.lastCheckIn === today) return {} as any;
+            return { lastCheckIn: today };
+          }),
+      };
+    },
     {
       name: 'gamification',
       partialize: (s) => ({
