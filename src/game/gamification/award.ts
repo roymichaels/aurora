@@ -1,6 +1,7 @@
-import { nanoid } from "nanoid";
-import { db } from "../../data/db";
-import { useGamificationStore } from "./store";
+
+import { nanoid } from 'nanoid';
+import { db } from '@/data/db';
+import { useGamificationStore } from './store';
 
 export type AwardArgs = {
   xp?: number;
@@ -21,7 +22,7 @@ async function logAchievement(achievement: string) {
 export function award({ xp = 0, achievement }: AwardArgs) {
   if (xp > 0) {
     useGamificationStore.getState().addXp(xp);
-    useGamificationStore.getState().persistStats();
+    void useGamificationStore.getState().persistStats();
   }
   if (achievement) {
     void logAchievement(achievement);
