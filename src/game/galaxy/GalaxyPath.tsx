@@ -57,7 +57,8 @@ export default function GalaxyPath() {
   const tmp = useRef(new THREE.Vector3());
 
   useFrame((_, dt) => {
-    curve.getPointAt(progressT, tmp.current);
+    const t = Number.isFinite(progressT) ? progressT : 0;
+    curve.getPointAt(t, tmp.current);
     if (sphereRef.current) {
       sphereRef.current.position.x = THREE.MathUtils.damp(
         sphereRef.current.position.x,
