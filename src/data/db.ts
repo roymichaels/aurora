@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table } from "dexie";
 
 export interface Task {
   id: string;
@@ -24,6 +24,9 @@ export interface Stat {
   updated_at: string;
 }
 
+/**
+ * Represents a gamification achievement earned by the user.
+ */
 export interface Achievement {
   id: string;
   name: string;
@@ -39,14 +42,13 @@ export class AuroraDB extends Dexie {
   achievements!: Table<Achievement, string>;
 
   constructor() {
-    super('aurora');
+    super("aurora");
     this.version(1).stores({
-      tasks: '&id,updated_at',
-      stats: '&id',
-      achievements: '&id,earned_at',
+      tasks: "&id,updated_at",
+      stats: "&id",
+      achievements: "&id,earned_at",
     });
   }
 }
 
 export const db = new AuroraDB();
-
