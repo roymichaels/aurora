@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { db, type Task as DBTask } from "@/data/db";
 
 export type TaskStatus = "todo" | "doing" | "done";
 
@@ -76,6 +77,26 @@ export const useRoadmapStore = create<RoadmapState>()(
     }
   )
 );
+
+export async function createTask(
+  goalId: string,
+  sprintId: string,
+  task: Task
+) {
+  const now = new Date().toISOString();
+  const dbTask: DBTask = {
+    id: task.id,
+    roadmap_id: goalId,
+    title: task.title,
+    description: task.notes ?? null,
+    status: task.status,
+    user_id: "local",
+    created_at: now,
+    updated_at: now,
+  };
+  await db.tasks.put(dbTask);
+  useRoadmapStore.getState().addTask(goalId, sprintId, task);
+}
 
 export const flattenRoadmap = (goals: Goal[]): Task[] => {
   const tasks: Task[] = [];
