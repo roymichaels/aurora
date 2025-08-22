@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment, Stars, Html } from "@react-three/drei";
 import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import * as THREE from "three";
@@ -111,6 +111,21 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
   );
 }
 
+function WebGLContextManager() {
+  const { gl } = useThree();
+  useEffect(() => {
+    const handleLost = (e: Event) => e.preventDefault();
+    const handleRestored = () => {};
+    gl.domElement.addEventListener('webglcontextlost', handleLost);
+    gl.domElement.addEventListener('webglcontextrestored', handleRestored);
+    return () => {
+      gl.domElement.removeEventListener('webglcontextlost', handleLost);
+      gl.domElement.removeEventListener('webglcontextrestored', handleRestored);
+    };
+  }, [gl]);
+  return null;
+}
+
 function GalaxyScene() {
   const { taskNodes, currentPos } = useTaskNodes();
   const currentRef = useRef<THREE.Vector3 | null>(currentPos ?? null);
@@ -163,6 +178,7 @@ export default function RoadmapGalaxy() {
         camera={{ fov: 50, near: 0.1, far: 100, position: [0, 1.6, 8] }}
         style={{ width: "100%", height: "64svh" }}
       >
+        <WebGLContextManager />
         <GalaxyScene />
       </Canvas>
     </div>

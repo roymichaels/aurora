@@ -155,6 +155,11 @@ export function AuroraSphere({
     let material: MeshStandardNodeMaterial | null = null;
     let particleGeometry: THREE.BufferGeometry | null = null;
     let particleMaterial: THREE.PointsMaterial | null = null;
+    let pmrem: THREE.PMREMGenerator | null = null;
+    let envTexture: THREE.Texture | null = null;
+    let hdrTexture: THREE.DataTexture | null = null;
+    let handleContextLost: ((e: Event) => void) | null = null;
+    let handleContextRestored: (() => void) | null = null;
 
     let disposed = false;
     let resizeObserver: ResizeObserver | null = null;
@@ -235,13 +240,26 @@ export function AuroraSphere({
       mount.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
+      handleContextLost = (e: Event) => {
+        e.preventDefault();
+        cancelAnimationFrame(frameRef.current);
+      };
+      handleContextRestored = () => {
+        animate();
+      };
+      renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
+      renderer.domElement.addEventListener('webglcontextrestored', handleContextRestored);
+
       if (variant === 'full') {
-        const pmrem = new THREE.PMREMGenerator(
+        pmrem = new THREE.PMREMGenerator(
           renderer as THREE.WebGLRenderer
         );
         new RGBELoader().load('/env/hdr-small.hdr', (tex) => {
+          hdrTexture = tex;
           tex.mapping = THREE.EquirectangularReflectionMapping;
-          scene.environment = pmrem.fromEquirectangular(tex).texture;
+          const env = pmrem!.fromEquirectangular(tex);
+          envTexture = env.texture;
+          scene.environment = envTexture;
         });
       }
 
@@ -374,6 +392,16 @@ export function AuroraSphere({
         } catch {
           /* ignore */
         }
+      }
+      haloRef.current?.geometry.dispose();
+      (haloRef.current?.material as THREE.Material | undefined)?.dispose();
+      hdrTexture?.dispose();
+      envTexture?.dispose();
+      pmrem?.dispose();
+      scene.environment = null;
+      if (renderer) {
+        renderer.domElement.removeEventListener('webglcontextlost', handleContextLost!);
+        renderer.domElement.removeEventListener('webglcontextrestored', handleContextRestored!);
       }
       try {
         renderer?.dispose?.();

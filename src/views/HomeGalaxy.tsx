@@ -1,8 +1,23 @@
-import React from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { useEffect } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Environment, Stars } from "@react-three/drei";
 import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import GalaxyPath from "@/game/galaxy/GalaxyPath";
+
+function WebGLContextManager() {
+  const { gl } = useThree();
+  useEffect(() => {
+    const handleLost = (e: Event) => e.preventDefault();
+    const handleRestored = () => {};
+    gl.domElement.addEventListener('webglcontextlost', handleLost);
+    gl.domElement.addEventListener('webglcontextrestored', handleRestored);
+    return () => {
+      gl.domElement.removeEventListener('webglcontextlost', handleLost);
+      gl.domElement.removeEventListener('webglcontextrestored', handleRestored);
+    };
+  }, [gl]);
+  return null;
+}
 
 export default function HomeGalaxy() {
   return (
@@ -19,6 +34,7 @@ export default function HomeGalaxy() {
         camera={{ fov: 60, position: [0, 0, 8] }}
         style={{ width: "100%", height: "64svh" }}
       >
+        <WebGLContextManager />
         <ambientLight intensity={0.35} />
         <directionalLight position={[2, 2, 2]} intensity={1.2} />
         <Stars
