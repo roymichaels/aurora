@@ -1,6 +1,7 @@
 import React from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls, Stars } from "@react-three/drei";
+import { Environment, Stars } from "@react-three/drei";
+import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import GalaxyPath from "@/game/galaxy/GalaxyPath";
 
 export default function HomeGalaxy() {
@@ -30,7 +31,7 @@ export default function HomeGalaxy() {
           speed={0.4}
         />
         <Environment preset="night" />
-        <OrbitControls
+        <PassiveOrbitControls
           makeDefault
           enablePan={false}
           enableZoom
