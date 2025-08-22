@@ -1,6 +1,8 @@
 import { supabase } from '@/integrations/supabase/client';
 import { db, type Task, type Stat } from './db';
 
+type RemoteStat = Omit<Stat, 'lastCheckIn'> & { last_check_in?: string | null };
+
 async function upsertIfNewer<T extends { id: string; updated_at: string }>(
   table: string,
   row: T,
@@ -27,7 +29,9 @@ export async function pushToSupabase() {
 
   const stats = await db.stats.toArray();
   for (const s of stats) {
-    await upsertIfNewer<Stat>('user_stats', s);
+    const { lastCheckIn, ...rest } = s;
+    const remoteStat: RemoteStat = { ...rest, last_check_in: lastCheckIn };
+    await upsertIfNewer<RemoteStat>('user_stats', remoteStat);
   }
 }
 
@@ -46,12 +50,16 @@ export async function pullFromSupabase() {
     }
   }
 
-  const { data: remoteStats } = await supabase.from('user_stats').select('*');
+  const { data: remoteStats } = await supabase
+    .from('user_stats')
+    .select('*');
   if (remoteStats) {
-    for (const s of remoteStats as Stat[]) {
-      const local = await db.stats.get(s.id);
-      if (!local || new Date(s.updated_at) > new Date(local.updated_at)) {
-        await db.stats.put(s);
+    for (const r of remoteStats as RemoteStat[]) {
+      const { last_check_in, ...rest } = r;
+      const stat: Stat = { ...rest, lastCheckIn: last_check_in };
+      const local = await db.stats.get(stat.id);
+      if (!local || new Date(stat.updated_at) > new Date(local.updated_at)) {
+        await db.stats.put(stat);
       }
     }
   }
