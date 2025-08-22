@@ -1,6 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { db, type Task as DBTask } from "@/data/db";
+import { db, type Task as DBTaskBase } from "@/data/db";
 
 export type TaskStatus = "todo" | "doing" | "done";
 
@@ -41,35 +40,6 @@ interface DBTask extends DBTaskBase {
 }
 
 export const useRoadmapStore = create<RoadmapState>((set, get) => {
-  const loadFromDB = async () => {
-    const records = (await db.tasks.toArray()) as unknown as DBTask[];
-    const goalsMap = new Map<string, Goal>();
-    records.forEach((r) => {
-      const goalId = r.goal_id;
-      const sprintId = r.sprint_id;
-      if (!goalId || !sprintId) return;
-      let goal = goalsMap.get(goalId);
-      if (!goal) {
-        goal = { id: goalId, title: r.goal_title ?? "", sprints: [] };
-        goalsMap.set(goalId, goal);
-      }
-      let sprint = goal.sprints.find((s) => s.id === sprintId);
-      if (!sprint) {
-        sprint = { id: sprintId, title: r.sprint_title ?? "", tasks: [] };
-        goal.sprints.push(sprint);
-      }
-      sprint.tasks.push({
-        id: r.id,
-        title: r.title,
-        status: r.status as TaskStatus,
-        notes: r.notes ?? r.description ?? undefined,
-      });
-    });
-    set({ goals: Array.from(goalsMap.values()) });
-  };
-
-  void loadFromDB();
-
   return {
     goals: [],
     setGoals: (goals) => set({ goals }),
@@ -191,6 +161,36 @@ export const useRoadmapStore = create<RoadmapState>((set, get) => {
     },
   };
 });
+
+function buildGoals(records: DBTask[]): Goal[] {
+  const goalsMap = new Map<string, Goal>();
+  records.forEach((r) => {
+    const goalId = r.goal_id;
+    const sprintId = r.sprint_id;
+    if (!goalId || !sprintId) return;
+    let goal = goalsMap.get(goalId);
+    if (!goal) {
+      goal = { id: goalId, title: r.goal_title ?? "", sprints: [] };
+      goalsMap.set(goalId, goal);
+    }
+    let sprint = goal.sprints.find((s) => s.id === sprintId);
+    if (!sprint) {
+      sprint = { id: sprintId, title: r.sprint_title ?? "", tasks: [] };
+      goal.sprints.push(sprint);
+    }
+    sprint.tasks.push({
+      id: r.id,
+      title: r.title,
+      status: r.status as TaskStatus,
+      notes: r.notes ?? r.description ?? undefined,
+    });
+  });
+  return Array.from(goalsMap.values());
+}
+
+export function initializeRoadmapStore(records: DBTask[] = []) {
+  useRoadmapStore.setState({ goals: buildGoals(records) });
+}
 
 export async function createTask(
   goalId: string,
