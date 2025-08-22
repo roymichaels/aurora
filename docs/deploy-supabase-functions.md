@@ -16,3 +16,5 @@ supabase functions deploy synthesize-mission --project-ref aybygkwfqpsphhopatso 
 ```
 
 The command builds the function and makes it accessible at `/functions/v1/synthesize-mission` in your project.
+
+> **Note:** If `SUPABASE_URL` or the anonymous key is missing, sync helpers treat the app as [offline-only](./offline-mode.md) and skip remote requests.

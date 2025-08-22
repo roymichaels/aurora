@@ -18,3 +18,5 @@ python -m memory.backup import /path/to/backup.bin --passphrase "your-passphrase
 ```
 
 The command decrypts the archive and restores `memory.db` and `chroma_db` in the `memory/` directory.
+
+> **Tip:** Running without Supabase credentials enables [offline mode](./offline-mode.md), so backups contain all current data.
