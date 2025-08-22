@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { db } from '@/data/db';
 import { levelForXp } from './model';
 
 export type GamificationState = {
@@ -9,6 +10,7 @@ export type GamificationState = {
   lastCheckIn: string | null;
   addXp: (amount: number) => void;
   checkIn: () => void;
+  persistStats: () => Promise<void>;
 };
 
 export const useGamificationStore = create<GamificationState>()(
@@ -17,6 +19,7 @@ export const useGamificationStore = create<GamificationState>()(
       const updateStats = (
         updater: (state: GamificationState) => Partial<GamificationState>
       ) =>
+
         set((state) => {
           const partial = updater(state);
           const xp = partial.xp ?? state.xp;
@@ -46,6 +49,7 @@ export const useGamificationStore = create<GamificationState>()(
           }),
       };
     },
+
     {
       name: 'gamification',
       partialize: (s) => ({
