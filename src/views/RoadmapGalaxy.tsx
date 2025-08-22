@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Stars, Html } from "@react-three/drei";
 import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
@@ -40,48 +40,51 @@ function useTaskNodes() {
   const goals = useRoadmapStore((s) => s.goals);
   const progress = useRoadmapProgress();
   const goalPositions = useSpiralPositions(goals.length);
-  const taskNodes: TaskNode[] = [];
-  const taskPosMap = new Map<string, THREE.Vector3>();
 
-  goals.forEach((g, gi) => {
-    const goalPos = goalPositions[gi] ?? new THREE.Vector3();
-    const sprintCount = g.sprints.length || 1;
-    g.sprints.forEach((s, si) => {
-      const angle = (si / sprintCount) * Math.PI * 2;
-      const radius = 2.2;
-      const sprintPos = new THREE.Vector3(
-        goalPos.x + Math.cos(angle) * radius,
-        goalPos.y + Math.sin(angle * 0.5) * 0.8,
-        goalPos.z + Math.sin(angle) * radius
-      );
-      const taskCount = s.tasks.length || 1;
-      s.tasks.forEach((t, ti) => {
-        const tAngle = (ti / taskCount) * Math.PI * 2;
-        const tRadius = 0.6;
-        const taskPos = new THREE.Vector3(
-          sprintPos.x + Math.cos(tAngle) * tRadius,
-          sprintPos.y + Math.sin(tAngle * 0.5) * 0.25,
-          sprintPos.z + Math.sin(tAngle) * tRadius
+  return useMemo(() => {
+    const taskNodes: TaskNode[] = [];
+    const taskPosMap = new Map<string, THREE.Vector3>();
+
+    goals.forEach((g, gi) => {
+      const goalPos = goalPositions[gi] ?? new THREE.Vector3();
+      const sprintCount = g.sprints.length || 1;
+      g.sprints.forEach((s, si) => {
+        const angle = (si / sprintCount) * Math.PI * 2;
+        const radius = 2.2;
+        const sprintPos = new THREE.Vector3(
+          goalPos.x + Math.cos(angle) * radius,
+          goalPos.y + Math.sin(angle * 0.5) * 0.8,
+          goalPos.z + Math.sin(angle) * radius
         );
-        taskPosMap.set(t.id, taskPos);
-        const index = progress.items.findIndex((it) => it.id === t.id);
-        const status: NodeStatus =
-          index === -1
-            ? "locked"
-            : index < progress.activeIndex
-            ? "done"
-            : index === progress.activeIndex
-            ? "current"
-            : "locked";
-        const color = new THREE.Color(milestoneColor(taskNodes.length));
-        taskNodes.push({ id: t.id, title: t.title, position: taskPos, status, color });
+        const taskCount = s.tasks.length || 1;
+        s.tasks.forEach((t, ti) => {
+          const tAngle = (ti / taskCount) * Math.PI * 2;
+          const tRadius = 0.6;
+          const taskPos = new THREE.Vector3(
+            sprintPos.x + Math.cos(tAngle) * tRadius,
+            sprintPos.y + Math.sin(tAngle * 0.5) * 0.25,
+            sprintPos.z + Math.sin(tAngle) * tRadius
+          );
+          taskPosMap.set(t.id, taskPos);
+          const index = progress.items.findIndex((it) => it.id === t.id);
+          const status: NodeStatus =
+            index === -1
+              ? "locked"
+              : index < progress.activeIndex
+              ? "done"
+              : index === progress.activeIndex
+              ? "current"
+              : "locked";
+          const color = new THREE.Color(milestoneColor(taskNodes.length));
+          taskNodes.push({ id: t.id, title: t.title, position: taskPos, status, color });
+        });
       });
     });
-  });
 
-  const currentTask = progress.items[progress.activeIndex];
-  const currentPos = currentTask ? taskPosMap.get(currentTask.id) : undefined;
-  return { taskNodes, currentPos } as const;
+    const currentTask = progress.items[progress.activeIndex];
+    const currentPos = currentTask ? taskPosMap.get(currentTask.id) : undefined;
+    return { taskNodes, currentPos } as const;
+  }, [goals, goalPositions, progress.items, progress.activeIndex]);
 }
 
 function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vector3 | null> }) {
@@ -111,9 +114,9 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
 function GalaxyScene() {
   const { taskNodes, currentPos } = useTaskNodes();
   const currentRef = useRef<THREE.Vector3 | null>(currentPos ?? null);
-  useFrame(() => {
+  useEffect(() => {
     currentRef.current = currentPos ?? null;
-  });
+  }, [currentPos]);
 
   const onClick = (n: TaskNode) => {
     if (n.status === "locked") return;
