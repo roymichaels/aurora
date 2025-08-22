@@ -20,7 +20,7 @@ async function upsertIfNewer<T extends { id: string; updated_at: string }>(
 export async function pushToSupabase() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return;
+  if (!supabaseUrl || !supabaseAnonKey) return Promise.resolve();
 
   const tasks = await db.tasks.toArray();
   for (const t of tasks) {
@@ -38,7 +38,7 @@ export async function pushToSupabase() {
 export async function pullFromSupabase() {
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseAnonKey) return;
+  if (!supabaseUrl || !supabaseAnonKey) return Promise.resolve();
 
   const { data: remoteTasks } = await supabase.from('tasks').select('*');
   if (remoteTasks) {
