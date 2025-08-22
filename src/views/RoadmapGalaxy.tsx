@@ -67,9 +67,9 @@ function useTaskNodes() {
         const status: NodeStatus =
           index === -1
             ? "locked"
-            : index < progress.currentIndex
+            : index < progress.activeIndex
             ? "done"
-            : index === progress.currentIndex
+            : index === progress.activeIndex
             ? "current"
             : "locked";
         const color = new THREE.Color(milestoneColor(taskNodes.length));
@@ -78,7 +78,7 @@ function useTaskNodes() {
     });
   });
 
-  const currentTask = progress.items[progress.currentIndex];
+  const currentTask = progress.items[progress.activeIndex];
   const currentPos = currentTask ? taskPosMap.get(currentTask.id) : undefined;
   return { taskNodes, currentPos } as const;
 }
