@@ -99,7 +99,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <TTSPill />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           {appShell ? <AppRoutesWithShell /> : <LegacyRoutes />}
         </BrowserRouter>
       </TooltipProvider>
