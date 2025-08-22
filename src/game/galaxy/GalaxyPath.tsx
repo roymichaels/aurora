@@ -4,7 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 import MilestoneNode from "./MilestoneNode";
-import { AuroraSphere } from "@/components/avatar/AuroraSphere";
+import AuroraBallR3F from "@/components/avatar/AuroraBallR3F";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import { usePersonaStore } from "@/state/persona";
 import type { UserProfile } from "@/data/profile";
@@ -52,7 +52,7 @@ export default function GalaxyPath() {
     );
   };
 
-  // AuroraSphere follower
+  // Aurora avatar follower
   const sphereRef = useRef<THREE.Group>(null!);
   const tmp = useRef(new THREE.Vector3());
 
@@ -94,7 +94,7 @@ export default function GalaxyPath() {
         />
       ))}
       <group ref={sphereRef}>
-        <AuroraSphere size={0.6} />
+        <AuroraBallR3F size={0.6} />
       </group>
     </group>
   );
