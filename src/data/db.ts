@@ -24,15 +24,26 @@ export interface Stat {
   updated_at: string;
 }
 
+export interface Achievement {
+  id: string;
+  name: string;
+  description?: string | null;
+  earned_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export class AuroraDB extends Dexie {
   tasks!: Table<Task, string>;
   stats!: Table<Stat, string>;
+  achievements!: Table<Achievement, string>;
 
   constructor() {
     super('aurora');
     this.version(1).stores({
       tasks: '&id,updated_at',
       stats: '&id',
+      achievements: '&id,earned_at',
     });
   }
 }
