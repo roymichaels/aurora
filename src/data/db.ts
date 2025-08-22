@@ -17,9 +17,9 @@ export interface Task {
 export interface Stat {
   id: string;
   level: number;
-  total_xp: number;
-  streak_count: number;
-  last_active_date?: string | null;
+  xp: number;
+  streak: number;
+  lastCheckIn?: string | null;
   created_at: string;
   updated_at: string;
 }
