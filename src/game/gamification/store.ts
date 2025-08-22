@@ -37,16 +37,32 @@ export const useGamificationStore = create<GamificationState>()(
         level: 1,
         streak: 0,
         lastCheckIn: null,
-        addXp: (amount) =>
+        addXp: (amount) => {
           updateStats((state) => ({
             xp: state.xp + Math.max(0, amount),
-          })),
-        checkIn: () =>
+          }));
+          get().persistStats();
+        },
+        checkIn: () => {
           updateStats((state) => {
             const today = new Date().toDateString();
             if (state.lastCheckIn === today) return {} as any;
             return { lastCheckIn: today };
-          }),
+          });
+          get().persistStats();
+        },
+        persistStats: async () => {
+          const { xp, level, streak } = get();
+          const now = new Date().toISOString();
+          await db.stats.put({
+            id: 'local',
+            xp,
+            level,
+            streak,
+            created_at: now,
+            updated_at: now,
+          });
+        },
       };
     },
 
