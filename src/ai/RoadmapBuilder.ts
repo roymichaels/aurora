@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { Goal, Sprint, Task, useRoadmapStore } from "@/state/roadmapStore";
+import { Goal, Sprint, Task, useRoadmapStore, createTask } from "@/state/roadmapStore";
 
 /**
  * Simple helper to build and mutate the local roadmap structure.
@@ -24,10 +24,8 @@ export class RoadmapBuilder {
     return sprint;
   }
 
-  static addTask(goalId: string, sprintId: string, title: string) {
-    const task: Task = { id: `task-${nanoid()}`, title, status: "todo" };
-    useRoadmapStore.getState().addTask(goalId, sprintId, task);
-    return task;
+  static async addTask(goalId: string, sprintId: string, title: string) {
+    return await createTask(goalId, sprintId, title);
   }
 
   static markTaskDone(taskId: string) {
