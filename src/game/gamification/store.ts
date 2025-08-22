@@ -15,44 +15,41 @@ export type GamificationState = {
 
 export const useGamificationStore = create<GamificationState>()(
   persist(
-    (set, get) => ({
-      xp: 0,
-      level: 1,
-      streak: 0,
-      lastCheckIn: null,
-      addXp: (amount) => {
+    (set, get) => {
+      const updateStats = (
+        updater: (state: GamificationState) => Partial<GamificationState>
+      ) =>
+
         set((state) => {
-          const xp = state.xp + Math.max(0, amount);
+          const partial = updater(state);
+          const xp = partial.xp ?? state.xp;
           const level = levelForXp(xp);
-          return { xp, level };
+          const lastCheckIn = partial.lastCheckIn ?? state.lastCheckIn;
+          let streak = state.streak;
+          if (partial.lastCheckIn && partial.lastCheckIn !== state.lastCheckIn) {
+            streak = state.streak + 1;
+          }
+          return { xp, level, streak, lastCheckIn };
         });
-        get().persistStats();
-      },
-      checkIn: () => {
-        let updated = false;
-        set((state) => {
-          const today = new Date().toDateString();
-          if (state.lastCheckIn === today) return {} as any;
-          updated = true;
-          const streak = state.streak + 1;
-          return { streak, lastCheckIn: today };
-        });
-        if (updated) get().persistStats();
-      },
-      persistStats: async () => {
-        const { xp, level, streak } = get();
-        const now = new Date().toISOString();
-        await db.stats.put({
-          id: 'local',
-          level,
-          total_xp: xp,
-          streak_count: streak,
-          last_active_date: now,
-          created_at: now,
-          updated_at: now,
-        });
-      },
-    }),
+
+      return {
+        xp: 0,
+        level: 1,
+        streak: 0,
+        lastCheckIn: null,
+        addXp: (amount) =>
+          updateStats((state) => ({
+            xp: state.xp + Math.max(0, amount),
+          })),
+        checkIn: () =>
+          updateStats((state) => {
+            const today = new Date().toDateString();
+            if (state.lastCheckIn === today) return {} as any;
+            return { lastCheckIn: today };
+          }),
+      };
+    },
+
     {
       name: 'gamification',
       partialize: (s) => ({
