@@ -1,4 +1,8 @@
 let dataKey: Uint8Array | undefined;
+let resolveKey: ((key: Uint8Array) => void) | undefined;
+const dataKeyPromise = new Promise<Uint8Array>((resolve) => {
+  resolveKey = resolve;
+});
 
 function decodeSignedMessage(message: string): Uint8Array {
   let normalized = message.trim();
@@ -59,4 +63,11 @@ export async function deriveDataKey(signedMessage: string, passcode: string) {
 
 export function getDataKey() {
   return dataKey;
+}
+
+export function waitForDataKey(): Promise<Uint8Array> {
+  if (dataKey) {
+    return Promise.resolve(dataKey);
+  }
+  return dataKeyPromise;
 }
