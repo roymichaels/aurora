@@ -193,5 +193,27 @@ describe('voiceService', () => {
     expect(blocked).toBeNull();
     off();
   });
+
+  it('stopPlayback stops audio and resets speaking state', () => {
+    let blocked: (() => void) | null = () => {};
+    const off = voiceService.onPlaybackBlocked((cb) => {
+      blocked = cb;
+    });
+    const audio = new MockAudio();
+    voiceService['audio'] = audio as any;
+    voiceService['audios'].add(audio as any);
+    const utter = new (SpeechSynthesisUtterance as any)('hi');
+    voiceService['utter'] = utter as any;
+    useVoiceStore.getState().setSpeaking(true);
+    const cancelSpy = jest.spyOn(window.speechSynthesis, 'cancel');
+
+    voiceService.stopPlayback();
+
+    expect(audio.pause).toHaveBeenCalled();
+    expect(cancelSpy).toHaveBeenCalled();
+    expect(useVoiceStore.getState().isSpeaking).toBe(false);
+    expect(blocked).toBeNull();
+    off();
+  });
 });
 

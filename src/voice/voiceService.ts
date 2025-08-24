@@ -170,10 +170,31 @@ class VoiceService {
     useVoiceStore.getState().setThinking(true);
   }
 
-  async speak(text: string) {
-    if (!text?.trim()) return;
+  stopPlayback() {
+    this.audios.forEach((a) => {
+      a.pause();
+      a.srcObject = null;
+    });
+    this.audios.clear();
+    this.audio = null;
+    if (this.utter) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        /* ignore */
+      }
+      this.utter = null;
+    }
     this.blocked = null;
     this.emitPlaybackBlocked(null);
+    useVoiceStore.getState().setSpeaking(false);
+    bus.emit('sphere/state:set', { state: 'thinking' });
+    bus.emit('voice/state:set', { state: 'thinking' });
+  }
+
+  async speak(text: string) {
+    if (!text?.trim()) return;
+    this.stopPlayback();
     if (!this.enabled) {
       const resume = () => {
         window.removeEventListener('pointerdown', resume);
