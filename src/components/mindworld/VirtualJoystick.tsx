@@ -17,6 +17,7 @@ export default function VirtualJoystick({
   const baseRef = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(false);
   const [thumb, setThumb] = useState({ x: 0, y: 0 });
+  const centerRef = useRef({ cx: 0, cy: 0, r: 0 });
 
   useEffect(() => {
     const prevent = (e: TouchEvent) => e.preventDefault();
@@ -32,9 +33,10 @@ export default function VirtualJoystick({
     const rect = baseRef.current.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
+    const r = rect.width / 2;
+    centerRef.current = { cx, cy, r };
     const dx = clientX - cx;
     const dy = clientY - cy;
-    const r = rect.width / 2;
     const mag = Math.hypot(dx, dy);
     const clampedMag = Math.min(mag, r * 0.6);
     const nx = (dx / (r * 0.6)) * (clampedMag / (r * 0.6));
@@ -45,13 +47,10 @@ export default function VirtualJoystick({
   };
 
   const move = (clientX: number, clientY: number) => {
-    if (!active || !baseRef.current) return;
-    const rect = baseRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+    if (!active) return;
+    const { cx, cy, r } = centerRef.current;
     const dx = clientX - cx;
     const dy = clientY - cy;
-    const r = rect.width / 2;
     const mag = Math.hypot(dx, dy);
     const clampedMag = Math.min(mag, r * 0.6);
     const nx = (dx / (r * 0.6)) * (clampedMag / (r * 0.6));
