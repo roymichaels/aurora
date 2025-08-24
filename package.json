@@ -110,7 +110,6 @@
     "globals": "^15.15.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
-    "lovable-tagger": "^1.1.9",
     "postcss": "^8.5.6",
     "storybook": "^8.6.14",
     "tailwindcss": "^3.4.17",
