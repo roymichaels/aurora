@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-
 import { useMemo, useRef, forwardRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 
@@ -9,6 +8,26 @@ export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> &
 };
 
 
+const allowedGroupProps: (keyof Omit<JSX.IntrinsicElements['group'], 'children'>)[] = [
+  'position',
+  'rotation',
+  'scale',
+  'up',
+  'matrix',
+  'matrixAutoUpdate',
+  'name',
+  'quaternion',
+  'visible',
+  'castShadow',
+  'receiveShadow',
+  'userData',
+];
+
+const isAllowedGroupProp = (
+  key: string
+): key is keyof Omit<JSX.IntrinsicElements['group'], 'children'> =>
+  allowedGroupProps.includes(key as never) || key.startsWith('on');
+
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
   (props, ref) => {
     const { size = 1, children, ...restProps } = props;
@@ -16,7 +35,7 @@ const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
 
     const groupProps = useMemo(() => {
       const entries = Object.entries(restProps as Record<string, unknown>).filter(
-        ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
+        ([key]) => isAllowedGroupProp(key)
       );
       return Object.fromEntries(entries) as Omit<
         JSX.IntrinsicElements['group'],
