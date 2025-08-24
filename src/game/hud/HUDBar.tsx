@@ -36,16 +36,18 @@ export default function HUDBar() {
     <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-[var(--z-hud)]">
       {/* HUD shelf with divider line */}
       <div className="relative w-full" style={{ height: 'var(--hud-h)' }}>
-        <button
-          type="button"
-          aria-label="Toggle HUD"
-          aria-expanded={expanded}
-          onClick={toggle}
-          onKeyDown={onKeyToggle}
-          className="hud-toggle absolute right-0 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white/10 hover:bg-white/20 transition-transform duration-200"
-        >
-          <ChevronDown className={`transition-transform duration-200 ${expanded ? '' : 'rotate-180'}`} />
-        </button>
+        <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 translate-x-full z-10">
+          <button
+            type="button"
+            aria-label="Toggle HUD"
+            aria-expanded={expanded}
+            onClick={toggle}
+            onKeyDown={onKeyToggle}
+            className="hud-toggle absolute-center pointer-events-auto p-2 rounded-full bg-gray-800 focus-visible:ring transition duration-200"
+          >
+            <ChevronDown className={`transition-transform duration-200 ${expanded ? '' : 'rotate-180'}`} />
+          </button>
+        </div>
         <div className="absolute top-0 left-0 right-0 h-px bg-border/80" role="separator" aria-hidden />
         <div className={`absolute inset-x-0 bottom-2 flex justify-center pb-safe transition-transform duration-200 ${expanded ? 'translate-y-0' : 'translate-y-full'}`}
         >

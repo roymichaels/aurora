@@ -227,6 +227,13 @@ All colors MUST be HSL.
     pointer-events: none;
     background-color: hsl(var(--background));
   }
+
+  .absolute-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* Subtle animated glow for active focus card */
