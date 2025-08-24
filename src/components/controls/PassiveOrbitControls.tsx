@@ -1,26 +1,16 @@
 import { useEffect, useRef } from "react";
-import { useThree, useFrame, extend, ReactThreeFiber } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
+import { OrbitControls as OrbitControls } from "@react-three/drei";
 import type { OrbitControlsProps } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
-extend({ OrbitControls: OrbitControlsImpl });
-
-declare global {
-  namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    interface IntrinsicElements {
-      orbitControls: ReactThreeFiber.Object3DNode<
-        OrbitControlsImpl,
-        typeof OrbitControlsImpl
-      >;
-    }
-  }
-}
-
-export default function PassiveOrbitControls({ makeDefault, enableDamping = true, ...props }: OrbitControlsProps) {
-  const { camera, gl } = useThree();
-  const set = useThree((state) => state.set);
-  const get = useThree((state) => state.get);
+export default function PassiveOrbitControls({
+  args,
+  enableDamping = true,
+  makeDefault,
+  ...props
+}: OrbitControlsProps) {
+  const { gl } = useThree();
   const controlsRef = useRef<OrbitControlsImpl>(null!);
 
   // Update the controls every frame so damping and auto-rotate work correctly
@@ -31,7 +21,7 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
   // Rebind the wheel listener with `passive: true` to avoid blocking the main thread
   useEffect(() => {
     const handler = (
-      controls as OrbitControlsImpl & {
+      controlsRef.current as OrbitControlsImpl & {
         _onMouseWheel?: (event: WheelEvent) => void;
       }
     )._onMouseWheel;
@@ -48,20 +38,12 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
     return () => element.removeEventListener("wheel", handler);
   }, [gl]);
 
-  // Support Drei's `makeDefault` prop so the controls can be accessed via `useThree()`
-  useEffect(() => {
-    if (!makeDefault) return;
-    const previous = get().controls;
-    // @ts-ignore - the three fiber typings don't include our custom controls
-    set({ controls: controlsRef.current });
-    return () => set({ controls: previous });
-  }, [makeDefault, set, get]);
-
   return (
-    <orbitControls
+    <OrbitControls
       ref={controlsRef}
-      args={[camera, gl.domElement]}
+      args={args}
       enableDamping={enableDamping}
+      makeDefault={makeDefault}
       {...props}
     />
   );
