@@ -1,10 +1,11 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
+
 import * as TonWeb from 'tonweb';
 
 
-const CHALLENGE_TTL = 300; // seconds
+const CHALLENGE_TTL = 120; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_SECRET_BYTES = new TextEncoder().encode(JWT_SECRET);
 
@@ -17,6 +18,15 @@ export function composeMessage(
   return [challenge, sessionPubKey || '', exp ? String(exp) : '', scopes.join(',')].join('|');
 }
 
+const verifySchema = z.object({
+  address: z.string(),
+  signature: z.string(),
+  challenge: z.string(),
+  sessionPubKey: z.string().optional(),
+  exp: z.number().optional(),
+  scopes: z.array(z.string()).default([]),
+});
+
 const plugin: FastifyPluginAsync = async (fastify) => {
   const challenges = new Map<string, number>();
 
@@ -28,15 +38,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   });
 
   fastify.post('/auth/ton/verify', async (req, reply) => {
-    const { address, signature, challenge, sessionPubKey, scopes = [], exp } =
-      req.body as {
-        address: string;
-        signature: string;
-        challenge: string;
-        sessionPubKey?: string;
-        scopes?: string[];
-        exp?: number;
-      };
+    const body = verifySchema.safeParse(req.body);
+    if (!body.success) {
+      return reply.code(400).send({ error: 'invalid_payload' });
+    }
+    const { address, signature, challenge, sessionPubKey, scopes, exp } = body.data;
 
     const expiresAt = challenges.get(challenge);
     if (!expiresAt) {
@@ -61,7 +67,10 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
     const now = Math.floor(Date.now() / 1000);
     let tokenExp = now + 24 * 60 * 60; // default 24h
-    const payload: any = { sub: address, scopes };
+    const payload: { sub: string; scopes: string[]; session?: string } = {
+      sub: address,
+      scopes,
+    };
 
     if (sessionPubKey) {
       if (!exp || exp > Date.now() + 60 * 60 * 1000) {

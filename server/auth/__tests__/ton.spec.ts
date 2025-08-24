@@ -1,4 +1,5 @@
 import fastify from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import tonAuth, { composeMessage } from '../ton';
 // TonWeb is CommonJS; require to access utils in Jest environment
@@ -12,7 +13,7 @@ function toHex(buf: Uint8Array): string {
 }
 
 describe('TON auth', () => {
-  let app: any;
+  let app: FastifyInstance;
   let keypair: nacl.SignKeyPair;
   const secretBytes = new TextEncoder().encode('secret');
 
@@ -30,7 +31,8 @@ describe('TON auth', () => {
 
   test('rejects replayed challenges', async () => {
     const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
-    const { challenge } = start.json();
+    const { challenge, ttl } = start.json();
+    expect(ttl).toBe(120);
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
@@ -42,6 +44,7 @@ describe('TON auth', () => {
     };
     const first = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(first.statusCode).toBe(200);
+
     const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
     expect(tokenCookie).toBeDefined();
     const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
@@ -51,13 +54,23 @@ describe('TON auth', () => {
     expect(second.statusCode).toBe(400);
   });
 
+  test('rejects invalid payload', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: { address: 'bad' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
   test('rejects expired challenge', async () => {
     const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
     const { challenge, ttl } = start.json();
+    expect(ttl).toBe(120);
     const originalNow = Date.now;
     const now = originalNow();
     // simulate expiration
-    // @ts-ignore
+    // @ts-expect-error: override Date.now for test
     Date.now = () => now + (ttl + 1) * 1000;
     const msg = composeMessage(challenge, []);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
