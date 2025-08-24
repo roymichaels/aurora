@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { TonConnectUI } from "@tonconnect/ui";
 
 // Create a single TonConnectUI instance for the app
-const connector = new TonConnectUI({
+export const connector = new TonConnectUI({
   manifestUrl: "/tonconnect-manifest.json",
 });
 
