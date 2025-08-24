@@ -20,6 +20,10 @@ export default function PassiveOrbitControls({
 
   // Rebind the wheel listener with `passive: true` to avoid blocking the main thread
   useEffect(() => {
+    const controls = controlsRef.current;
+    const element = gl.domElement;
+    if (!controls || !element) return;
+
     const handler = (
       controlsRef.current as OrbitControlsImpl & {
         _onMouseWheel?: (event: WheelEvent) => void;
@@ -32,11 +36,10 @@ export default function PassiveOrbitControls({
       return;
     }
 
-    const element = gl.domElement;
     element.removeEventListener("wheel", handler);
     element.addEventListener("wheel", handler, { passive: true });
     return () => element.removeEventListener("wheel", handler);
-  }, [gl]);
+  }, [controlsRef.current, gl.domElement]);
 
   return (
     <OrbitControls
