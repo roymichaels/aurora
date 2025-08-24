@@ -6,7 +6,7 @@ import {
   type RxJsonSchema,
 } from "rxdb";
 import { RxDBAttachmentsPlugin } from "rxdb/plugins/attachments";
-import { RxDBEncryptionPlugin } from "rxdb/plugins/encryption-crypto-js";
+import { wrappedKeyEncryptionCryptoJsStorage } from "rxdb/plugins/encryption-crypto-js";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import type { Observable } from "rxjs";
 import { getDataKey } from "@/state/keyManager";
@@ -194,7 +194,6 @@ export type Collections = {
 };
 
 addRxPlugin(RxDBAttachmentsPlugin);
-addRxPlugin(RxDBEncryptionPlugin);
 
 let dbPromise: Promise<RxDatabase<Collections>> | null = null;
 
@@ -203,9 +202,12 @@ async function getDatabase(): Promise<RxDatabase<Collections>> {
     const key = getDataKey();
     if (!key) throw new Error("Data key not set");
     const password = btoa(String.fromCharCode(...key));
+    const storage = wrappedKeyEncryptionCryptoJsStorage({
+      storage: getRxStorageDexie(),
+    });
     dbPromise = createRxDatabase<Collections>({
       name: "brain",
-      storage: getRxStorageDexie(),
+      storage,
       password,
     }).then(async (db) => {
       await db.addCollections({
