@@ -2,15 +2,20 @@ import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import tonAuth, { composeMessage } from '../ton';
-import * as nacl from 'tweetnacl';
+// TonWeb is CommonJS; require to access utils in Jest environment
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const TonWeb = require('tonweb');
+const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
+
 
 function toHex(buf: Uint8Array): string {
-  return Buffer.from(buf).toString('hex');
+  return bytesToHex(buf);
 }
 
 describe('TON auth', () => {
   let app: FastifyInstance;
   let keypair: nacl.SignKeyPair;
+  const secretBytes = new TextEncoder().encode('secret');
 
   beforeEach(async () => {
     app = fastify();
@@ -30,7 +35,7 @@ describe('TON auth', () => {
     expect(ttl).toBe(120);
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const payload = {
       address: toHex(keypair.publicKey),
       challenge,
@@ -39,7 +44,12 @@ describe('TON auth', () => {
     };
     const first = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(first.statusCode).toBe(200);
-    expect(first.cookies.find((c) => c.name === 'sid')).toBeDefined();
+
+    const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
+    expect(tokenCookie).toBeDefined();
+    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
+    expect(tokenPayload.scopes).toEqual(scopes);
     const second = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(second.statusCode).toBe(400);
   });
@@ -63,7 +73,7 @@ describe('TON auth', () => {
     // @ts-expect-error: override Date.now for test
     Date.now = () => now + (ttl + 1) * 1000;
     const msg = composeMessage(challenge, []);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const res = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
@@ -83,7 +93,7 @@ describe('TON auth', () => {
     const { challenge } = start.json();
     const signedScopes = ['read'];
     const msg = composeMessage(challenge, signedScopes);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const res = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',

@@ -70,7 +70,6 @@
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "jose": "^6.0.13",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.462.0",
     "nanoid": "^3.3.11",
     "next": "14.2.31",
