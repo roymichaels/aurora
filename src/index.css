@@ -227,6 +227,13 @@ All colors MUST be HSL.
     pointer-events: none;
     background-color: hsl(var(--background));
   }
+
+  .absolute-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
 }
 
 /* Subtle animated glow for active focus card */
@@ -539,27 +546,6 @@ All colors MUST be HSL.
 .room-agent { --primary: 290 70% 60%; --accent: 290 70% 60%; }
 
 /* Chat drawer and HUD grabbers */
-.drawer-grabber {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--chatbar-h) + var(--gap-h) + var(--safe-area-bottom));
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: auto;
-  z-index: var(--z-hud);
-}
-.drawer-grabber-icon {
-  width: 20px;
-  height: 20px;
-  color: hsl(var(--foreground) / 0.6);
-  transition: transform 0.2s ease;
-}
-.drawer-grabber.open .drawer-grabber-icon {
-  transform: rotate(180deg);
-}
 .chat-drawer {
   position: fixed;
   left: 12px;
