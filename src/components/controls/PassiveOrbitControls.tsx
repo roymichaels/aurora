@@ -13,6 +13,7 @@ export default function PassiveOrbitControls({
   enableDamping = true,
   ...props
 }: OrbitControlsProps) {
+
   const { camera, gl } = useThree();
   const set = useThree((state) => state.set);
   const get = useThree((state) => state.get);
@@ -46,12 +47,12 @@ export default function PassiveOrbitControls({
   }, [makeDefault, set, get]);
 
   return (
-    <DreiOrbitControls
+      <DreiOrbitControls
       ref={controlsRef}
       args={[camera, gl.domElement]}
       enableDamping={enableDamping}
       makeDefault={makeDefault}
-      {...props}
+      {...safeProps}
     />
   );
 }
