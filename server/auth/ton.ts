@@ -3,8 +3,9 @@ import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import TonWeb from 'tonweb';
-
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const TonWeb = require('tonweb');
 
 const CHALLENGE_TTL = 120; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -97,6 +98,17 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     reply.setCookie('sid', token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: req.protocol === 'https',
+      path: '/',
+    });
+    return reply.send({ ok: true });
+  });
+
+  fastify.post('/auth/logout', async (req, reply) => {
+    reply.clearCookie('sid', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: req.protocol === 'https',
       path: '/',
     });
     return reply.send({ ok: true });

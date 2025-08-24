@@ -3,9 +3,11 @@ import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
 import tonAuth, { composeMessage } from '../ton';
-let nacl: any;
-let bytesToHex: any;
-let stringToBytes: any;
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const TonWeb = require('tonweb');
+const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
+
 
 
 function toHex(buf: Uint8Array): string {
@@ -24,7 +26,7 @@ describe('TON auth', () => {
   });
 
   beforeEach(async () => {
-    app = fastify();
+    app = fastify({ trustProxy: true });
     await app.register(cookie);
     await app.register(tonAuth);
     await app.ready();
@@ -35,7 +37,95 @@ describe('TON auth', () => {
     await app.close();
   });
 
-  test('accepts valid signature and sets cookie', async () => {
+  test('sets cookie attributes over HTTP', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const scopes = ['read'];
+    const msg = composeMessage(challenge, scopes);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes,
+        signature: sig,
+      },
+      protocol: 'http',
+    });
+    expect(res.statusCode).toBe(200);
+    const cookie = res.cookies.find((c: any) => c.name === 'sid');
+    expect(cookie).toBeDefined();
+    expect(cookie.httpOnly).toBe(true);
+    expect(cookie.sameSite).toBe('Lax');
+    expect(cookie.secure).toBeUndefined();
+  });
+
+  test('sets secure cookie over HTTPS', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const scopes = ['read'];
+    const msg = composeMessage(challenge, scopes);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes,
+        signature: sig,
+      },
+      protocol: 'https',
+      headers: { 'x-forwarded-proto': 'https' },
+    });
+    expect(res.statusCode).toBe(200);
+    const cookie = res.cookies.find((c: any) => c.name === 'sid');
+    expect(cookie).toBeDefined();
+    expect(cookie.httpOnly).toBe(true);
+    expect(cookie.sameSite).toBe('Lax');
+    expect(cookie.secure).toBe(true);
+  });
+
+  test('clears cookie on logout', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const login = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+      protocol: 'https',
+      headers: { 'x-forwarded-proto': 'https' },
+    });
+    const token = login.cookies.find((c: any) => c.name === 'sid');
+    expect(token).toBeDefined();
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/logout',
+      cookies: { sid: token.value },
+      protocol: 'https',
+      headers: { 'x-forwarded-proto': 'https' },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ ok: true });
+    const cleared = res.cookies.find((c: any) => c.name === 'sid');
+    expect(cleared).toBeDefined();
+    expect(cleared.value).toBe('');
+    expect(cleared.expires.toISOString()).toBe('1970-01-01T00:00:00.000Z');
+    expect(cleared.secure).toBe(true);
+  });
+
+  test('rejects replayed challenges', async () => {
+
     const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
     const { challenge, ttl } = start.json();
     expect(ttl).toBe(120);
