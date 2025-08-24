@@ -1,4 +1,3 @@
-import Dexie, { type Table } from "dexie";
 import {
   addRxPlugin,
   createRxDatabase,
@@ -48,27 +47,6 @@ export interface Achievement {
   updated_at: string;
 }
 
-export class AuroraDB extends Dexie {
-  tasks!: Table<RoadmapTask, string>;
-  stats!: Table<Stat, string>;
-  achievements!: Table<Achievement, string>;
-
-  constructor() {
-    super("aurora");
-    this.version(1).stores({
-      tasks: "&id,updated_at",
-      stats: "&id",
-      achievements: "&id,earned_at",
-    });
-  }
-}
-
-export const db = new AuroraDB();
-
-// ----- RxDB setup for journal, focus sessions, simple tasks and goals -----
-addRxPlugin(RxDBAttachmentsPlugin);
-addRxPlugin(RxDBEncryptionPlugin);
-
 export interface JournalEntry {
   id: string;
   content: string;
@@ -94,6 +72,62 @@ export interface GoalItem {
   title: string;
   status: string;
 }
+
+// ---- Schemas --------------------------------------------------------------
+
+const roadmapTaskSchema: RxJsonSchema<RoadmapTask> = {
+  title: "roadmap task schema",
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    roadmap_id: { type: "string" },
+    title: { type: "string" },
+    description: { type: "string" },
+    status: { type: "string" },
+    due_at: { type: "string" },
+    completed_at: { type: "string" },
+    position: { type: "number" },
+    user_id: { type: "string" },
+    created_at: { type: "string" },
+    updated_at: { type: "string" },
+  },
+  required: ["id", "roadmap_id", "title", "status", "user_id", "created_at", "updated_at"],
+};
+
+const statSchema: RxJsonSchema<Stat> = {
+  title: "stat schema",
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    level: { type: "number" },
+    xp: { type: "number" },
+    streak: { type: "number" },
+    lastCheckIn: { type: "string" },
+    created_at: { type: "string" },
+    updated_at: { type: "string" },
+  },
+  required: ["id", "level", "xp", "streak", "created_at", "updated_at"],
+};
+
+const achievementSchema: RxJsonSchema<Achievement> = {
+  title: "achievement schema",
+  version: 0,
+  primaryKey: "id",
+  type: "object",
+  properties: {
+    id: { type: "string" },
+    name: { type: "string" },
+    description: { type: "string" },
+    earned_at: { type: "string" },
+    created_at: { type: "string" },
+    updated_at: { type: "string" },
+  },
+  required: ["id", "name", "earned_at", "created_at", "updated_at"],
+};
 
 const journalSchema: RxJsonSchema<JournalEntry> = {
   title: "journal schema",
@@ -150,15 +184,21 @@ const goalSchema: RxJsonSchema<GoalItem> = {
 };
 
 export type Collections = {
+  roadmap_tasks: RxCollection<RoadmapTask>;
+  stats: RxCollection<Stat>;
+  achievements: RxCollection<Achievement>;
   journal: RxCollection<JournalEntry>;
   focus_sessions: RxCollection<FocusSession>;
-  tasks: RxCollection<TaskItem>;
+  simple_tasks: RxCollection<TaskItem>;
   goals: RxCollection<GoalItem>;
 };
 
+addRxPlugin(RxDBAttachmentsPlugin);
+addRxPlugin(RxDBEncryptionPlugin);
+
 let dbPromise: Promise<RxDatabase<Collections>> | null = null;
 
-export async function createDatabase(): Promise<RxDatabase<Collections>> {
+async function getDatabase(): Promise<RxDatabase<Collections>> {
   if (!dbPromise) {
     const key = getDataKey();
     if (!key) throw new Error("Data key not set");
@@ -169,9 +209,12 @@ export async function createDatabase(): Promise<RxDatabase<Collections>> {
       password,
     }).then(async (db) => {
       await db.addCollections({
+        roadmap_tasks: { schema: roadmapTaskSchema },
+        stats: { schema: statSchema },
+        achievements: { schema: achievementSchema },
         journal: { schema: journalSchema },
         focus_sessions: { schema: focusSessionSchema },
-        tasks: { schema: taskSchema },
+        simple_tasks: { schema: taskSchema },
         goals: { schema: goalSchema },
       });
       return db;
@@ -180,14 +223,64 @@ export async function createDatabase(): Promise<RxDatabase<Collections>> {
   return dbPromise;
 }
 
-// Journal helpers
+export const db = {
+  open: async () => {
+    await getDatabase();
+  },
+  tasks: {
+    async put(task: RoadmapTask) {
+      const db = await getDatabase();
+      await db.roadmap_tasks.upsert(task);
+    },
+    async get(id: string) {
+      const db = await getDatabase();
+      const doc = await db.roadmap_tasks.findOne(id).exec();
+      return doc?.toJSON();
+    },
+    async toArray() {
+      const db = await getDatabase();
+      const docs = await db.roadmap_tasks.find().exec();
+      return docs.map((d) => d.toJSON());
+    },
+  },
+  stats: {
+    async put(stat: Stat) {
+      const db = await getDatabase();
+      await db.stats.upsert(stat);
+    },
+    async get(id: string) {
+      const db = await getDatabase();
+      const doc = await db.stats.findOne(id).exec();
+      return doc?.toJSON();
+    },
+    async toArray() {
+      const db = await getDatabase();
+      const docs = await db.stats.find().exec();
+      return docs.map((d) => d.toJSON());
+    },
+  },
+  achievements: {
+    async add(ach: Achievement) {
+      const db = await getDatabase();
+      return db.achievements.insert(ach);
+    },
+    async toArray() {
+      const db = await getDatabase();
+      const docs = await db.achievements.find().exec();
+      return docs.map((d) => d.toJSON());
+    },
+  },
+};
+
+// ---- Journal helpers ------------------------------------------------------
+
 export async function addJournal(entry: JournalEntry) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   return db.journal.insert(entry);
 }
 
 export async function getJournal(id: string) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   return db.journal.findOne(id).exec();
 }
 
@@ -202,14 +295,15 @@ export async function removeJournal(id: string) {
 }
 
 export async function journal$(): Promise<Observable<JournalEntry[]>> {
-  const db = await createDatabase();
+  const db = await getDatabase();
   // @ts-ignore - rxdb observable type
   return db.journal.find().$;
 }
 
-// Focus session helpers
+// ---- Focus session helpers -----------------------------------------------
+
 export async function addFocusSession(entry: FocusSession) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   return db.focus_sessions.insert(entry);
 }
 
@@ -217,67 +311,69 @@ export async function updateFocusSession(
   id: string,
   data: Partial<FocusSession>,
 ) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   const doc = await db.focus_sessions.findOne(id).exec();
   return doc?.update({ $set: data });
 }
 
 export async function removeFocusSession(id: string) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   const doc = await db.focus_sessions.findOne(id).exec();
   return doc?.remove();
 }
 
 export async function focusSessions$(): Promise<Observable<FocusSession[]>> {
-  const db = await createDatabase();
+  const db = await getDatabase();
   // @ts-ignore
   return db.focus_sessions.find().$;
 }
 
-// Simple task helpers
+// ---- Simple task helpers --------------------------------------------------
+
 export async function addTask(entry: TaskItem) {
-  const db = await createDatabase();
-  return db.tasks.insert(entry);
+  const db = await getDatabase();
+  return db.simple_tasks.insert(entry);
 }
 
 export async function updateTask(id: string, data: Partial<TaskItem>) {
-  const db = await createDatabase();
-  const doc = await db.tasks.findOne(id).exec();
+  const db = await getDatabase();
+  const doc = await db.simple_tasks.findOne(id).exec();
   return doc?.update({ $set: data });
 }
 
 export async function removeTask(id: string) {
-  const db = await createDatabase();
-  const doc = await db.tasks.findOne(id).exec();
+  const db = await getDatabase();
+  const doc = await db.simple_tasks.findOne(id).exec();
   return doc?.remove();
 }
 
 export async function tasks$(): Promise<Observable<TaskItem[]>> {
-  const db = await createDatabase();
+  const db = await getDatabase();
   // @ts-ignore
-  return db.tasks.find().$;
+  return db.simple_tasks.find().$;
 }
 
-// Goal helpers
+// ---- Goal helpers ---------------------------------------------------------
+
 export async function addGoal(entry: GoalItem) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   return db.goals.insert(entry);
 }
 
 export async function updateGoal(id: string, data: Partial<GoalItem>) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   const doc = await db.goals.findOne(id).exec();
   return doc?.update({ $set: data });
 }
 
 export async function removeGoal(id: string) {
-  const db = await createDatabase();
+  const db = await getDatabase();
   const doc = await db.goals.findOne(id).exec();
   return doc?.remove();
 }
 
 export async function goals$(): Promise<Observable<GoalItem[]>> {
-  const db = await createDatabase();
+  const db = await getDatabase();
   // @ts-ignore
   return db.goals.find().$;
 }
