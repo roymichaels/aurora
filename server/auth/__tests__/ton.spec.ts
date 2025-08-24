@@ -3,10 +3,14 @@ import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
 import tonAuth, { composeMessage } from '../ton';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const TonWeb = require('tonweb');
-const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
+
+import type TonWeb from 'tonweb';
+import type { SignKeyPair } from 'tweetnacl';
+
+type TonUtils = typeof TonWeb.utils;
+let nacl: TonUtils['nacl'];
+let bytesToHex: TonUtils['bytesToHex'];
+let stringToBytes: TonUtils['stringToBytes'];
 
 
 
@@ -16,13 +20,12 @@ function toHex(buf: Uint8Array): string {
 
 describe('TON auth', () => {
   let app: FastifyInstance;
-  let keypair: any;
+  let keypair: SignKeyPair;
   const secretBytes = new TextEncoder().encode('secret');
 
   beforeAll(async () => {
-    const TonWeb = await import('tonweb');
-    const utils = (TonWeb as any).utils || (TonWeb as any).default.utils;
-    ({ nacl, bytesToHex, stringToBytes } = utils);
+    const TonWebMod = (await import('tonweb')).default;
+    ({ nacl, bytesToHex, stringToBytes } = TonWebMod.utils);
   });
 
   beforeEach(async () => {
@@ -55,7 +58,7 @@ describe('TON auth', () => {
       protocol: 'http',
     });
     expect(res.statusCode).toBe(200);
-    const cookie = res.cookies.find((c: any) => c.name === 'sid');
+    const cookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
     expect(cookie).toBeDefined();
     expect(cookie.httpOnly).toBe(true);
     expect(cookie.sameSite).toBe('Lax');
@@ -81,7 +84,7 @@ describe('TON auth', () => {
       headers: { 'x-forwarded-proto': 'https' },
     });
     expect(res.statusCode).toBe(200);
-    const cookie = res.cookies.find((c: any) => c.name === 'sid');
+    const cookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
     expect(cookie).toBeDefined();
     expect(cookie.httpOnly).toBe(true);
     expect(cookie.sameSite).toBe('Lax');
@@ -105,7 +108,7 @@ describe('TON auth', () => {
       protocol: 'https',
       headers: { 'x-forwarded-proto': 'https' },
     });
-    const token = login.cookies.find((c: any) => c.name === 'sid');
+    const token = login.cookies.find((c: { name: string }) => c.name === 'sid');
     expect(token).toBeDefined();
 
     const res = await app.inject({
@@ -117,7 +120,7 @@ describe('TON auth', () => {
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
-    const cleared = res.cookies.find((c: any) => c.name === 'sid');
+    const cleared = res.cookies.find((c: { name: string }) => c.name === 'sid');
     expect(cleared).toBeDefined();
     expect(cleared.value).toBe('');
     expect(cleared.expires.toISOString()).toBe('1970-01-01T00:00:00.000Z');
@@ -143,7 +146,7 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(200);
-    const tokenCookie = res.cookies.find((c: any) => c.name === 'sid');
+    const tokenCookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
     expect(tokenCookie).toBeDefined();
     const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
     expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
@@ -257,7 +260,7 @@ describe('TON auth', () => {
         signature: sig1,
       },
     });
-    const t1 = first.cookies.find((c: any) => c.name === 'sid');
+    const t1 = first.cookies.find((c: { name: string }) => c.name === 'sid');
     const { payload: p1 } = await jwtVerify(t1.value, secretBytes);
 
     const start2 = await app.inject({ method: 'POST', url: '/auth/ton/start' });
@@ -274,7 +277,7 @@ describe('TON auth', () => {
         signature: sig2,
       },
     });
-    const t2 = second.cookies.find((c: any) => c.name === 'sid');
+    const t2 = second.cookies.find((c: { name: string }) => c.name === 'sid');
     const { payload: p2 } = await jwtVerify(t2.value, secretBytes);
     // second token should have a later expiry, proving rotation
     expect(p2.exp).toBeGreaterThan(p1.exp);
@@ -301,7 +304,7 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(200);
-    const tokenCookie = res.cookies.find((c: any) => c.name === 'sid');
+    const tokenCookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
     const { payload } = await jwtVerify(tokenCookie.value, secretBytes);
     expect(payload.session).toBe(session);
     expect(payload.sessionExp).toBe(Math.floor(exp / 1000));

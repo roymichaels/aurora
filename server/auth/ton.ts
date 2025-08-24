@@ -3,13 +3,14 @@ import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const TonWeb = require('tonweb');
+// tonweb is a CommonJS module so we load it via dynamic import
+const TonWeb = (await import('tonweb')).default;
 
 const CHALLENGE_TTL = 120; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_SECRET_BYTES = new TextEncoder().encode(JWT_SECRET);
+
+const { stringToBytes, hexToBytes, nacl } = TonWeb.utils;
 
 export function composeMessage(
   challenge: string,
@@ -56,7 +57,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
     challenges.delete(challenge);
 
-    const { stringToBytes, hexToBytes, nacl } = TonWeb.utils;
     const message = composeMessage(challenge, scopes, sessionPubKey, exp);
     const ok = nacl.sign.detached.verify(
       stringToBytes(message),
