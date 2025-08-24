@@ -7,7 +7,7 @@ import {
   type RxJsonSchema,
 } from "rxdb";
 import { RxDBAttachmentsPlugin } from "rxdb/plugins/attachments";
-import { RxDBEncryptionPlugin } from "rxdb/plugins/encryption";
+import { RxDBEncryptionPlugin } from "rxdb/plugins/encryption-crypto-js";
 import { getRxStorageDexie } from "rxdb/plugins/storage-dexie";
 import type { Observable } from "rxjs";
 import { getDataKey } from "@/state/keyManager";
