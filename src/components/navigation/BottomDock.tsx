@@ -55,7 +55,7 @@ export default function BottomDock() {
       ref={ref}
       className={cn(
         "fixed left-0 right-0 mx-3 select-none",
-        "transition-[transform,opacity] duration-[250ms] ease-in-out",
+        "transition-[transform,opacity] duration-300 ease-in-out",
         expanded ? "pb-3" : "pb-2"
       )}
       style={{
@@ -86,7 +86,7 @@ export default function BottomDock() {
 
           <div
             className={cn(
-              "grid overflow-hidden transition-[max-height,opacity] duration-[250ms] ease-in-out",
+              "grid overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out",
               expanded ? "max-h-40 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
             )}
           >
