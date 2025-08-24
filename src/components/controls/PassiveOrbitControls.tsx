@@ -6,8 +6,8 @@ import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 extend({ OrbitControls: OrbitControlsImpl });
 
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
     interface IntrinsicElements {
       orbitControls: ReactThreeFiber.Object3DNode<
         OrbitControlsImpl,
@@ -30,6 +30,10 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
 
   // Rebind the wheel listener with `passive: true` to avoid blocking the main thread
   useEffect(() => {
+    const controls = controlsRef.current;
+    const element = gl.domElement;
+    if (!controls || !element) return;
+
     const handler = (
       controls as OrbitControlsImpl & {
         _onMouseWheel?: (event: WheelEvent) => void;
@@ -42,17 +46,16 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
       return;
     }
 
-    const element = gl.domElement;
     element.removeEventListener("wheel", handler);
     element.addEventListener("wheel", handler, { passive: true });
     return () => element.removeEventListener("wheel", handler);
-  }, [gl]);
+  }, [controlsRef.current, gl.domElement]);
 
   // Support Drei's `makeDefault` prop so the controls can be accessed via `useThree()`
   useEffect(() => {
     if (!makeDefault) return;
     const previous = get().controls;
-    // @ts-ignore - the three fiber typings don't include our custom controls
+    // @ts-expect-error - the three fiber typings don't include our custom controls
     set({ controls: controlsRef.current });
     return () => set({ controls: previous });
   }, [makeDefault, set, get]);
