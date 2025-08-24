@@ -40,7 +40,6 @@
   --hud-gap: var(--gap-h);
   --kb-offset: 0px; /* keyboard height offset */
   --compass-bottom: calc(var(--dock-h) + var(--chatbar-h) + var(--gap-h) + var(--safe-area-bottom));
-  --chat-drawer-max-h: calc(100vh - var(--dock-h) - var(--chatbar-h) - var(--gap-h) - var(--safe-area-bottom));
 }
 
 /* Ethereal dimension */
