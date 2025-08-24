@@ -8,7 +8,11 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Lock files are intentionally ignored to avoid merge churn
 bun.lockb
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
 dist
 dist-ssr
 *.local
