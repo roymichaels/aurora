@@ -255,13 +255,35 @@ export function AuroraSphere({
         pmrem = new THREE.PMREMGenerator(
           renderer as THREE.WebGLRenderer
         );
-        new RGBELoader().load('/env/hdr-small.hdr', (tex) => {
-          hdrTexture = tex;
-          tex.mapping = THREE.EquirectangularReflectionMapping;
-          const env = pmrem!.fromEquirectangular(tex);
-          envTexture = env.texture;
-          scene.environment = envTexture;
-        });
+        const hdrUrl = '/env/hdr-small.hdr';
+        new RGBELoader().load(
+          hdrUrl,
+          (tex) => {
+            hdrTexture = tex;
+            tex.mapping = THREE.EquirectangularReflectionMapping;
+            const env = pmrem!.fromEquirectangular(tex);
+            envTexture = env.texture;
+            scene.environment = envTexture;
+          },
+          undefined,
+          (err) => {
+            console.error('Failed to load HDR environment', err);
+            const data = new Uint8Array([128, 128, 128]);
+            const fallback = new THREE.DataTexture(
+              data,
+              1,
+              1,
+              THREE.RGBFormat
+            );
+            fallback.colorSpace = THREE.SRGBColorSpace;
+            fallback.mapping = THREE.EquirectangularReflectionMapping;
+            fallback.needsUpdate = true;
+            hdrTexture = fallback;
+            const env = pmrem!.fromEquirectangular(fallback);
+            envTexture = env.texture;
+            scene.environment = envTexture;
+          }
+        );
       }
 
       const resize = () => {
