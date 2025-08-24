@@ -71,7 +71,11 @@ export function ChatDrawer() {
         className={cn('chat-drawer glass-maple', open && 'open')}
         style={{ zIndex: 75 }}
       >
-        <div ref={contentRef} className="p-4 space-y-2 overflow-y-auto max-h-[70vh]">
+        <div
+          ref={contentRef}
+          className="flex-1 p-4 space-y-2 overflow-y-auto"
+          style={{ maxHeight: 'var(--chat-drawer-max-h)' }}
+        >
           {messages.map((m) => (
             <div key={m.id} className={cn('flex', m.role === 'assistant' ? 'justify-start' : 'justify-end')}>
               <div

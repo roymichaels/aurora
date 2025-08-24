@@ -564,7 +564,9 @@ All colors MUST be HSL.
   left: 12px;
   right: 12px;
   bottom: calc(var(--chatbar-h) + var(--gap-h) + var(--safe-area-bottom));
-  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  max-height: var(--chat-drawer-max-h);
   border-radius: 16px;
   overflow: hidden;
   transform: translateY(12px);
