@@ -7,8 +7,7 @@ import ViewHeader from "@/components/view/ViewHeader";
 import { Flame, Mic, MicOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceIO } from "@/voice/voiceio";
-import { memoryStore } from "@/memory/indexedDbMemory";
-import { useProgressStore } from "@/state/progress";
+import { addJournal, createDatabase, type JournalEntry } from "@/data/db";
 import { auroraChat } from "@/utils/auroraChat";
 
 const moods = [
@@ -17,6 +16,19 @@ const moods = [
   { id: "bad", label: "Bad" },
 ];
 
+function calcStreak(entries: JournalEntry[]): number {
+  const days = new Set(entries.map((e) => new Date(e.ts).toDateString()));
+  let count = 0;
+  const today = new Date();
+  for (;;) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - count);
+    if (days.has(day.toDateString())) count++;
+    else break;
+  }
+  return count;
+}
+
 export default function JournalView() {
   const [entry, setEntry] = useState("");
   const [lastEntry, setLastEntry] = useState("");
@@ -24,29 +36,48 @@ export default function JournalView() {
   const [showSummary, setShowSummary] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [listening, setListening] = useState(false);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [streak, setStreak] = useState(0);
   const voiceRef = useRef<VoiceIO | null>(null);
-
-  const addNote = useProgressStore((s) => s.addNote);
-  const notes = useProgressStore((s) => s.notes);
-  const streak = useProgressStore((s) => s.streak);
 
   useEffect(() => {
     voiceRef.current = new VoiceIO({
       onPartial: (t) => setEntry((e) => e + t),
       onFinal: (t) => setEntry((e) => e + t),
-      onSpeakingChange: () => {},
+      onSpeakingChange: () => {
+        /* noop */
+        return;
+      },
       onError: (err) =>
         toast({
           title: "Voice error",
           description: String(err),
-          variant: "destructive" as any,
+          variant: "destructive",
         }),
     });
     return () => {
       try {
         voiceRef.current?.stopListening();
-      } catch {}
+      } catch (e) {
+        void e;
+      }
     };
+  }, []);
+
+  useEffect(() => {
+    let sub: { unsubscribe: () => void } | undefined;
+    createDatabase().then((db) => {
+      sub = db.journal
+        .find()
+        .sort({ ts: "desc" })
+        .limit(100).$
+        .subscribe((docs) => {
+          const filtered = docs.filter((d) => d.tags?.includes("journal"));
+          setEntries(filtered.slice(0, 5));
+          setStreak(calcStreak(filtered));
+        });
+    });
+    return () => sub?.unsubscribe();
   }, []);
 
   const toggleMic = async () => {
@@ -63,7 +94,7 @@ export default function JournalView() {
       toast({
         title: "Mic permission needed",
         description: "Please allow microphone access.",
-        variant: "destructive" as any,
+        variant: "destructive",
       });
     }
   };
@@ -74,11 +105,13 @@ export default function JournalView() {
       toast({ title: "Empty entry", description: "Type or speak something first." });
       return;
     }
-    await memoryStore.add("episodic", "user", content, {
+    await addJournal({
+      id: crypto.randomUUID(),
+      content,
       mood: mood || undefined,
+      ts: Date.now(),
       tags: ["journal"],
     });
-    addNote({ text: content, ts: Date.now(), mood: mood || undefined });
     setLastEntry(content);
     setEntry("");
     setMood(null);
@@ -96,7 +129,10 @@ export default function JournalView() {
         },
         { role: "user", content: lastEntry },
       ]);
-      await memoryStore.add("semantic", "assistant", content, {
+      await addJournal({
+        id: crypto.randomUUID(),
+        content,
+        ts: Date.now(),
         tags: ["plan", "summary"],
       });
       toast({ title: "Plan updated", description: "Summary added to plan." });
@@ -181,24 +217,20 @@ export default function JournalView() {
 
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Recent entries</h2>
-        {notes.length === 0 && (
+        {entries.length === 0 && (
           <p className="text-sm text-muted-foreground">No entries yet.</p>
         )}
-        {notes
-          .slice()
-          .reverse()
-          .slice(0, 5)
-          .map((n) => (
-            <Card key={n.ts}>
-              <CardContent className="p-4 space-y-1">
-                <div className="text-sm">{n.text}</div>
-                <div className="text-xs text-muted-foreground flex justify-between">
-                  <span>{n.mood}</span>
-                  <span>{new Date(n.ts).toLocaleDateString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {entries.map((n) => (
+          <Card key={n.ts}>
+            <CardContent className="p-4 space-y-1">
+                <div className="text-sm">{n.content}</div>
+              <div className="text-xs text-muted-foreground flex justify-between">
+                <span>{n.mood}</span>
+                <span>{new Date(n.ts).toLocaleDateString()}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </section>
     </div>
   );
