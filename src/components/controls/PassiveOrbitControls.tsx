@@ -6,13 +6,14 @@ import {
 } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
-extend({ OrbitControls: OrbitControlsImpl });
-
 export default function PassiveOrbitControls({
   makeDefault,
   enableDamping = true,
   ...props
 }: OrbitControlsProps) {
+  useEffect(() => {
+    extend({ OrbitControls: OrbitControlsImpl });
+  }, []);
   const { camera, gl } = useThree();
   const set = useThree((state) => state.set);
   const get = useThree((state) => state.get);
