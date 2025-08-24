@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useThree, useFrame, extend } from "@react-three/fiber";
 import {
   OrbitControls as DreiOrbitControls,
@@ -18,6 +18,13 @@ export default function PassiveOrbitControls({
   const set = useThree((state) => state.set);
   const get = useThree((state) => state.get);
   const controlsRef = useRef<OrbitControlsImpl>(null!);
+
+  const safeProps = useMemo(() => {
+    const entries = Object.entries(props as Record<string, unknown>).filter(
+      ([key]) => !key.startsWith('data-') && !key.startsWith('aria-') && key !== 'lov'
+    );
+    return Object.fromEntries(entries) as OrbitControlsProps;
+  }, [props]);
 
   // Update controls every frame so damping and auto-rotate work correctly
   useFrame(() => {
