@@ -1,23 +1,12 @@
 
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { useTonAuth } from "@/hooks/useTonAuth";
 
 export function AuthMenu() {
-  const { user } = useSupabaseAuth();
+  const { address, disconnect } = useTonAuth();
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ title: "Sign out failed", description: error.message });
-      return;
-    }
-    toast({ title: "Signed out", description: "You have been signed out." });
-  };
-
-  if (!user) {
+  if (!address) {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="primary" size="lg">
@@ -27,10 +16,12 @@ export function AuthMenu() {
     );
   }
 
+  const short = `${address.slice(0, 4)}…${address.slice(-4)}`;
+
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground max-w-[160px] truncate">{user.email}</span>
-      <Button variant="softPrimary" size="sm" onClick={signOut}>Sign out</Button>
+      <span className="text-xs text-muted-foreground max-w-[160px] truncate">{short}</span>
+      <Button variant="softPrimary" size="sm" onClick={disconnect}>Disconnect</Button>
     </div>
   );
 }
