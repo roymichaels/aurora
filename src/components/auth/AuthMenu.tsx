@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useTonAuth } from "@/hooks/useTonAuth";
 
 export function AuthMenu() {
-  const { address, disconnect } = useTonAuth();
+  const { address, logout } = useTonAuth();
 
   if (!address) {
     return (
@@ -21,7 +21,7 @@ export function AuthMenu() {
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground max-w-[160px] truncate">{short}</span>
-      <Button variant="softPrimary" size="sm" onClick={disconnect}>Disconnect</Button>
+      <Button variant="softPrimary" size="sm" onClick={logout}>Disconnect</Button>
     </div>
   );
 }

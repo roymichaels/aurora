@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useTonAuth, connector } from "@/hooks/useTonAuth";
+import { useTonAuth } from "@/hooks/useTonAuth";
 
 const AuthPage = () => {
-  const { address } = useTonAuth();
+  const { address, login, loading } = useTonAuth();
   const navigate = useNavigate();
-  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     if (address) {
@@ -16,12 +15,7 @@ const AuthPage = () => {
   }, [address, navigate]);
 
   const connect = async () => {
-    setIsConnecting(true);
-    try {
-      await connector.connectWallet();
-    } finally {
-      setIsConnecting(false);
-    }
+    await login();
   };
 
   return (
@@ -33,7 +27,7 @@ const AuthPage = () => {
           <p className="text-sm text-muted-foreground">Use your TON wallet to sign in.</p>
         </div>
         <div className="flex justify-center">
-          {isConnecting ? (
+          {loading ? (
             <p className="text-sm text-muted-foreground">Connecting...</p>
           ) : (
             <Button onClick={connect}>Connect TON Wallet</Button>
