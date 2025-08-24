@@ -2,7 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import * as jwt from 'jsonwebtoken';
+import { jwtVerify } from 'jose';
 import { z } from 'zod';
 
 const paramsSchema = z.object({
@@ -12,6 +12,7 @@ const paramsSchema = z.object({
 const plugin: FastifyPluginAsync = async (fastify) => {
   const rateLimiter = new RateLimiterMemory({ points: 100, duration: 60 });
   const jwtSecret = process.env.JWT_SECRET || 'secret';
+  const jwtSecretBytes = new TextEncoder().encode(jwtSecret);
 
   await fastify.register(cors, { origin: false });
   await fastify.register(helmet, {
@@ -37,7 +38,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       return null;
     }
     try {
-      const payload: any = jwt.verify(auth.slice(7), jwtSecret);
+      const { payload }: any = await jwtVerify(auth.slice(7), jwtSecretBytes);
       if (!Array.isArray(payload.scopes) || !payload.scopes.includes('replicate')) {
         reply.code(401).send({ error: 'invalid_scope' });
         return null;
