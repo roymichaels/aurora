@@ -1,16 +1,14 @@
 import fastify from 'fastify';
 import replicatePlugin from '../../replicate';
 import cookie from '@fastify/cookie';
-import { SignJWT } from 'jose';
+import { signJWT } from '../../jwt';
 
 const secret = 'secret';
 const secretBytes = new TextEncoder().encode(secret);
 
 async function sign(scopes: string[]) {
-  return new SignJWT({ sub: 'user1', scopes })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('1h')
-    .sign(secretBytes);
+  const exp = Math.floor(Date.now() / 1000) + 60 * 60;
+  return signJWT({ sub: 'user1', scopes }, secretBytes, exp);
 }
 
 describe('replicate plugin', () => {
