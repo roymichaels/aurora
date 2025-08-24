@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -23,7 +23,8 @@ const AuthPage = () => {
     }
   }, [user, initializing, navigate]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast({ title: "Login failed", description: error.message });
@@ -33,7 +34,8 @@ const AuthPage = () => {
     navigate("/", { replace: true });
   };
 
-  const handleSignup = async () => {
+  const handleSignup = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const redirectUrl = `${window.location.origin}/`;
     const { error } = await supabase.auth.signUp({
       email,
@@ -70,22 +72,34 @@ const AuthPage = () => {
           </p>
         </div>
 
-        <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@domain.com" value={email} onChange={(e)=> setEmail(e.target.value)} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" placeholder="Your password" value={password} onChange={(e)=> setPassword(e.target.value)} />
-        </div>
+        <form onSubmit={mode === "login" ? handleLogin : handleSignup} className="space-y-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@domain.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
 
-        <div className="flex gap-2">
-          {mode === "login" ? (
-            <Button className="flex-1" onClick={handleLogin}>Sign in</Button>
-          ) : (
-            <Button className="flex-1" onClick={handleSignup}>Create account</Button>
-          )}
-        </div>
+          <div className="flex gap-2">
+            <Button className="flex-1" type="submit">
+              {mode === "login" ? "Sign in" : "Create account"}
+            </Button>
+          </div>
+        </form>
 
         <div className="text-xs text-muted-foreground">
           {mode === "login" ? (
