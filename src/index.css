@@ -574,6 +574,7 @@ All colors MUST be HSL.
   bottom: auto;
 }
 
+
 /* // [AURORA-BEGIN:visual-css] */
 .xp-pulse {
   animation: xp-pulse 1s var(--ease-standard) forwards;

@@ -1,3 +1,4 @@
+
 // [AURORA-BEGIN:visual-events]
 export type XpAwardedDetail = {
   activity?: string;
