@@ -8,7 +8,6 @@ import { Flame, Mic, MicOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceIO } from "@/voice/voiceio";
 import { journal, type JournalEntry } from "@/state/db";
-import { useProgressStore } from "@/state/progress";
 import { auroraChat } from "@/utils/auroraChat";
 
 const moods = [
@@ -16,6 +15,19 @@ const moods = [
   { id: "ok", label: "OK" },
   { id: "bad", label: "Bad" },
 ];
+
+function calcStreak(entries: JournalEntry[]): number {
+  const days = new Set(entries.map((e) => new Date(e.ts).toDateString()));
+  let count = 0;
+  const today = new Date();
+  for (;;) {
+    const day = new Date(today);
+    day.setDate(today.getDate() - count);
+    if (days.has(day.toDateString())) count++;
+    else break;
+  }
+  return count;
+}
 
 export default function JournalView() {
   const [entry, setEntry] = useState("");
@@ -25,27 +37,30 @@ export default function JournalView() {
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [listening, setListening] = useState(false);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [streak, setStreak] = useState(0);
   const voiceRef = useRef<VoiceIO | null>(null);
-
-  const addNote = useProgressStore((s) => s.addNote);
-  const streak = useProgressStore((s) => s.streak);
 
   useEffect(() => {
     voiceRef.current = new VoiceIO({
       onPartial: (t) => setEntry((e) => e + t),
       onFinal: (t) => setEntry((e) => e + t),
-      onSpeakingChange: () => {},
+      onSpeakingChange: () => {
+        /* noop */
+        return;
+      },
       onError: (err) =>
         toast({
           title: "Voice error",
           description: String(err),
-          variant: "destructive" as any,
+          variant: "destructive",
         }),
     });
     return () => {
       try {
         voiceRef.current?.stopListening();
-      } catch {}
+      } catch (e) {
+        void e;
+      }
     };
   }, []);
 
@@ -53,10 +68,12 @@ export default function JournalView() {
     const sub = journal
       .find()
       .sort({ ts: "desc" })
-      .limit(5).$
-      .subscribe((docs) =>
-        setEntries(docs.filter((d) => d.tags?.includes("journal")))
-      );
+      .limit(100).$
+      .subscribe((docs) => {
+        const filtered = docs.filter((d) => d.tags?.includes("journal"));
+        setEntries(filtered.slice(0, 5));
+        setStreak(calcStreak(filtered));
+      });
     return () => sub.unsubscribe();
   }, []);
 
@@ -74,7 +91,7 @@ export default function JournalView() {
       toast({
         title: "Mic permission needed",
         description: "Please allow microphone access.",
-        variant: "destructive" as any,
+        variant: "destructive",
       });
     }
   };
@@ -91,7 +108,6 @@ export default function JournalView() {
       ts: Date.now(),
       tags: ["journal"],
     });
-    addNote({ text: content, ts: Date.now(), mood: mood || undefined });
     setLastEntry(content);
     setEntry("");
     setMood(null);
