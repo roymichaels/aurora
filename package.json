@@ -84,7 +84,11 @@
     "vite-plugin-pwa": "^0.20.5",
     "yjs": "^13.6.6",
     "zod": "^3.25.76",
-    "zustand": "^4.5.7"
+    "zustand": "^4.5.7",
+    "@fastify/cookie": "^9.3.1",
+    "fastify": "^4.28.1",
+    "jsonwebtoken": "^9.0.2",
+    "tweetnacl": "^1.0.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
