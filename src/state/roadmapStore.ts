@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { db, type Task as DBTaskBase } from "@/data/db";
+import { db, type RoadmapTask as DBTaskBase } from "@/data/db";
 
 export type TaskStatus = "todo" | "doing" | "done";
 

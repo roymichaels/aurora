@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { db, type Task, type Stat } from './db';
+import { db, type RoadmapTask, type Stat } from './db';
 
 type RemoteStat = Omit<Stat, 'lastCheckIn'> & { last_check_in?: string | null };
 
@@ -24,7 +24,7 @@ export async function pushToSupabase() {
 
   const tasks = await db.tasks.toArray();
   for (const t of tasks) {
-    await upsertIfNewer<Task>('tasks', t);
+    await upsertIfNewer<RoadmapTask>('tasks', t);
   }
 
   const stats = await db.stats.toArray();
@@ -42,7 +42,7 @@ export async function pullFromSupabase() {
 
   const { data: remoteTasks } = await supabase.from('tasks').select('*');
   if (remoteTasks) {
-    for (const t of remoteTasks as Task[]) {
+    for (const t of remoteTasks as RoadmapTask[]) {
       const local = await db.tasks.get(t.id);
       if (!local || new Date(t.updated_at) > new Date(local.updated_at)) {
         await db.tasks.put(t);

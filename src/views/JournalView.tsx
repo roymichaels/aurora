@@ -7,7 +7,7 @@ import ViewHeader from "@/components/view/ViewHeader";
 import { Flame, Mic, MicOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceIO } from "@/voice/voiceio";
-import { addJournal, createDatabase, type JournalEntry } from "@/state/db";
+import { addJournal, createDatabase, type JournalEntry } from "@/data/db";
 import { auroraChat } from "@/utils/auroraChat";
 
 const moods = [
