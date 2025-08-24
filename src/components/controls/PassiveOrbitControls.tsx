@@ -11,6 +11,7 @@ export default function PassiveOrbitControls({
   enableDamping = true,
   ...props
 }: OrbitControlsProps) {
+  const { lov, ...safeProps } = props;
   useEffect(() => {
     extend({ OrbitControls: OrbitControlsImpl });
   }, []);
@@ -47,12 +48,12 @@ export default function PassiveOrbitControls({
   }, [makeDefault, set, get]);
 
   return (
-    <DreiOrbitControls
+      <DreiOrbitControls
       ref={controlsRef}
       args={[camera, gl.domElement]}
       enableDamping={enableDamping}
       makeDefault={makeDefault}
-      {...props}
+      {...safeProps}
     />
   );
 }
