@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "./useSupabaseAuth";
+import { useTonSession } from "./useTonSession";
 
 /**
  * Weekly review hook
@@ -8,7 +8,7 @@ import { useSupabaseAuth } from "./useSupabaseAuth";
  * - Stores the next sprint id for quick access
  */
 export default function useWeeklyReview(missionId: string | null) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
 
   useEffect(() => {
     if (!user || !missionId) return;

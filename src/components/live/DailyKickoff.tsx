@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 import { MoodCheck } from "./MoodCheck";
 
@@ -13,7 +13,7 @@ interface Props {
 type Task = { id: string; title: string };
 
 export default function DailyKickoff({ visible, onComplete }: Props) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selected, setSelected] = useState<string | undefined>(undefined);
 

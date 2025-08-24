@@ -12,7 +12,7 @@ import GameHome from '@/game/path/GameHome';
 import ArchivePanel from '@/components/archive/ArchivePanel';
 import { PanelHeaderUnified } from '@/components/layout/PanelHeaderUnified';
 import DailyKickoff from '@/components/live/DailyKickoff';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useTonSession } from '@/hooks/useTonSession';
 import LandingPage from './LandingPage';
 import { type PathNode } from '@/game/path/path.data';
 import FastTravel from '@/components/overlays/FastTravel';
@@ -398,7 +398,7 @@ const Index = () => {
     gotoPanel,
   } = useSwipeNavigation();
   const [showKickoff, setShowKickoff] = useState(false);
-  const { user, initializing } = useSupabaseAuth();
+  const { user, initializing } = useTonSession();
 
   const completeQuest = useGameStore((s) => s.completeQuest);
   const resetDaily = useGameStore((s) => s.resetDaily);

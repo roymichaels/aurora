@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 export default function RoadmapForm({ onCreated }: { onCreated?: (id: string) => void }) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [title, setTitle] = useState("");
   const [color, setColor] = useState("");
   const [description, setDescription] = useState("");

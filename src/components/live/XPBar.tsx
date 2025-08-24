@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
 export function XPBar() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [total, setTotal] = useState<number>(0);
   const [spark, setSpark] = useState(false);
   const prevLevel = useRef(1);

@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TasksManager from "@/components/control/TasksManager";
 import { useUIStore } from "@/state/ui";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function TasksModal() {
   const tasksRoadmapId = useUIStore((s) => s.tasksRoadmapId);
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [defaultId, setDefaultId] = useState<string | null>(null);
 
   useEffect(() => {

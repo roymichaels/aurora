@@ -10,8 +10,8 @@ jest.mock('@/agent/stores-agent', () => ({
   mintStoreNFT: jest.fn(),
 }));
 
-jest.mock('@/hooks/useSupabaseAuth', () => ({
-  useSupabaseAuth: () => ({ user: { id: 'user-1' } }),
+jest.mock('@/hooks/useTonSession', () => ({
+  useTonSession: () => ({ user: { id: 'user-1' } }),
 }));
 
 describe('StoreCreation', () => {

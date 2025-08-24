@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import useWeeklyReview from "@/hooks/useWeeklyReview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,7 +11,7 @@ interface Sprint { id: string; title: string; start_date: string | null; end_dat
 interface Task { id: string; title: string; sprint_id: string }
 
 export default function PlanView() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [params] = useSearchParams();
   const missionId = params.get("mission_id");
 

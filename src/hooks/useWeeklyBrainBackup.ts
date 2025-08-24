@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { useSupabaseAuth } from './useSupabaseAuth';
+import { useTonSession } from './useTonSession';
 import { supabase } from '@/integrations/supabase/client';
 import { exportEncryptedBrain } from '@/memory/brainBackup';
 
 export default function useWeeklyBrainBackup() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [enabled] = useLocalStorage<boolean>('brain.backup.enabled', false);
   const [passphrase] = useLocalStorage<string>('brain.backup.passphrase', '');
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame } from "lucide-react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 
 interface HeroCardProps {
@@ -8,7 +8,7 @@ interface HeroCardProps {
 }
 
 export default function HeroCard({ taskTitle }: HeroCardProps) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [xp, setXp] = useState(0);
   const [mood, setMood] = useState<string | null>(null);
 

@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 
 type Goal = {
@@ -24,7 +24,7 @@ async function fetchGoals() {
 }
 
 export default function GoalsList() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({

@@ -1,10 +1,10 @@
 import { Flame } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 
 export function StreakBadge() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [streak, setStreak] = useState<number>(0);
   const [spark, setSpark] = useState(false);
   const prev = useRef(0);

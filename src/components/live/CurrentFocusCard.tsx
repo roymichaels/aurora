@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { awardXPRemote } from "@/integrations/supabase/gameSync";
 import { award } from "@/game/gamification/award";
 import { useState } from "react";
@@ -34,7 +34,7 @@ export function CurrentFocusCard({
   progressPercent?: number;
   onAdvance: () => void;
 }) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [busy, setBusy] = useState(false);
 
   const markDoneAndAdvance = async () => {
