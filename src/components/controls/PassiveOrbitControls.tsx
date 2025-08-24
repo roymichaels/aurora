@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { useThree, useFrame, extend, ReactThreeFiber } from "@react-three/fiber";
+import { useThree, useFrame } from "@react-three/fiber";
+import { OrbitControls as OrbitControls } from "@react-three/drei";
 import type { OrbitControlsProps } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 
@@ -37,7 +38,6 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
       }
     )._onMouseWheel;
 
-    const element = gl.domElement;
     element.removeEventListener("wheel", handler);
     element.addEventListener("wheel", handler, { passive: true });
     return () => element.removeEventListener("wheel", handler);
@@ -52,11 +52,13 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
     return () => set({ controls: previous });
   }, [makeDefault, set, get]);
 
+
   return (
-    <orbitControls
+    <OrbitControls
       ref={controlsRef}
-      args={[camera, gl.domElement]}
+      args={args}
       enableDamping={enableDamping}
+      makeDefault={makeDefault}
       {...props}
     />
   );
