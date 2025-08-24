@@ -107,7 +107,17 @@ serve(async (req) => {
     }
 
     const data = await resp.json();
-    let content = data?.choices?.[0]?.message?.content ?? "Okay.";
+    let content = data?.choices?.[0]?.message?.content;
+    if (!content || !content.trim()) {
+      console.error("Empty model response", data);
+      return new Response(
+        JSON.stringify({ error: "Empty response from model" }),
+        {
+          status: 502,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
 
     for (const filter of brain.filters) {
       content = filter(content);
