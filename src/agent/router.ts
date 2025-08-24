@@ -65,5 +65,8 @@ export async function routeChat(
     body: { messages: safeMessages, profile: safeProfile, ...options },
   });
   if (error) throw error;
-  return data ?? { content: '', sentiment: 0 };
+  if (!data?.content) {
+    throw new Error('Empty response from aurora-chat');
+  }
+  return data;
 }

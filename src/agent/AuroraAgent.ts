@@ -93,7 +93,7 @@ export class AuroraAgent {
         this.say(content, sentiment);
       } catch (e) {
         console.error('aurora-chat failed', e);
-        this.say('Could you elaborate?');
+        this.events.onError?.(e);
       }
       return;
     }
@@ -152,7 +152,7 @@ export class AuroraAgent {
       this.say(content, sentiment);
     } catch (e) {
       console.error('aurora-chat failed', e);
-      this.say('Okay.');
+      this.events.onError?.(e);
     }
   }
 

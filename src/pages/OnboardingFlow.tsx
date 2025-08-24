@@ -267,9 +267,9 @@ export default function OnboardingFlow() {
     setMessages(newMessages);
     setInput("");
 
-    let error: string | null = null;
+    let validationError: string | null = null;
     if (phase === "question") {
-      error = validateAnswer(userMsg.content, currentModule, questionIndex);
+      validationError = validateAnswer(userMsg.content, currentModule, questionIndex);
     }
 
     const baseMessages: ChatMsg[] = [
@@ -277,10 +277,10 @@ export default function OnboardingFlow() {
       ...newMessages,
     ];
 
-    if (error) {
+    if (validationError) {
       baseMessages.push({
         role: "system",
-        content: `The user's last answer failed validation: ${error} Ask them to clarify or provide more detail.`,
+        content: `The user's last answer failed validation: ${validationError} Ask them to clarify or provide more detail.`,
       });
     }
 
@@ -300,11 +300,17 @@ export default function OnboardingFlow() {
       });
     }
 
-    const { data } = await supabase.functions.invoke("aurora-chat", { body: { messages: baseMessages } });
-    if (data?.content) {
+    const { data, error } = await supabase.functions.invoke<{ content: string }>(
+      "aurora-chat",
+      { body: { messages: baseMessages } },
+    );
+    if (error || !data?.content) {
+      console.error("aurora-chat error", error, data);
+      sendPrompt("Sorry, I had trouble responding. Please try again.");
+    } else {
       setMessages((m) => [...m, { role: "assistant", content: data.content }]);
     }
-    if (error) return;
+    if (validationError) return;
 
     if (phase === "question") {
       const updatedAnswers = answers.map((a) => [...a]);
