@@ -574,20 +574,21 @@ All colors MUST be HSL.
   bottom: auto;
 }
 
-/* Identity scene container */
-.identity-page {
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(600px 400px at 50% 0%, hsl(var(--primary) / 0.1), transparent 70%),
-    hsl(var(--background));
-  overflow: hidden;
+
+/* // [AURORA-BEGIN:visual-css] */
+.xp-pulse {
+  animation: xp-pulse 1s var(--ease-standard) forwards;
 }
-.identity-page canvas {
-  touch-action: none;
+@keyframes xp-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
 }
-.identity-page .overlay {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+
+.streak-flash {
+  animation: streak-flash 0.8s var(--ease-standard) forwards;
 }
+@keyframes streak-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+/* // [AURORA-END:visual-css] */

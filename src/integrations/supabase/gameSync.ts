@@ -33,7 +33,19 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
     const total = first?.total_xp ?? null;
     const streak = first?.streak_count;
     if (typeof total === "number") {
+
+      window.dispatchEvent(
+        new CustomEvent("xp-total-update", { detail: { total_xp: total, streak } })
+      );
       dispatchVisualEvent("xp-total-update", { total_xp: total, streak });
+      window.dispatchEvent(
+        new CustomEvent("xp-awarded", { detail: { activity, amount, total } })
+      );
+    }
+    if (typeof streak === "number") {
+      window.dispatchEvent(
+        new CustomEvent("streak-progress", { detail: { streak } })
+      );
     }
   } catch (e) {
     logger.warn("[gameSync] xp-total-update event failed", e);

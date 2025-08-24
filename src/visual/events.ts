@@ -1,20 +1,22 @@
-export type VisualEventMap = {
-  'xp-total-update': { total_xp: number; streak?: number };
+
+// [AURORA-BEGIN:visual-events]
+export type XpAwardedDetail = {
+  activity?: string;
+  amount: number;
+  total?: number;
 };
 
-export type VisualEventType = keyof VisualEventMap;
-
-export function dispatchVisualEvent<K extends VisualEventType>(type: K, detail: VisualEventMap[K]) {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(type, { detail }));
-  }
+export function onXpAwarded(handler: (detail: XpAwardedDetail) => void) {
+  window.addEventListener("xp-awarded", (e: Event) => {
+    const detail = (e as CustomEvent<XpAwardedDetail>).detail;
+    handler(detail);
+  });
 }
 
-export function onVisualEvent<K extends VisualEventType>(
-  type: K,
-  handler: (ev: CustomEvent<VisualEventMap[K]>) => void,
-) {
-  const listener = handler as EventListener;
-  window.addEventListener(type, listener);
-  return () => window.removeEventListener(type, listener);
+export function onStreakProgress(handler: (streak: number) => void) {
+  window.addEventListener("streak-progress", (e: Event) => {
+    const detail = (e as CustomEvent<{ streak: number }>).detail;
+    handler(detail.streak);
+  });
 }
+// [AURORA-END:visual-events]
