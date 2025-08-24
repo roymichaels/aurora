@@ -1,8 +1,9 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
 
 import * as TonWeb from 'tonweb';
+import { z } from 'zod';
+import { signJWT } from '../jwt';
 
 
 const CHALLENGE_TTL = 120; // seconds
@@ -29,6 +30,11 @@ const verifySchema = z.object({
 
 const plugin: FastifyPluginAsync = async (fastify) => {
   const challenges = new Map<string, number>();
+
+  fastify.post('/auth/logout', async (_req, reply) => {
+    reply.clearCookie('sid');
+    return reply.send({ ok: true });
+  });
 
   fastify.post('/auth/ton/start', async (_req, reply) => {
     const challenge = nanoid();
@@ -80,10 +86,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       tokenExp = Math.min(Math.floor(exp / 1000), now + 60 * 60);
     }
 
-    const token = await new SignJWT(payload)
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime(tokenExp)
-      .sign(JWT_SECRET_BYTES);
+    const token = signJWT(payload, JWT_SECRET_BYTES, tokenExp);
     reply.setCookie('sid', token, {
       httpOnly: true,
       sameSite: 'lax',

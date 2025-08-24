@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import tonAuth, { composeMessage } from '../ton';
+import { verifyJWT } from '../../jwt';
 // TonWeb is CommonJS; require to access utils in Jest environment
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const TonWeb = require('tonweb');
@@ -16,6 +17,7 @@ describe('TON auth', () => {
   let app: FastifyInstance;
   let keypair: nacl.SignKeyPair;
   const secretBytes = new TextEncoder().encode('secret');
+  
 
   beforeEach(async () => {
     app = fastify();
@@ -47,7 +49,7 @@ describe('TON auth', () => {
 
     const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
     expect(tokenCookie).toBeDefined();
-    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    const { payload: tokenPayload } = verifyJWT(tokenCookie.value, secretBytes);
     expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
     expect(tokenPayload.scopes).toEqual(scopes);
     const second = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
@@ -105,5 +107,34 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(401);
+  });
+
+  test('logout clears sid cookie', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const verify = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+    });
+    const tokenCookie = verify.cookies.find((c: any) => c.name === 'sid');
+    expect(tokenCookie).toBeDefined();
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/auth/logout',
+      cookies: { sid: tokenCookie.value },
+    });
+    expect(logout.statusCode).toBe(200);
+    expect(logout.json()).toEqual({ ok: true });
+    const cleared = logout.cookies.find((c: any) => c.name === 'sid');
+    expect(cleared).toBeDefined();
+    expect(cleared.value).toBe('');
   });
 });
