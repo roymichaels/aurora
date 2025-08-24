@@ -7,7 +7,7 @@ import ViewHeader from "@/components/view/ViewHeader";
 import { Flame, Mic, MicOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { VoiceIO } from "@/voice/voiceio";
-import { memoryStore } from "@/memory/indexedDbMemory";
+import { journal, type JournalEntry } from "@/state/db";
 import { useProgressStore } from "@/state/progress";
 import { auroraChat } from "@/utils/auroraChat";
 
@@ -24,10 +24,10 @@ export default function JournalView() {
   const [showSummary, setShowSummary] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState(false);
   const [listening, setListening] = useState(false);
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
   const voiceRef = useRef<VoiceIO | null>(null);
 
   const addNote = useProgressStore((s) => s.addNote);
-  const notes = useProgressStore((s) => s.notes);
   const streak = useProgressStore((s) => s.streak);
 
   useEffect(() => {
@@ -47,6 +47,17 @@ export default function JournalView() {
         voiceRef.current?.stopListening();
       } catch {}
     };
+  }, []);
+
+  useEffect(() => {
+    const sub = journal
+      .find()
+      .sort({ ts: "desc" })
+      .limit(5).$
+      .subscribe((docs) =>
+        setEntries(docs.filter((d) => d.tags?.includes("journal")))
+      );
+    return () => sub.unsubscribe();
   }, []);
 
   const toggleMic = async () => {
@@ -74,8 +85,10 @@ export default function JournalView() {
       toast({ title: "Empty entry", description: "Type or speak something first." });
       return;
     }
-    await memoryStore.add("episodic", "user", content, {
+    await journal.insert({
+      text: content,
       mood: mood || undefined,
+      ts: Date.now(),
       tags: ["journal"],
     });
     addNote({ text: content, ts: Date.now(), mood: mood || undefined });
@@ -96,7 +109,9 @@ export default function JournalView() {
         },
         { role: "user", content: lastEntry },
       ]);
-      await memoryStore.add("semantic", "assistant", content, {
+      await journal.insert({
+        text: content,
+        ts: Date.now(),
         tags: ["plan", "summary"],
       });
       toast({ title: "Plan updated", description: "Summary added to plan." });
@@ -181,24 +196,20 @@ export default function JournalView() {
 
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Recent entries</h2>
-        {notes.length === 0 && (
+        {entries.length === 0 && (
           <p className="text-sm text-muted-foreground">No entries yet.</p>
         )}
-        {notes
-          .slice()
-          .reverse()
-          .slice(0, 5)
-          .map((n) => (
-            <Card key={n.ts}>
-              <CardContent className="p-4 space-y-1">
-                <div className="text-sm">{n.text}</div>
-                <div className="text-xs text-muted-foreground flex justify-between">
-                  <span>{n.mood}</span>
-                  <span>{new Date(n.ts).toLocaleDateString()}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+        {entries.map((n) => (
+          <Card key={n.ts}>
+            <CardContent className="p-4 space-y-1">
+              <div className="text-sm">{n.text}</div>
+              <div className="text-xs text-muted-foreground flex justify-between">
+                <span>{n.mood}</span>
+                <span>{new Date(n.ts).toLocaleDateString()}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </section>
     </div>
   );
