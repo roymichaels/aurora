@@ -5,7 +5,7 @@ import { wrappedKeyEncryptionCryptoJsStorage } from 'rxdb/plugins/encryption-cry
 import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { firstValueFrom } from 'rxjs';
 import { map, take, toArray } from 'rxjs';
-import { keyManager } from '../keyManager';
+import { keyManager } from '../test-utils/keyManager';
 
 describe('RxDB journal collection', () => {
   let db: any;
