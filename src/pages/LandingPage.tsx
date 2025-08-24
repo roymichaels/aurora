@@ -44,7 +44,7 @@ const copy = {
   },
   faq: [
     { q: "Is it free?", a: "Yes, start free. Upgrade options may come later." },
-    { q: "Do I need a credit card?", a: "No. Just your email to sign in." },
+    { q: "Do I need a credit card?", a: "No. Just connect your TON wallet to sign in." },
     { q: "Will it work on mobile?", a: "Yes. It's built mobile-first and safe-area aware." }
   ],
   footer: {
