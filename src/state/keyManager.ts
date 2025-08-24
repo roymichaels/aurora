@@ -1,3 +1,5 @@
+import secrets from 'secrets.js-grempe';
+
 let dataKey: Uint8Array | undefined;
 let resolveKey: ((key: Uint8Array) => void) | undefined;
 const dataKeyPromise = new Promise<Uint8Array>((resolve) => {
@@ -26,6 +28,20 @@ function decodeSignedMessage(message: string): Uint8Array {
   } catch {
     throw new Error('Invalid signed message format');
   }
+}
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
 }
 
 export function setDataKey(key: Uint8Array) {
@@ -71,5 +87,20 @@ export function waitForDataKey(): Promise<Uint8Array> {
     return Promise.resolve(dataKey);
   }
   return dataKeyPromise;
+}
+
+export function generateKeyShards(total: number, threshold: number): string[] {
+  if (!dataKey) {
+    throw new Error('No data key set');
+  }
+  const hex = bytesToHex(dataKey);
+  return secrets.share(hex, total, threshold);
+}
+
+export function restoreKeyFromShards(shards: string[]): Uint8Array {
+  const hex = secrets.combine(shards);
+  const key = hexToBytes(hex);
+  setDataKey(key);
+  return key;
 }
 
