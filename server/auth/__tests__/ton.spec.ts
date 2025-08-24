@@ -1,7 +1,8 @@
 import fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import tonAuth, { composeMessage } from '../ton';
-import * as nacl from 'tweetnacl';
+import nacl from 'tweetnacl';
+import { jwtVerify } from 'jose';
 
 function toHex(buf: Uint8Array): string {
   return Buffer.from(buf).toString('hex');
@@ -10,6 +11,7 @@ function toHex(buf: Uint8Array): string {
 describe('TON auth', () => {
   let app: any;
   let keypair: nacl.SignKeyPair;
+  const secretBytes = new TextEncoder().encode('secret');
 
   beforeEach(async () => {
     app = fastify();
@@ -37,7 +39,11 @@ describe('TON auth', () => {
     };
     const first = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(first.statusCode).toBe(200);
-    expect(first.cookies.find((c: any) => c.name === 'sid')).toBeDefined();
+    const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
+    expect(tokenCookie).toBeDefined();
+    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
+    expect(tokenPayload.scopes).toEqual(scopes);
     const second = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(second.statusCode).toBe(400);
   });
