@@ -13,8 +13,11 @@ import {
   buildProfile,
   ConversationResponse,
   saveProfile,
+  setProfileKey,
 } from "@/data/profile";
-import { setEncryptionKey } from "@/state/encryption";
+import { setMemoryKey } from "@/memory/indexedDbMemory";
+import { deriveDataKey } from "@/state/keyManager";
+import { connector } from "@/hooks/useTonAuth";
 import { Volume2 } from "lucide-react";
 
 
@@ -152,7 +155,26 @@ export default function OnboardingFlow() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (user) setEncryptionKey(user.id);
+    const setupKeys = async () => {
+      if (!user) return;
+      try {
+        const passcode = window.prompt("Set a passcode to secure your data") || "";
+        if (!passcode) return;
+        const { signature } = await connector.signData({
+          type: "text",
+          text: "Authorize Aurora key derivation",
+        });
+        const keyBytes = await deriveDataKey(signature, passcode);
+        const keyHex = Array.from(keyBytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        setProfileKey(keyHex);
+        setMemoryKey(keyHex);
+      } catch (err) {
+        console.error("Failed to derive encryption key", err);
+      }
+    };
+    setupKeys();
   }, [user]);
 
   const total = MODULES.reduce((sum, module) => sum + module.questions.length, 0);
