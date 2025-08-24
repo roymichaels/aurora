@@ -7,6 +7,7 @@ import {
   Grid3X3,
   Route,
   ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGameStore } from "@/game/store";
@@ -54,7 +55,7 @@ export default function BottomDock() {
       ref={ref}
       className={cn(
         "fixed left-0 right-0 mx-3 select-none",
-        "transition-[transform,opacity] duration-200",
+        "transition-[transform,opacity] duration-[250ms] ease-in-out",
         expanded ? "pb-3" : "pb-2"
       )}
       style={{
@@ -64,84 +65,91 @@ export default function BottomDock() {
       }}
     >
       <div className="relative">
-        <button
-          type="button"
-          aria-label={expanded ? "Collapse dock" : "Expand dock"}
-          onClick={toggle}
-          className={cn("drawer-grabber hud-dock-grabber", expanded && "open")}
-        >
-          <ChevronUp className="drawer-grabber-icon" />
-        </button>
-
         <div
           className={cn(
-            "glass-maple rounded-2xl px-4",
-            expanded ? "py-3" : "py-2",
-            "backdrop-blur-md"
+            "relative glass-maple rounded-2xl backdrop-blur-md px-4",
+            expanded ? "pt-6 pb-3" : "py-2"
           )}
         >
-          {expanded && (
-            <>
-              <div className="flex items-center gap-2 min-w-0 mb-2">
-                {avatarEnabled && (
-                  <div
-                    style={{
-                      filter: 'drop-shadow(0 12px 28px rgba(0,0,0,.45))',
-                    }}
-                  >
-                    <AuroraSphere size={56} />
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="text-[13px] opacity-90 truncate">
-                    Lv. {stats.level} • Streak {stats.streak}
-                  </div>
-                  <div className="text-[15px] font-semibold truncate">Dean</div>
-                </div>
-              </div>
+          <button
+            type="button"
+            aria-label={expanded ? "Collapse dock" : "Expand dock"}
+            onClick={toggle}
+            className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-gray-700 bg-gray-900 p-1 text-gray-200 shadow-md transition hover:shadow-[0_0_8px_rgba(100,108,255,0.6)]"
+          >
+            {expanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
 
-              <div className="flex md:flex-row flex-col gap-1 md:items-center mb-2">
-                <div className="maple-gauge">
-                  <div className="maple-gauge__top">
-                    <span className="maple-gauge__label">HP</span>
-                    <span className="maple-gauge__val">
-                      {Math.floor(stats.hp)}%
-                    </span>
-                  </div>
-                  <div className="maple-gauge__bar hp">
-                    <span style={{ width: `${stats.hp}%` }} />
-                  </div>
+          <div
+            className={cn(
+              "grid overflow-hidden transition-[max-height,opacity] duration-[250ms] ease-in-out",
+              expanded ? "max-h-40 opacity-100 mb-2" : "max-h-0 opacity-0 mb-0"
+            )}
+          >
+            <div className="flex items-center gap-2 min-w-0 mb-2">
+              {avatarEnabled && (
+                <div
+                  style={{
+                    filter: "drop-shadow(0 12px 28px rgba(0,0,0,.45))",
+                  }}
+                >
+                  <AuroraSphere size={56} />
                 </div>
-                <div className="maple-gauge">
-                  <div className="maple-gauge__top">
-                    <span className="maple-gauge__label">MP</span>
-                    <span className="maple-gauge__val">
-                      {Math.floor(stats.mp)}%
-                    </span>
-                  </div>
-                  <div className="maple-gauge__bar mp">
-                    <span style={{ width: `${stats.mp}%` }} />
-                  </div>
+              )}
+              <div className="min-w-0">
+                <div className="text-[13px] opacity-90 truncate">
+                  Lv. {stats.level} • Streak {stats.streak}
                 </div>
-                <div className="maple-gauge">
-                  <div className="maple-gauge__top">
-                    <span className="maple-gauge__label">XP</span>
-                    <span className="maple-gauge__val">
-                      {Math.floor(stats.xp)}%
-                    </span>
-                  </div>
-                  <div className="maple-gauge__bar xp">
-                    <span style={{ width: `${stats.xp}%` }} />
-                  </div>
+                <div className="text-[15px] font-semibold truncate">Dean</div>
+              </div>
+            </div>
+
+            <div className="flex md:flex-row flex-col gap-1 md:items-center">
+              <div className="maple-gauge">
+                <div className="maple-gauge__top">
+                  <span className="maple-gauge__label">HP</span>
+                  <span className="maple-gauge__val">
+                    {Math.floor(stats.hp)}%
+                  </span>
+                </div>
+                <div className="maple-gauge__bar hp">
+                  <span style={{ width: `${stats.hp}%` }} />
                 </div>
               </div>
-            </>
-          )}
+              <div className="maple-gauge">
+                <div className="maple-gauge__top">
+                  <span className="maple-gauge__label">MP</span>
+                  <span className="maple-gauge__val">
+                    {Math.floor(stats.mp)}%
+                  </span>
+                </div>
+                <div className="maple-gauge__bar mp">
+                  <span style={{ width: `${stats.mp}%` }} />
+                </div>
+              </div>
+              <div className="maple-gauge">
+                <div className="maple-gauge__top">
+                  <span className="maple-gauge__label">XP</span>
+                  <span className="maple-gauge__val">
+                    {Math.floor(stats.xp)}%
+                  </span>
+                </div>
+                <div className="maple-gauge__bar xp">
+                  <span style={{ width: `${stats.xp}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
           <nav aria-label="Main navigation" className="dock-nav">
             <ul
               className={cn(
                 "flex justify-center",
-                expanded ? "gap-4" : "gap-3",
+                expanded ? "gap-4" : "gap-3"
               )}
             >
               {items.map(({ to, label, icon: Icon }) => (
@@ -156,7 +164,7 @@ export default function BottomDock() {
                         expanded
                           ? "flex-col items-center gap-1"
                           : "items-center justify-center",
-                        isActive && "active",
+                        isActive && "active"
                       )
                     }
                   >
