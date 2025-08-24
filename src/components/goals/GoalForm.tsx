@@ -3,10 +3,10 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 
 export default function GoalForm() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const [title, setTitle] = useState("");
   const [why, setWhy] = useState("");
   const [nextAction, setNextAction] = useState("");

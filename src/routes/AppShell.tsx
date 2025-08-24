@@ -11,7 +11,7 @@ import { bus } from "@/utils/bus";
 import { useViewNav } from "@/state/view";
 import { useXPChime } from "@/hooks/useXPChime";
 import { useSwipeNav } from "@/hooks/useSwipeNav";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import useDailyCheckIn from "@/hooks/useDailyCheckIn";
 import useWeeklyBrainBackup from "@/hooks/useWeeklyBrainBackup";
 import { useKeyboardOffset } from "@/hooks/useKeyboardOffset";
@@ -19,7 +19,7 @@ import AppHeader from "@/components/layout/AppHeader";
 import { useUIStore } from "@/state/ui";
 
 export default function AppShell() {
-  const { user, initializing } = useSupabaseAuth();
+  const { user, initializing } = useTonSession();
   const loc = useLocation();
   const open = useViewNav();
 

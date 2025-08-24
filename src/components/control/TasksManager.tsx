@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ export type Task = {
 };
 
 export default function TasksManager({ roadmapId }: { roadmapId: string }) {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   if (!requirePro()) {
     return (
       <div className="p-4 text-center space-y-2">

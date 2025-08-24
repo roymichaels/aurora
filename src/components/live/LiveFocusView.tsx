@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useTonSession } from '@/hooks/useTonSession';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ type Roadmap = {
 
 
 export default function LiveFocusView() {
-  const { user, initializing } = useSupabaseAuth();
+  const { user, initializing } = useTonSession();
   const [activeRoadmap, setActiveRoadmap] = useState<Roadmap | null>(null);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [task, setTask] = useState<Task | null>(null);

@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
 
@@ -22,7 +22,7 @@ type Sound = {
 };
 
 export function useBackgroundAudio() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 import { exportProfile, deleteProfile } from "@/lib/storage";
 import {
@@ -25,14 +24,14 @@ import DeviceManagerPanel from "@/components/settings/DeviceManagerPanel";
 
 
 export default function SettingsView() {
-  const { user } = useSupabaseAuth();
+  const { user, logout } = useTonSession();
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({ title: "Sign out failed", description: error.message });
-    } else {
+    try {
+      await logout();
       toast({ title: "Signed out", description: "You have been signed out." });
+    } catch (error: any) {
+      toast({ title: "Sign out failed", description: String(error) });
     }
   };
 

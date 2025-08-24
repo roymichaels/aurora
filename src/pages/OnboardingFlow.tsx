@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useTonSession } from "@/hooks/useTonSession";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -108,7 +108,7 @@ const getNextState = (
 type Phase = "start" | "question" | "summary";
 
 export default function OnboardingFlow() {
-  const { user } = useSupabaseAuth();
+  const { user } = useTonSession();
   const navigate = useNavigate();
 
   // SINGLE instance
