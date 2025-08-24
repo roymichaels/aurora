@@ -3,7 +3,7 @@ import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { RxDBEncryptionPlugin } from 'rxdb/plugins/encryption';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import type { Observable } from 'rxjs';
-import { getDataKey } from './keyManager';
+import { getDataKey, waitForDataKey } from './keyManager';
 
 addRxPlugin(RxDBAttachmentsPlugin);
 addRxPlugin(RxDBEncryptionPlugin);
@@ -97,19 +97,19 @@ let dbPromise: Promise<RxDatabase<Collections>> | null = null;
 
 export async function createDatabase(): Promise<RxDatabase<Collections>> {
   if (!dbPromise) {
+    await waitForDataKey();
     const key = getDataKey();
     if (!key) throw new Error('Data key not set');
     const password = btoa(String.fromCharCode(...key));
     dbPromise = createRxDatabase<Collections>({
       name: 'brain',
       storage: getRxStorageDexie(),
-      password
     }).then(async (db) => {
       await db.addCollections({
-        journal: { schema: journalSchema },
-        focus_sessions: { schema: focusSessionSchema },
-        tasks: { schema: taskSchema },
-        goals: { schema: goalSchema }
+        journal: { schema: journalSchema, password },
+        focus_sessions: { schema: focusSessionSchema, password },
+        tasks: { schema: taskSchema, password },
+        goals: { schema: goalSchema, password }
       });
       return db;
     });

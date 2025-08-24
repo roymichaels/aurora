@@ -1,4 +1,8 @@
 let dataKey: Uint8Array | undefined;
+let resolveKey: ((key: Uint8Array) => void) | undefined;
+const dataKeyPromise = new Promise<Uint8Array>((resolve) => {
+  resolveKey = resolve;
+});
 
 export async function deriveDataKey(signedMessage: string, passcode: string) {
   const enc = new TextEncoder();
@@ -19,9 +23,17 @@ export async function deriveDataKey(signedMessage: string, passcode: string) {
   );
   const raw = await crypto.subtle.exportKey('raw', key);
   dataKey = new Uint8Array(raw);
+  resolveKey?.(dataKey);
   return dataKey;
 }
 
 export function getDataKey() {
   return dataKey;
+}
+
+export function waitForDataKey(): Promise<Uint8Array> {
+  if (dataKey) {
+    return Promise.resolve(dataKey);
+  }
+  return dataKeyPromise;
 }
