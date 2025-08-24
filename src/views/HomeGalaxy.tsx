@@ -1,25 +1,9 @@
-import React, { useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import React from "react";
+import { Canvas } from "@react-three/fiber";
 import { Environment, Stars } from "@react-three/drei";
 import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import GalaxyPath from "@/game/galaxy/GalaxyPath";
-
-function WebGLContextManager() {
-  const { gl } = useThree();
-  useEffect(() => {
-    const handleLost = (e: Event) => e.preventDefault();
-    const handleRestored = () => {
-      gl.resetState();
-    };
-    gl.domElement.addEventListener('webglcontextlost', handleLost);
-    gl.domElement.addEventListener('webglcontextrestored', handleRestored);
-    return () => {
-      gl.domElement.removeEventListener('webglcontextlost', handleLost);
-      gl.domElement.removeEventListener('webglcontextrestored', handleRestored);
-    };
-  }, [gl]);
-  return null;
-}
+import WebGLContextManager from "@/components/WebGLContextManager";
 
 export default function HomeGalaxy() {
   return (

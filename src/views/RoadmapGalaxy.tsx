@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useEffect } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { Environment, Stars, Html } from "@react-three/drei";
 import PassiveOrbitControls from "@/components/controls/PassiveOrbitControls";
 import * as THREE from "three";
@@ -8,6 +8,7 @@ import PlanetNode, { NodeStatus } from "@/components/roadmap/PlanetNode";
 import { useRoadmapStore } from "@/state/roadmapStore";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
 import { milestoneColor } from "@/game/galaxy/palette";
+import WebGLContextManager from "@/components/WebGLContextManager";
 
 function useSpiralPositions(count: number) {
   return useMemo(() => {
@@ -111,22 +112,6 @@ function AuroraFollower({ target }: { target: React.MutableRefObject<THREE.Vecto
   );
 }
 
-function WebGLContextManager() {
-  const { gl } = useThree();
-  useEffect(() => {
-    const handleLost = (e: Event) => e.preventDefault();
-    const handleRestored = () => {
-      gl.resetState();
-    };
-    gl.domElement.addEventListener('webglcontextlost', handleLost);
-    gl.domElement.addEventListener('webglcontextrestored', handleRestored);
-    return () => {
-      gl.domElement.removeEventListener('webglcontextlost', handleLost);
-      gl.domElement.removeEventListener('webglcontextrestored', handleRestored);
-    };
-  }, [gl]);
-  return null;
-}
 
 function GalaxyScene() {
   const { taskNodes, currentPos } = useTaskNodes();
