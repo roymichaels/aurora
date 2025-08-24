@@ -30,6 +30,7 @@ function decodeSignedMessage(message: string): Uint8Array {
 
 export function setDataKey(key: Uint8Array) {
   dataKey = key;
+  resolveKey?.(key);
 }
 
 export function clearDataKey() {
@@ -71,3 +72,4 @@ export function waitForDataKey(): Promise<Uint8Array> {
   }
   return dataKeyPromise;
 }
+
