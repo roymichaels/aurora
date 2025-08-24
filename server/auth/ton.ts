@@ -3,7 +3,7 @@ import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
 import { z } from 'zod';
 
-import * as TonWeb from 'tonweb';
+import TonWeb from 'tonweb';
 
 
 const CHALLENGE_TTL = 120; // seconds

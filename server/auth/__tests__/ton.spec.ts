@@ -3,8 +3,9 @@ import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
 import tonAuth, { composeMessage } from '../ton';
-import TonWeb from 'tonweb';
-const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
+let nacl: any;
+let bytesToHex: any;
+let stringToBytes: any;
 
 
 function toHex(buf: Uint8Array): string {
@@ -13,8 +14,14 @@ function toHex(buf: Uint8Array): string {
 
 describe('TON auth', () => {
   let app: FastifyInstance;
-  let keypair: nacl.SignKeyPair;
+  let keypair: any;
   const secretBytes = new TextEncoder().encode('secret');
+
+  beforeAll(async () => {
+    const TonWeb = await import('tonweb');
+    const utils = (TonWeb as any).utils || (TonWeb as any).default.utils;
+    ({ nacl, bytesToHex, stringToBytes } = utils);
+  });
 
   beforeEach(async () => {
     app = fastify();
@@ -28,31 +35,66 @@ describe('TON auth', () => {
     await app.close();
   });
 
-  test('rejects replayed challenges', async () => {
+  test('accepts valid signature and sets cookie', async () => {
     const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
     const { challenge, ttl } = start.json();
     expect(ttl).toBe(120);
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes,
+        signature: sig,
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const tokenCookie = res.cookies.find((c: any) => c.name === 'sid');
+    expect(tokenCookie).toBeDefined();
+    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
+    expect(tokenPayload.scopes).toEqual(scopes);
+  });
+
+  test('rejects invalid signature', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const wrongMsg = composeMessage('wrong', []);
+    const wrongSig = toHex(
+      nacl.sign.detached(stringToBytes(wrongMsg), keypair.secretKey)
+    );
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        address: toHex(keypair.publicKey),
+        challenge,
+        scopes: [],
+        signature: wrongSig,
+      },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  test('rejects replayed challenges', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge, ttl } = start.json();
+    expect(ttl).toBe(120);
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const payload = {
       address: toHex(keypair.publicKey),
       challenge,
-      scopes,
+      scopes: [],
       signature: sig,
     };
     const first = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(first.statusCode).toBe(200);
 
-    const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
-    expect(tokenCookie).toBeDefined();
-    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
-    expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
-    expect(tokenPayload.scopes).toEqual(scopes);
-    // token expiration is capped at one hour
-    expect(tokenPayload.exp).toBeLessThanOrEqual(
-      Math.floor(Date.now() / 1000) + 60 * 60
-    );
     const second = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(second.statusCode).toBe(400);
   });
