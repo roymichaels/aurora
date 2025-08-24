@@ -12,7 +12,11 @@ import { mergeAndExplainMemories, formatMemoryContext } from "@/memory/relevance
 import { bus } from "@/utils/bus";
 import { runAgentCommand } from "@/services/aiBridge";
 
-export type ChatEntry = ChatMessage & { id: string };
+export type ChatEntry = ChatMessage & {
+  id: string;
+  /** Optional retry handler for failed responses */
+  retry?: () => Promise<void>;
+};
 
 type ChatState = {
   messages: ChatEntry[];
@@ -115,17 +119,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
       memoryStore.add("episodic", "assistant", finalText).catch(() => {});
       saveMemory(finalText, { role: "assistant" }).catch(() => {});
     } catch (error) {
+      const errorMessage =
+        error instanceof Error && error.message
+          ? `${error.message}. Tap to retry.`
+          : "Something went wrong. Tap to retry.";
       set(state => ({
         messages: state.messages.map(m =>
           m.id === responseId
-            ? { ...m, content: "Sorry, I couldn't respond." }
+            ? { ...m, content: errorMessage, retry: () => get().send(text) }
             : m
         ),
         sending: false,
       }));
       bus.emit('chat/stream:error', { id: responseId, error });
+      voiceService.cancel();
       bus.emit('sphere/state:set', { state: 'thinking' });
       bus.emit('voice/state:set', { state: 'thinking' });
+      void voiceService.speak(errorMessage);
     }
   },
 }));
