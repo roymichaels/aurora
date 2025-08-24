@@ -6,6 +6,7 @@ import tonAuth, { composeMessage } from '../ton';
 const TonWeb = require('tonweb');
 const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
 
+
 function toHex(buf: Uint8Array): string {
   return bytesToHex(buf);
 }
@@ -13,6 +14,7 @@ function toHex(buf: Uint8Array): string {
 describe('TON auth', () => {
   let app: any;
   let keypair: nacl.SignKeyPair;
+  const secretBytes = new TextEncoder().encode('secret');
 
   beforeEach(async () => {
     app = fastify();
@@ -40,7 +42,11 @@ describe('TON auth', () => {
     };
     const first = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(first.statusCode).toBe(200);
-    expect(first.cookies.find((c: any) => c.name === 'sid')).toBeDefined();
+    const tokenCookie = first.cookies.find((c: any) => c.name === 'sid');
+    expect(tokenCookie).toBeDefined();
+    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
+    expect(tokenPayload.scopes).toEqual(scopes);
     const second = await app.inject({ method: 'POST', url: '/auth/ton/verify', payload });
     expect(second.statusCode).toBe(400);
   });

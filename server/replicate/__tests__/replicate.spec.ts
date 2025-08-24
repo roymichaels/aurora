@@ -1,12 +1,16 @@
 import fastify from 'fastify';
 import replicatePlugin from '../../replicate';
 import cookie from '@fastify/cookie';
-import * as jwt from 'jsonwebtoken';
+import { SignJWT } from 'jose';
 
 const secret = 'secret';
+const secretBytes = new TextEncoder().encode(secret);
 
-function sign(scopes: string[]) {
-  return jwt.sign({ sub: 'user1', scopes }, secret, { expiresIn: '1h' });
+async function sign(scopes: string[]) {
+  return new SignJWT({ sub: 'user1', scopes })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('1h')
+    .sign(secretBytes);
 }
 
 describe('replicate plugin', () => {
@@ -50,7 +54,7 @@ describe('replicate plugin', () => {
   });
 
   test('proxies changes feed', async () => {
-    const token = sign(['replicate']);
+    const token = await sign(['replicate']);
     const res = await app.inject({
       method: 'GET',
       url: '/replicate/tasks/_changes?since=0',
@@ -63,7 +67,7 @@ describe('replicate plugin', () => {
   });
 
   test('proxies bulk docs', async () => {
-    const token = sign(['replicate']);
+    const token = await sign(['replicate']);
     const payload = { docs: [{ _id: 'a' }] };
     const res = await app.inject({
       method: 'POST',
@@ -78,7 +82,7 @@ describe('replicate plugin', () => {
   });
 
   test('rejects missing scope', async () => {
-    const token = sign([]);
+    const token = await sign([]);
     const res = await app.inject({
       method: 'GET',
       url: '/replicate/tasks/_changes',

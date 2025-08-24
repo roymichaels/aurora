@@ -1,10 +1,12 @@
 import type { FastifyPluginAsync } from 'fastify';
-import * as jwt from 'jsonwebtoken';
+import { SignJWT } from 'jose';
 import { nanoid } from 'nanoid';
 import * as TonWeb from 'tonweb';
 
+
 const CHALLENGE_TTL = 300; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET_BYTES = new TextEncoder().encode(JWT_SECRET);
 
 export function composeMessage(
   challenge: string,
@@ -69,7 +71,10 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       tokenExp = Math.min(Math.floor(exp / 1000), now + 60 * 60);
     }
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: tokenExp - now });
+    const token = await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setExpirationTime(tokenExp)
+      .sign(JWT_SECRET_BYTES);
     reply.setCookie('sid', token, {
       httpOnly: true,
       sameSite: 'lax',
