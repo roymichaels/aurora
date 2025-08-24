@@ -1,11 +1,48 @@
 let dataKey: Uint8Array | undefined;
 
+function decodeSignedMessage(message: string): Uint8Array {
+  let normalized = message.trim();
+  if (normalized.startsWith('0x') || normalized.startsWith('0X')) {
+    normalized = normalized.slice(2);
+  }
+  if (/^[0-9a-fA-F]+$/.test(normalized)) {
+    const bytes = new Uint8Array(normalized.length / 2);
+    for (let i = 0; i < normalized.length; i += 2) {
+      bytes[i / 2] = parseInt(normalized.substring(i, i + 2), 16);
+    }
+    return bytes;
+  }
+  try {
+    if (typeof atob === 'function') {
+      const bin = atob(normalized);
+      return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+    }
+    // @ts-ignore - fallback for node environments
+    return Uint8Array.from(Buffer.from(normalized, 'base64'));
+  } catch {
+    throw new Error('Invalid signed message format');
+  }
+}
+
+export function setDataKey(key: Uint8Array) {
+  dataKey = key;
+}
+
+export function clearDataKey() {
+  dataKey = undefined;
+}
+
 export async function deriveDataKey(signedMessage: string, passcode: string) {
+  const messageBytes = decodeSignedMessage(signedMessage);
+  const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', messageBytes));
   const enc = new TextEncoder();
-  const combined = enc.encode(`${signedMessage}${passcode}`);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const baseKey = await crypto.subtle.importKey('raw', combined, 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
+  const passBytes = enc.encode(passcode);
+  const combined = new Uint8Array(msgHash.length + passBytes.length);
+  combined.set(msgHash);
+  combined.set(passBytes, msgHash.length);
+  const baseKey = await crypto.subtle.importKey('raw', combined, 'PBKDF2', false, ['deriveBits']);
+  const salt = new Uint8Array(await crypto.subtle.digest('SHA-256', passBytes));
+  const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
       salt,
@@ -13,13 +50,11 @@ export async function deriveDataKey(signedMessage: string, passcode: string) {
       hash: 'SHA-256'
     },
     baseKey,
-    { name: 'AES-GCM', length: 256 },
-    true,
-    ['encrypt', 'decrypt']
+    256
   );
-  const raw = await crypto.subtle.exportKey('raw', key);
-  dataKey = new Uint8Array(raw);
-  return dataKey;
+  const key = new Uint8Array(bits);
+  setDataKey(key);
+  return key;
 }
 
 export function getDataKey() {
