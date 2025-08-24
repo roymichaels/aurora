@@ -573,3 +573,21 @@ All colors MUST be HSL.
   right: 0;
   bottom: auto;
 }
+
+/* // [AURORA-BEGIN:visual-css] */
+.xp-pulse {
+  animation: xp-pulse 1s var(--ease-standard) forwards;
+}
+@keyframes xp-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.streak-flash {
+  animation: streak-flash 0.8s var(--ease-standard) forwards;
+}
+@keyframes streak-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+/* // [AURORA-END:visual-css] */
