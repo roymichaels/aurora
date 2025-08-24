@@ -47,11 +47,14 @@ function AppRoutesWithShell() {
     <Routes>
       <Route element={<AppShell />}>
         <Route path="/" element={<Navigate to="/app" replace />} />
-        <Route path="/app" element={<Outlet />}>
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
+        <Route
+          path="/app"
+          element={
+            <RequireRoadmap>
+              <Outlet />
+            </RequireRoadmap>
+          }
+        >
           <Route index element={<HomeGalaxy />} />
           {views
             .filter((v) => v.id !== 'home')
@@ -87,9 +90,6 @@ function LegacyRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/app" replace />} />
-<<<<<<< Updated upstream
-      <Route path="/app" element={<AppShell />}>
-=======
       <Route
         path="/app"
         element={
@@ -98,7 +98,6 @@ function LegacyRoutes() {
           </RequireRoadmap>
         }
       >
->>>>>>> Stashed changes
         <Route index element={<HomeGalaxy />} />
         {views
           .filter((v) => v.id !== 'home')

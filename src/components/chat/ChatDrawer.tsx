@@ -58,14 +58,20 @@ export function ChatDrawer() {
 
   return (
     <>
-      <button
-        aria-label={open ? 'Collapse chat' : 'Expand chat'}
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className={cn('drawer-grabber', open && 'open')}
+      <div
+        className="pointer-events-none fixed right-3 bottom-[calc(var(--chatbar-h)+var(--gap-h)+var(--safe-area-bottom)+var(--chat-drawer-h))] z-[var(--z-hud)]"
       >
-        <ChevronUp className="drawer-grabber-icon" />
-      </button>
+        <button
+          aria-label={open ? 'Collapse chat' : 'Expand chat'}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="absolute-center pointer-events-auto p-2 rounded-full bg-gray-800 focus-visible:ring transition duration-200"
+        >
+          <ChevronUp
+            className={cn('transition-transform duration-200', open && 'rotate-180')}
+          />
+        </button>
+      </div>
       <div
         ref={drawerRef}
         className={cn('chat-drawer glass-maple', open && 'open')}

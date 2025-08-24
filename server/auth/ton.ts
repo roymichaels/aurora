@@ -7,7 +7,6 @@ import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const TonWeb = require('tonweb');
 
-
 const CHALLENGE_TTL = 120; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
 const JWT_SECRET_BYTES = new TextEncoder().encode(JWT_SECRET);
@@ -69,20 +68,29 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    let tokenExp = now + 24 * 60 * 60; // default 24h
-    const payload: { sub: string; scopes: string[]; session?: string } = {
+    let tokenExp = now + 60 * 60; // rotate tokens every hour
+    const payload: {
+      sub: string;
+      scopes: string[];
+      session?: string;
+      sessionExp?: number;
+    } = {
       sub: address,
       scopes,
     };
 
     if (sessionPubKey) {
+      // session key must expire within one hour
       if (!exp || exp > Date.now() + 60 * 60 * 1000) {
         return reply.code(400).send({ error: 'invalid_grant_exp' });
       }
       payload.session = sessionPubKey;
-      tokenExp = Math.min(Math.floor(exp / 1000), now + 60 * 60);
+      payload.sessionExp = Math.floor(exp / 1000);
+      // token cannot outlive the session key
+      tokenExp = Math.min(tokenExp, payload.sessionExp);
     }
 
+    // a fresh JWT is issued for every verification to force rotation
     const token = await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime(tokenExp)
