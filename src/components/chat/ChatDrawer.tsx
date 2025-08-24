@@ -20,12 +20,33 @@ export function ChatDrawer() {
 
   const [open, setOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
       contentRef.current?.scrollTo({ top: contentRef.current.scrollHeight });
     }
   }, [messages, open]);
+
+  useEffect(() => {
+    const el = drawerRef.current;
+    const root = document.documentElement;
+    if (!el) return;
+    if (open) {
+      const set = () => {
+        root.style.setProperty('--chat-drawer-h', `${el.offsetHeight}px`);
+      };
+      set();
+      const ro = new ResizeObserver(set);
+      ro.observe(el);
+      return () => {
+        ro.disconnect();
+        root.style.setProperty('--chat-drawer-h', '0px');
+      };
+    } else {
+      root.style.setProperty('--chat-drawer-h', '0px');
+    }
+  }, [open]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,7 +66,11 @@ export function ChatDrawer() {
       >
         <ChevronUp className="drawer-grabber-icon" />
       </button>
-      <div className={cn('chat-drawer glass-maple', open && 'open')}>
+      <div
+        ref={drawerRef}
+        className={cn('chat-drawer glass-maple', open && 'open')}
+        style={{ zIndex: 75 }}
+      >
         <div ref={contentRef} className="p-4 space-y-2 overflow-y-auto max-h-[70vh]">
           {messages.map((m) => (
             <div key={m.id} className={cn('flex', m.role === 'assistant' ? 'justify-start' : 'justify-end')}>

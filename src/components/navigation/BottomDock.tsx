@@ -58,7 +58,7 @@ export default function BottomDock() {
         expanded ? "pb-3" : "pb-2"
       )}
       style={{
-        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom) + var(--chatbar-h) + var(--gap-h))`,
+        bottom: `calc(var(--kb-offset) + var(--safe-area-bottom) + var(--chatbar-h) + var(--gap-h) + var(--chat-drawer-h))`,
         zIndex: 80,
         pointerEvents: "auto",
       }}
