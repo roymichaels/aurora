@@ -3,12 +3,22 @@ import StatBars from './StatBars'
 import QuickSlot from './QuickSlot'
 import { quickSlots } from './hud.data'
 import { useHUDActions } from './useHUDActions'
-import { useEffect } from 'react'
+import { useEffect, useState, KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useUIStore } from '@/state/ui'
+import { ChevronDown } from 'lucide-react'
 
 export default function HUDBar() {
   const { run } = useHUDActions()
   const openModal = useUIStore.getState().openModal
+  const [expanded, setExpanded] = useState(true)
+
+  const toggle = () => setExpanded(e => !e)
+  const onKeyToggle = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      toggle()
+    }
+  }
 
   // Desktop hotkeys 1..6
   useEffect(() => {
@@ -25,9 +35,20 @@ export default function HUDBar() {
   return (
     <div className="pointer-events-auto fixed inset-x-0 bottom-0 z-[var(--z-hud)]">
       {/* HUD shelf with divider line */}
-      <div className="w-full" style={{ height: 'var(--hud-h)' }}>
+      <div className="relative w-full" style={{ height: 'var(--hud-h)' }}>
+        <button
+          type="button"
+          aria-label="Toggle HUD"
+          aria-expanded={expanded}
+          onClick={toggle}
+          onKeyDown={onKeyToggle}
+          className="hud-toggle absolute right-0 top-1/2 -translate-y-1/2 rounded-full p-2 bg-white/10 hover:bg-white/20 transition-transform duration-200"
+        >
+          <ChevronDown className={`transition-transform duration-200 ${expanded ? '' : 'rotate-180'}`} />
+        </button>
         <div className="absolute top-0 left-0 right-0 h-px bg-border/80" role="separator" aria-hidden />
-        <div className="absolute inset-x-0 bottom-2 flex justify-center pb-safe">
+        <div className={`absolute inset-x-0 bottom-2 flex justify-center pb-safe transition-transform duration-200 ${expanded ? 'translate-y-0' : 'translate-y-full'}`}
+        >
           <div className="hud-shell max-w-[1200px] w-[96%]">
             {/* Flex that wraps to 2 lines when tight */}
             <div className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -51,7 +72,7 @@ export default function HUDBar() {
               </div>
 
               {/* Quick Slots: full width on small (second line), inline on large */}
-              <div className="flex items-center gap-3 basis-full sm:basis-auto order-4 sm:order-none">
+              <div data-testid="quick-slots" className="flex items-center gap-3 basis-full sm:basis-auto order-4 sm:order-none">
                 {quickSlots.map(s => (
                   <QuickSlot key={s.id} hotkey={s.key} label={s.label} icon={s.icon} onClick={() => run(s.action)} />
                 ))}

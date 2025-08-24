@@ -31,3 +31,16 @@
 /* Bars remain visible on darker glass */
 .hud-readable .bar { background: hsl(0 0% 100% / 0.12); }
 .hud-readable .bar > i { box-shadow: 0 0 10px hsl(var(--accent) / 0.15); }
+
+/* Chevron toggle spacing and positioning to avoid overlap with quick actions */
+.hud-shell {
+  padding-right: 3rem;
+}
+
+.hud-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 9999px;
+}
