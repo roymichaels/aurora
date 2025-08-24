@@ -25,9 +25,17 @@ export default function PassiveOrbitControls({ makeDefault, enableDamping = true
 
   // Rebind the wheel listener with `passive: true` to avoid blocking the main thread
   useEffect(() => {
-    const handler = (controls as OrbitControlsImpl & {
-      _onMouseWheel: (event: WheelEvent) => void;
-    })._onMouseWheel;
+    const handler = (
+      controls as OrbitControlsImpl & {
+        _onMouseWheel?: (event: WheelEvent) => void;
+      }
+    )._onMouseWheel;
+    if (!handler) {
+      console.warn(
+        "PassiveOrbitControls: _onMouseWheel handler not found; skipping wheel listener rebind."
+      );
+      return;
+    }
     const element = gl.domElement;
     element.removeEventListener("wheel", handler);
     element.addEventListener("wheel", handler, { passive: true });
