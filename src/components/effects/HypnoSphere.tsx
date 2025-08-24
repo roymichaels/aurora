@@ -44,6 +44,7 @@ export function HypnoSphere({ size = 256, className = "" }: Props) {
       cancelAnimationFrame(frameId);
     };
     const handleContextRestored = () => {
+      renderer.resetState();
       frameId = requestAnimationFrame(animate);
     };
     renderer.domElement.addEventListener('webglcontextlost', handleContextLost);

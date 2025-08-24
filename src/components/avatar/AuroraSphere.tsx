@@ -245,6 +245,7 @@ export function AuroraSphere({
         cancelAnimationFrame(frameRef.current);
       };
       handleContextRestored = () => {
+        renderer.resetState();
         animate();
       };
       renderer.domElement.addEventListener('webglcontextlost', handleContextLost);

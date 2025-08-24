@@ -44,6 +44,8 @@ const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
       }
     });
 
+    useEffect(() => () => matRef.current?.dispose(), []);
+
     const geometry = useMemo(() => new THREE.IcosahedronGeometry(1, 5), []);
     useEffect(() => () => geometry.dispose(), [geometry]);
 

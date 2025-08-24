@@ -8,7 +8,9 @@ function WebGLContextManager() {
   const { gl } = useThree();
   useEffect(() => {
     const handleLost = (e: Event) => e.preventDefault();
-    const handleRestored = () => {};
+    const handleRestored = () => {
+      gl.resetState();
+    };
     gl.domElement.addEventListener('webglcontextlost', handleLost);
     gl.domElement.addEventListener('webglcontextrestored', handleRestored);
     return () => {

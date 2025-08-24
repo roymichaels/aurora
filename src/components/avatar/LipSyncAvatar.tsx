@@ -65,6 +65,7 @@ export function LipSyncAvatar({ size = 96 }: Props) {
       cancelAnimationFrame(frame);
     };
     const handleContextRestored = () => {
+      renderer.resetState();
       frame = requestAnimationFrame(animate);
     };
     renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
