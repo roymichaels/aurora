@@ -1,10 +1,13 @@
 import fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import tonAuth, { composeMessage } from '../ton';
-import * as nacl from 'tweetnacl';
+// TonWeb is CommonJS; require to access utils in Jest environment
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const TonWeb = require('tonweb');
+const { nacl, bytesToHex, stringToBytes } = TonWeb.utils;
 
 function toHex(buf: Uint8Array): string {
-  return Buffer.from(buf).toString('hex');
+  return bytesToHex(buf);
 }
 
 describe('TON auth', () => {
@@ -28,7 +31,7 @@ describe('TON auth', () => {
     const { challenge } = start.json();
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const payload = {
       address: toHex(keypair.publicKey),
       challenge,
@@ -51,7 +54,7 @@ describe('TON auth', () => {
     // @ts-ignore
     Date.now = () => now + (ttl + 1) * 1000;
     const msg = composeMessage(challenge, []);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const res = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
@@ -71,7 +74,7 @@ describe('TON auth', () => {
     const { challenge } = start.json();
     const signedScopes = ['read'];
     const msg = composeMessage(challenge, signedScopes);
-    const sig = toHex(nacl.sign.detached(Buffer.from(msg), keypair.secretKey));
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const res = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',

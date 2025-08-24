@@ -1,7 +1,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 import * as jwt from 'jsonwebtoken';
 import { nanoid } from 'nanoid';
-import * as nacl from 'tweetnacl';
+import * as TonWeb from 'tonweb';
 
 const CHALLENGE_TTL = 300; // seconds
 const JWT_SECRET = process.env.JWT_SECRET || 'secret';
@@ -46,11 +46,12 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
     challenges.delete(challenge);
 
+    const { stringToBytes, hexToBytes, nacl } = TonWeb.utils;
     const message = composeMessage(challenge, scopes, sessionPubKey, exp);
     const ok = nacl.sign.detached.verify(
-      Buffer.from(message),
-      Buffer.from(signature, 'hex'),
-      Buffer.from(address, 'hex')
+      stringToBytes(message),
+      hexToBytes(signature),
+      hexToBytes(address)
     );
     if (!ok) {
       return reply.code(401).send({ error: 'invalid_signature' });
