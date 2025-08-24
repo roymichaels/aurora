@@ -101,6 +101,7 @@ All colors MUST be HSL.
     /* Layout gap */
     --gap-h: 12px;           /* gap above dock/chat bar */
     --chat-drawer-h: 0px;
+    --chat-drawer-max-h: calc(100vh - var(--dock-h) - var(--chatbar-h) - var(--gap-h) - var(--safe-area-bottom));
   }
 
   .light {
