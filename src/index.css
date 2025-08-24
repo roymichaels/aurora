@@ -573,3 +573,21 @@ All colors MUST be HSL.
   right: 0;
   bottom: auto;
 }
+
+/* Identity scene container */
+.identity-page {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(600px 400px at 50% 0%, hsl(var(--primary) / 0.1), transparent 70%),
+    hsl(var(--background));
+  overflow: hidden;
+}
+.identity-page canvas {
+  touch-action: none;
+}
+.identity-page .overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}

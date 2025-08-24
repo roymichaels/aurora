@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import logger from "@/lib/logger";
+import { dispatchVisualEvent } from "@/visual/events";
 
 /**
  * Lightweight helpers to sync game actions with Supabase.
@@ -32,7 +33,7 @@ export async function awardXPRemote(activity: string, amount: number, metadata: 
     const total = first?.total_xp ?? null;
     const streak = first?.streak_count;
     if (typeof total === "number") {
-      window.dispatchEvent(new CustomEvent("xp-total-update", { detail: { total_xp: total, streak } }));
+      dispatchVisualEvent("xp-total-update", { total_xp: total, streak });
     }
   } catch (e) {
     logger.warn("[gameSync] xp-total-update event failed", e);
