@@ -36,13 +36,16 @@ export default function HypnoPanel({ onClose }: Props) {
     const user = await getTonUser();
     const uid = user?.id;
     if (uid) {
-      db.from("sessions").insert({
-        user_id: uid,
-        type: "hypno",
-        mood_before: mood,
-      })
-      .then(() => logEvent("session_start", { type: "hypno" }))
-      .catch((e) => console.error("[HypnoPanel] session insert failed", e));
+      try {
+        await db.from("sessions").insert({
+          user_id: uid,
+          type: "hypno",
+          mood_before: mood,
+        });
+        await logEvent("session_start", { type: "hypno" });
+      } catch (e) {
+        console.error("[HypnoPanel] session insert failed", e);
+      }
     }
   };
 
