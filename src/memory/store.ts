@@ -1,4 +1,8 @@
-import { IndexedDbMemory, type MemoryBucket, type MemoryEntry } from './indexedDbMemory';
+import {
+  IndexedDbMemory,
+  type MemoryBucket,
+  type MemoryEntry,
+} from './indexedDbMemory';
 import { OpfsMemory } from './opfsStore';
 
 async function createStore() {
@@ -16,7 +20,11 @@ async function createStore() {
   return new IndexedDbMemory();
 }
 
-export const memoryStore = await createStore();
+const memoryStorePromise = createStore();
+
+export async function getMemoryStore() {
+  return memoryStorePromise;
+}
 
 export interface MemoryRecord {
   id: number;
@@ -24,12 +32,20 @@ export interface MemoryRecord {
   metadata: Record<string, any>;
 }
 
-export async function saveMemory(text: string, metadata: Record<string, any> = {}): Promise<void> {
-  await memoryStore.add('semantic', metadata.role ?? 'user', text, metadata);
+export async function saveMemory(
+  text: string,
+  metadata: Record<string, any> = {},
+): Promise<void> {
+  const store = await memoryStorePromise;
+  await store.add('semantic', metadata.role ?? 'user', text, metadata);
 }
 
-export async function queryMemory(query: string, k = 5): Promise<MemoryRecord[]> {
-  const results = await memoryStore.search(query, k);
+export async function queryMemory(
+  query: string,
+  k = 5,
+): Promise<MemoryRecord[]> {
+  const store = await memoryStorePromise;
+  const results = await store.search(query, k);
   return results.map((m, i) => ({ id: i, text: m.content, metadata: m }));
 }
 
