@@ -153,7 +153,7 @@ describe('voiceService', () => {
     playClonedVoiceMock.mockResolvedValue({
       audio: new (class extends MockAudio {
         play = jest.fn<() => Promise<void>>().mockRejectedValue({ name: 'NotAllowedError' });
-      })(),
+      })() as unknown as HTMLAudioElement,
       error: { name: 'NotAllowedError' },
     });
 
@@ -169,7 +169,7 @@ describe('voiceService', () => {
     useVoiceStore.getState().setVoiceId('abc');
     guardMock.mockResolvedValue('free');
     playClonedVoiceMock.mockResolvedValue({
-      audio: new MockAudio(),
+      audio: new MockAudio() as unknown as HTMLAudioElement,
       error: null,
     });
 
