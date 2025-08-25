@@ -65,7 +65,8 @@ export function useTonAuth() {
     try {
       if (!connector.wallet) {
         try {
-          await connector.tonConnect.connectWallet({ chain: CHAIN.TESTNET });
+          // use TonConnectUI's connectWallet to prompt user connection
+          await connector.connectWallet();
         } catch (err) {
           console.error("Wallet connection failed", err);
           throw err;
