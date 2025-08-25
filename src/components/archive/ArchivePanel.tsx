@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { db } from "@/integrations/db";
+import { createSignedUrl } from "@/integrations/storage";
 import { useQuery } from "@tanstack/react-query";
 import { PanelHeaderUnified } from "@/components/layout/PanelHeaderUnified";
 // Basic types for archive entities
@@ -90,7 +91,8 @@ export default function ArchivePanel() {
         const [bucket, ...rest] = sp.split("/");
         const path = rest.join("/");
         if (!bucket || !path) continue;
-        const { data, error } = await db.storage.from(bucket).createSignedUrl(path, 60 * 60);
+        const { data, error } = await createSignedUrl(bucket, path, 60 * 60);
+
         if (!error && data?.signedUrl) {
           entries.push([m.id, data.signedUrl]);
         }

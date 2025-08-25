@@ -1,13 +1,15 @@
 import { db } from "@/integrations/db";
+import { downloadFromStorage } from "@/integrations/storage";
 
 async function cacheVoiceModel(voiceId: string) {
   if (typeof window === "undefined") return;
   const key = `aurora_voice_model_${voiceId}`;
   if (localStorage.getItem(key)) return;
   try {
-    const { data } = await db.storage
-      .from("voice-models")
-      .download(`${voiceId}.bin`);
+    const { data } = await downloadFromStorage(
+      "voice-models",
+      `${voiceId}.bin`,
+    );
     if (data) {
       const base64 = await blobToBase64(data);
       localStorage.setItem(key, base64);

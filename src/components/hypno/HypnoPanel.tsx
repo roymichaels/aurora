@@ -6,6 +6,7 @@ import { REWARDS } from "@/game/QuestEngine";
 import { award } from "@/game/gamification/award";
 import { db } from "@/integrations/db";
 import { logEvent } from "@/integrations/db";
+import { getTonUser } from "@/integrations/auth";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -32,8 +33,8 @@ export default function HypnoPanel({ onClose }: Props) {
     award({ xp: REWARDS.completeQuest });
 
     // Server: create a session start row (if signed-in)
-    const { data } = await db.auth.getUser();
-    const uid = data.user?.id;
+    const user = await getTonUser();
+    const uid = user?.id;
     if (uid) {
       db.from("sessions").insert({
         user_id: uid,

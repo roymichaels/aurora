@@ -10,6 +10,7 @@ import './state/quickActions';
 import { db } from './data/db';
 import { initializeGamificationStore } from './game/gamification/store';
 import { initializeRoadmapStore } from './state/roadmapStore';
+import { getDataKey } from './state/keyManager';
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true });
@@ -19,16 +20,22 @@ async function bootstrap() {
   initSettings();
   preloadLocalModels().catch(() => {});
 
-  try {
-    await db.open();
-    const [tasks, stats] = await Promise.all([
-      db.tasks.toArray(),
-      db.stats.get('local'),
-    ]);
-    initializeRoadmapStore(tasks as any);
-    initializeGamificationStore(stats ?? undefined);
-  } catch (err) {
-    console.warn('Dexie unavailable', err);
+  const key = getDataKey();
+  if (key) {
+    try {
+      await db.open();
+      const [tasks, stats] = await Promise.all([
+        db.tasks.toArray(),
+        db.stats.get('local'),
+      ]);
+      initializeRoadmapStore(tasks as any);
+      initializeGamificationStore(stats ?? undefined);
+    } catch (err) {
+      console.warn('Dexie unavailable', err);
+      initializeRoadmapStore([]);
+      initializeGamificationStore();
+    }
+  } else {
     initializeRoadmapStore([]);
     initializeGamificationStore();
   }

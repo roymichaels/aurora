@@ -9,6 +9,8 @@ import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import FocusRunner from "@/nodes/FocusRunner";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
+import { getTonUser } from "@/integrations/auth";
+import { uploadToStorage } from "@/integrations/storage";
 
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
@@ -41,11 +43,11 @@ export function QuickPodsRow() {
   };
   const [noteText, setNoteText] = useState("");
   const saveNote = async () => {
-    const user = (await db.auth.getUser()).data.user;
-      if (!user) {
-        toast({ title: "Sign in required", description: "Sign in to capture notes." });
-        return;
-      }
+    const user = await getTonUser();
+    if (!user) {
+      toast({ title: "Sign in required", description: "Sign in to capture notes." });
+      return;
+    }
 
     if (!noteText.trim()) return;
     const { error } = await db.from("moments").insert({
@@ -78,11 +80,11 @@ export function QuickPodsRow() {
   const timerRef = useRef<number | null>(null);
 
   const startRecording = async () => {
-    const authUser = (await db.auth.getUser()).data.user;
-      if (!authUser) {
-        toast({ title: "Sign in required", description: "Sign in to record voice notes." });
-        return;
-      }
+    const authUser = await getTonUser();
+    if (!authUser) {
+      toast({ title: "Sign in required", description: "Sign in to record voice notes." });
+      return;
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -96,7 +98,8 @@ export function QuickPodsRow() {
         try {
           const blob = new Blob(chunks, { type: "audio/webm" });
           const filePath = `${authUser!.id}/${Date.now()}.webm`;
-          const { error: upErr } = await db.storage.from("voice-notes").upload(filePath, blob, { contentType: "audio/webm" });
+          const { error: upErr } = await uploadToStorage("voice-notes", filePath, blob, "audio/webm");
+
           if (upErr) throw upErr;
           const { error: insErr } = await db.from("moments").insert({
             user_id: authUser!.id,

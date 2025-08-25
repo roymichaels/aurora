@@ -17,21 +17,6 @@ class TonDbClient {
     invoke: async (_fn: string, _args?: any): Promise<QueryResult<any>> => ({ data: null, error: null }),
   };
 
-  auth = {
-    getUser: async (): Promise<QueryResult<any>> => ({ data: null, error: null }),
-    signOut: async (): Promise<{ error: Error | null }> => ({ error: null }),
-  };
-
-  storage = {
-    from: (_bucket: string) => ({
-      upload: async (_path: string, _file: Blob): Promise<QueryResult<any>> => ({ data: null, error: null }),
-      createSignedUrl: async (_path: string): Promise<QueryResult<{ signedUrl: string }>> => ({
-        data: { signedUrl: '' },
-        error: null,
-      }),
-    }),
-  };
-}
 
 export const db = new TonDbClient();
 

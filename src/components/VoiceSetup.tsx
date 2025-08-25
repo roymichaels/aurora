@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
 import { db } from "@/integrations/db";
+import { getTonUser } from "@/integrations/auth";
 
 export default function VoiceSetup() {
   const {
@@ -45,8 +46,8 @@ export default function VoiceSetup() {
         setMode("cloned");
         setLocale(navigator.language || "en-US");
         try {
-          const { data: auth } = await db.auth.getUser();
-          const uid = auth.user?.id;
+          const auth = await getTonUser();
+          const uid = auth?.id;
           if (uid) {
             const { data: prof } = await db
               .from("profiles")
