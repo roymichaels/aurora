@@ -23,7 +23,7 @@ build();
 
 // [AURORA-BEGIN:ton-manifest-dev]
 server.get('/tonconnect-manifest.json', async (req, reply) => {
-  const p = path.join(process.cwd(), 'tonconnect-manifest.json'); // drop file in project root
+  const p = path.join(process.cwd(), 'public', 'tonconnect-manifest.json'); // read from public directory
   if (!fs.existsSync(p)) return reply.code(404).send({ error: 'manifest not found' });
   const json = fs.readFileSync(p, 'utf8');
   reply
