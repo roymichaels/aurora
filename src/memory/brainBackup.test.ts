@@ -8,10 +8,10 @@ describe('brain backup round trip', () => {
     db.run("CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT)");
     db.run("INSERT INTO memories (content) VALUES ('hello')");
     await db.saveToDisk();
-    const blob = await exportEncryptedBrain('pass');
+    const data = await exportEncryptedBrain('pass');
     await closeBrainDb();
     __setMemoryDb(null);
-    await importEncryptedBrain(blob, 'pass');
+    await importEncryptedBrain(data, 'pass');
     const db2 = await openBrainDb();
     const stmt = db2.prepare("SELECT content FROM memories");
     let content = '';

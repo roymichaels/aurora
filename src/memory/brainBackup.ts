@@ -5,9 +5,15 @@ const DB_FILE = 'brain.db';
 
 async function deriveKey(passphrase: string, salt: Uint8Array) {
   const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(passphrase),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt: salt.buffer, iterations: 100000, hash: 'SHA-256' },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -15,7 +21,7 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
   );
 }
 
-export async function exportEncryptedBrain(passphrase: string): Promise<Blob> {
+export async function exportEncryptedBrain(passphrase: string): Promise<ArrayBuffer> {
   const db: BrainDatabase = await openBrainDb();
   await db.saveToDisk();
   const data = db.export();
@@ -23,13 +29,13 @@ export async function exportEncryptedBrain(passphrase: string): Promise<Blob> {
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
   const encrypted = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data)
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data.buffer)
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
   out.set(salt, 0);
   out.set(iv, salt.length);
   out.set(encrypted, salt.length + iv.length);
-  return new Blob([out], { type: 'application/x-aurora' });
+  return out.buffer;
 }
 
 async function writeBrain(bytes: Uint8Array) {
@@ -72,14 +78,14 @@ async function writeBrain(bytes: Uint8Array) {
   __setMemoryDb(bytes);
 }
 
-export async function importEncryptedBrain(blob: Blob, passphrase: string) {
-  const buf = new Uint8Array(await blob.arrayBuffer());
+export async function importEncryptedBrain(buffer: ArrayBuffer, passphrase: string) {
+  const buf = new Uint8Array(buffer);
   const salt = buf.slice(0, 16);
   const iv = buf.slice(16, 28);
   const data = buf.slice(28);
   const key = await deriveKey(passphrase, salt);
   const decrypted = new Uint8Array(
-    await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data)
+    await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data.buffer)
   );
   await writeBrain(decrypted);
 }

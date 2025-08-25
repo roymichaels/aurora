@@ -21,7 +21,8 @@ export default function BrainBackupPanel() {
     }
     setBusy(true);
     try {
-      const blob = await exportEncryptedBrain(passphrase);
+      const data = await exportEncryptedBrain(passphrase);
+      const blob = new Blob([data], { type: 'application/x-aurora' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -50,7 +51,8 @@ export default function BrainBackupPanel() {
       if (!file) return;
       setBusy(true);
       try {
-        await importEncryptedBrain(file, passphrase);
+        const buffer = await file.arrayBuffer();
+        await importEncryptedBrain(buffer, passphrase);
         toast({ title: 'Brain restored', description: 'Reloading…' });
         location.reload();
       } catch (e) {

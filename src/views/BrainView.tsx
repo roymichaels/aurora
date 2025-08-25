@@ -176,7 +176,8 @@ export default function BrainView() {
   const handleExport = async () => {
     const pass = prompt('Passphrase to encrypt backup') || '';
     if (!pass) return;
-    const blob = await exportEncryptedBrain(pass);
+    const data = await exportEncryptedBrain(pass);
+    const blob = new Blob([data], { type: 'application/x-aurora' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -188,7 +189,8 @@ export default function BrainView() {
   const handleImport = async (file: File) => {
     const pass = prompt('Passphrase to decrypt backup') || '';
     if (!pass) return;
-    await importEncryptedBrain(file, pass);
+    const buffer = await file.arrayBuffer();
+    await importEncryptedBrain(buffer, pass);
     window.location.reload();
   };
 
