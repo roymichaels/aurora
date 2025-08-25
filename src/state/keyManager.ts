@@ -1,6 +1,7 @@
 type Secrets = typeof import('secrets.js-grempe');
 let secrets: Secrets | undefined;
 
+
 async function loadSecrets() {
   if (secrets) {
     return secrets;
@@ -13,6 +14,7 @@ async function loadSecrets() {
       'secrets.js-grempe/secrets.js'
     ) as { default: Secrets };
     secrets = loaded;
+
     try {
       secrets.init();
       secrets.setRNG('browserCryptoGetRandomValues');
