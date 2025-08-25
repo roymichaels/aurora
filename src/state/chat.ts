@@ -74,13 +74,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
       const memoryContext = formatMemoryContext(annotated);
       const confidence = annotated.length > 2 ? 0.9 : 0.5;
-      const payload: ChatMessage[] = [
-        ...history,
-        ...(memoryContext
-          ? [{ role: "system", content: `Relevant memories:\n${memoryContext}` }]
-          : []),
-        { role: "user", content: text },
-      ];
+      const payload: ChatMessage[] = [...history];
+      if (memoryContext)
+        payload.push({
+          role: "system",
+          content: `Relevant memories:\n${memoryContext}`,
+        });
+      payload.push({ role: "user", content: text });
 
       let fullText = '';
       let first = true;
