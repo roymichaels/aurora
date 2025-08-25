@@ -61,10 +61,11 @@ function merge(
 }
 
 export async function sync(adapter: SyncAdapter) {
-  const [{ memoryStore }, { default: logger }] = await Promise.all([
+  const [{ getMemoryStore }, { default: logger }] = await Promise.all([
     import('./store'),
     import('@/lib/logger'),
   ]);
+  const memoryStore = await getMemoryStore();
   const remote = await adapter.pull();
   const local = memoryStore.exportAll();
   const merged = merge(local, remote);
