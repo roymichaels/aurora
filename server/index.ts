@@ -1,6 +1,10 @@
 // [AURORA-BEGIN:server-entry]
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
+// [AURORA-BEGIN:ton-manifest-dev]
+import path from 'node:path';
+import fs from 'node:fs';
+// [AURORA-END:ton-manifest-dev]
 
 import authTon from './auth/ton';
 import replicate from './replicate';
@@ -16,6 +20,20 @@ async function build() {
 }
 
 build();
+
+// [AURORA-BEGIN:ton-manifest-dev]
+if (process.env.NODE_ENV === 'development') {
+  server.get('/tonconnect-manifest.json', async (req, reply) => {
+    const p = path.join(process.cwd(), 'tonconnect-manifest.json'); // drop file in project root
+    if (!fs.existsSync(p)) return reply.code(404).send({ error: 'manifest not found' });
+    const json = fs.readFileSync(p, 'utf8');
+    reply
+      .header('Content-Type', 'application/json; charset=utf-8')
+      .header('Access-Control-Allow-Origin', '*')
+      .send(json);
+  });
+}
+// [AURORA-END:ton-manifest-dev]
 
 const port = Number(process.env.PORT) || 3000;
 server.listen({ port, host: '0.0.0.0' }).catch((err) => {

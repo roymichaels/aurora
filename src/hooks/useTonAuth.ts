@@ -31,16 +31,19 @@ export function useTonAuth() {
     const res = await fetch("/auth/ton/start", { method: "POST" });
     const { challenge } = await res.json();
     const message = composeMessage(challenge, scopes);
-    const { signature, address: addr } = await connector.signData({
+    const { signature } = await connector.signData({
       type: "text",
       text: message,
     });
+    const publicKey = connector.wallet?.account.publicKey;
+    if (!publicKey) throw new Error("missing_public_key");
     await fetch("/auth/ton/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ address: addr, signature, challenge, scopes }),
+      body: JSON.stringify({ publicKey, signature, challenge, scopes }),
     });
-    setAddress(addr);
+    const addr = connector.wallet?.account.address;
+    setAddress(addr || null);
   };
 
   const login = async (scopes: string[] = []) => {
