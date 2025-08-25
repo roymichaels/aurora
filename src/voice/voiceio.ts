@@ -3,20 +3,9 @@ import { voiceService } from '@/voice/voiceService';
 import { bus } from '@/utils/bus';
 
 declare global {
-  interface SpeechRecognition {
-    lang: string;
-    interimResults: boolean;
-    maxAlternatives: number;
-    onresult: ((event: any) => void) | null;
-    onerror: ((event: any) => void) | null;
-    onend: (() => void) | null;
-    start(): void;
-    stop(): void;
-  }
-
   interface Window {
-    SpeechRecognition?: new () => SpeechRecognition;
-    webkitSpeechRecognition?: new () => SpeechRecognition;
+    SpeechRecognition?: typeof SpeechRecognition;
+    webkitSpeechRecognition?: typeof SpeechRecognition;
   }
 }
 
