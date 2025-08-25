@@ -50,7 +50,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes,
         signature: sig,
@@ -75,7 +75,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes,
         signature: sig,
@@ -100,7 +100,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes: [],
         signature: sig,
@@ -139,7 +139,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes,
         signature: sig,
@@ -164,7 +164,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes: [],
         signature: wrongSig,
@@ -180,7 +180,7 @@ describe('TON auth', () => {
     const msg = composeMessage(challenge, []);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const payload = {
-      address: toHex(keypair.publicKey),
+      publicKey: toHex(keypair.publicKey),
       challenge,
       scopes: [],
       signature: sig,
@@ -196,7 +196,25 @@ describe('TON auth', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
-      payload: { address: 'bad' },
+      payload: { publicKey: 'bad' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects non-hex public key', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        publicKey: 'zz',
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
     });
     expect(res.statusCode).toBe(400);
   });
@@ -216,7 +234,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes: [],
         signature: sig,
@@ -236,7 +254,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         scopes: ['read', 'write'],
         signature: sig,
@@ -254,7 +272,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge: ch1,
         scopes: [],
         signature: sig1,
@@ -271,7 +289,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge: ch2,
         scopes: [],
         signature: sig2,
@@ -295,7 +313,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         sessionPubKey: session,
         exp,
@@ -322,7 +340,7 @@ describe('TON auth', () => {
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
-        address: toHex(keypair.publicKey),
+        publicKey: toHex(keypair.publicKey),
         challenge,
         sessionPubKey: session,
         exp,

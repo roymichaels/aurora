@@ -22,7 +22,7 @@ export function composeMessage(
 }
 
 const verifySchema = z.object({
-  address: z.string(),
+  publicKey: z.string(),
   signature: z.string(),
   challenge: z.string(),
   sessionPubKey: z.string().optional(),
@@ -45,7 +45,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     if (!body.success) {
       return reply.code(400).send({ error: 'invalid_payload' });
     }
-    const { address, signature, challenge, sessionPubKey, scopes, exp } = body.data;
+    const { publicKey, signature, challenge, sessionPubKey, scopes, exp } = body.data;
 
     const expiresAt = challenges.get(challenge);
     if (!expiresAt) {
@@ -57,11 +57,18 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
     challenges.delete(challenge);
 
+    let pkBytes: Uint8Array;
+    try {
+      pkBytes = hexToBytes(publicKey);
+    } catch {
+      return reply.code(400).send({ error: 'invalid_public_key' });
+    }
+
     const message = composeMessage(challenge, scopes, sessionPubKey, exp);
     const ok = nacl.sign.detached.verify(
       stringToBytes(message),
       hexToBytes(signature),
-      hexToBytes(address)
+      pkBytes
     );
     if (!ok) {
       return reply.code(401).send({ error: 'invalid_signature' });
@@ -75,7 +82,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       session?: string;
       sessionExp?: number;
     } = {
-      sub: address,
+      sub: publicKey,
       scopes,
     };
 
