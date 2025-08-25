@@ -40,7 +40,10 @@ function getEncryptionSettings() {
   }
 }
 
-async function deriveKey(passphrase: string, salt: Uint8Array) {
+async function deriveKey(
+  passphrase: string,
+  salt: Uint8Array,
+): Promise<CryptoKey> {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
@@ -50,7 +53,7 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    { name: "PBKDF2", salt: salt.buffer, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -58,12 +61,19 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
   );
 }
 
-async function encryptData(data: Uint8Array, passphrase: string) {
+async function encryptData(
+  data: Uint8Array,
+  passphrase: string,
+): Promise<Uint8Array> {
   const salt = crypto.getRandomValues(new Uint8Array(SALT_LEN));
   const iv = crypto.getRandomValues(new Uint8Array(IV_LEN));
   const key = await deriveKey(passphrase, salt);
   const encrypted = new Uint8Array(
-    await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data),
+    await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      data.buffer,
+    ),
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
   out.set(salt, 0);
@@ -72,14 +82,21 @@ async function encryptData(data: Uint8Array, passphrase: string) {
   return out;
 }
 
-async function decryptData(data: Uint8Array, passphrase: string) {
+async function decryptData(
+  data: Uint8Array,
+  passphrase: string,
+): Promise<Uint8Array> {
   if (data.length < SALT_LEN + IV_LEN) throw new Error("Invalid data");
   const salt = data.slice(0, SALT_LEN);
   const iv = data.slice(SALT_LEN, SALT_LEN + IV_LEN);
   const enc = data.slice(SALT_LEN + IV_LEN);
   const key = await deriveKey(passphrase, salt);
   const decrypted = new Uint8Array(
-    await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, enc),
+    await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      enc.buffer,
+    ),
   );
   return decrypted;
 }
@@ -204,7 +221,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
       if (opfsHandle) {
         try {
           const writable = await opfsHandle.createWritable();
-          await writable.write(data);
+          await writable.write(data.buffer);
           await writable.close();
         } catch {
           toast({ title: "Storage error", description: "OPFS write failed" });
@@ -222,7 +239,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
             const root = await (navigator as any).storage.getDirectory();
             opfsHandle = await root.getFileHandle(DB_FILE, { create: true });
             const writable = await opfsHandle.createWritable();
-            await writable.write(data);
+            await writable.write(data.buffer);
             await writable.close();
           } catch {
             toast({ title: "Storage error", description: "OPFS sync failed" });
