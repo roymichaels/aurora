@@ -5,6 +5,9 @@ import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import fs from "fs";
 import type { IncomingMessage, ServerResponse } from "http";
+import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
+import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
+import nodePolyfills from "rollup-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -44,6 +47,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
+      nodePolyfills() as unknown as Plugin,
       VitePWA({
         registerType: 'autoUpdate',
         manifest: false,
@@ -62,9 +66,24 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       'process.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
+      global: "globalThis",
     },
     optimizeDeps: {
       exclude: ["@mlc-ai/web-llm"],
+      esbuildOptions: {
+        define: {
+          global: "globalThis",
+        },
+        plugins: [
+          NodeGlobalsPolyfillPlugin({ buffer: true, process: true }) as any,
+          NodeModulesPolyfillPlugin() as any,
+        ],
+      },
+    },
+    build: {
+      rollupOptions: {
+        plugins: [nodePolyfills() as unknown as Plugin],
+      },
     },
     ssr: {
       noExternal: ["@mlc-ai/web-llm"],
