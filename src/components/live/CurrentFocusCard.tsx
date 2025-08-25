@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
-import { awardXPRemote } from "@/integrations/supabase/gameSync";
+import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import { useState } from "react";
 import { StickyNote } from "lucide-react";

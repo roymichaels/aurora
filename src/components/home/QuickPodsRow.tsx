@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { awardXPRemote } from "@/integrations/supabase/gameSync";
+import { supabase } from "@/integrations/db";
+import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import FocusRunner from "@/nodes/FocusRunner";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";

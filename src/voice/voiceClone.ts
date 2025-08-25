@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 async function cacheVoiceModel(voiceId: string) {
   if (typeof window === "undefined") return;

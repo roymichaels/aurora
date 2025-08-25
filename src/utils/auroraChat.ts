@@ -3,7 +3,7 @@ import brain from '@/brain/Brain';
 import { getFilterName } from '@/brain/filters';
 import { routeChat } from '@/agent/router';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/db';
 import { useModelPreference } from '@/state/modelPreference';
 import { buildPrompt } from '../../core/prompt.ts';
 

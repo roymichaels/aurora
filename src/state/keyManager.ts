@@ -1,4 +1,4 @@
-import secrets from 'secrets.js-grempe';
+import secrets from 'secrets.js-grempe/lib/secrets.js';
 
 // secrets.js does not automatically use a CSPRNG. Initialize the library and
 // explicitly set the RNG so shard generation relies on `crypto.getRandomValues`.

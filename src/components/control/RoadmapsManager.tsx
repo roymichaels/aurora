@@ -3,7 +3,7 @@ import RoadmapForm from "./RoadmapForm";
 import RoadmapsList, { RoadmapItem } from "./RoadmapsList";
 import TasksManager from "./TasksManager";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

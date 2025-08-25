@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/supabase/gameSync";
-import { supabase } from "@/integrations/supabase/client";
+import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/db";
+import { supabase } from "@/integrations/db";
 import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };

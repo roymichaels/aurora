@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame } from "lucide-react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 interface HeroCardProps {
   taskTitle: string | null;

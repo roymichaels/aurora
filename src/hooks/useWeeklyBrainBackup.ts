@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { useTonSession } from './useTonSession';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/db';
 import { exportEncryptedBrain } from '@/memory/brainBackup';
 
 export default function useWeeklyBrainBackup() {

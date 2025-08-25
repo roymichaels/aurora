@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useBackgroundAudio } from "@/hooks/useBackgroundAudio";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
