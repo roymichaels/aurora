@@ -16,8 +16,7 @@ async function loadSecrets() {
     secrets = loaded;
 
     try {
-      secrets.init();
-      secrets.setRNG('browserCryptoGetRandomValues');
+      secrets.init(256, 'browserCryptoGetRandomValues');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to initialize secrets.js RNG', err);
@@ -82,14 +81,18 @@ export function clearDataKey() {
 
 export async function deriveDataKey(signedMessage: string, passcode: string) {
   const messageBytes = decodeSignedMessage(signedMessage);
-  const msgHash = new Uint8Array(await crypto.subtle.digest('SHA-256', messageBytes));
+  const msgHash = new Uint8Array(
+    await crypto.subtle.digest('SHA-256', messageBytes.buffer)
+  );
   const enc = new TextEncoder();
   const passBytes = enc.encode(passcode);
   const combined = new Uint8Array(msgHash.length + passBytes.length);
   combined.set(msgHash);
   combined.set(passBytes, msgHash.length);
   const baseKey = await crypto.subtle.importKey('raw', combined, 'PBKDF2', false, ['deriveBits']);
-  const salt = new Uint8Array(await crypto.subtle.digest('SHA-256', passBytes));
+  const salt = new Uint8Array(
+    await crypto.subtle.digest('SHA-256', passBytes.buffer)
+  );
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
