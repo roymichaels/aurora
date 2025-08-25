@@ -80,17 +80,13 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
-    build: {
-      rollupOptions: {
-        plugins: [nodePolyfills() as unknown as Plugin],
-      },
-    },
     ssr: {
       noExternal: ["@mlc-ai/web-llm"],
     },
     build: {
       chunkSizeWarningLimit: 6000,
       rollupOptions: {
+        plugins: [nodePolyfills() as unknown as Plugin],
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
