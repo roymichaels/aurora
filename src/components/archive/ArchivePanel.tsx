@@ -78,7 +78,7 @@ export default function ArchivePanel() {
     },
   });
 
-  // Build signed URLs for audio moments stored in Supabase storage
+  // Build signed URLs for audio moments stored in cloud storage
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   useEffect(() => {
     (async () => {

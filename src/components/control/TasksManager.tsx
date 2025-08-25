@@ -110,7 +110,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   };
 
   const addTask = async () => {
-    if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to add tasks." }); return; }
+      if (!user) { toast({ title: "Sign in required", description: "Sign in to add tasks." }); return; }
     if (!title.trim()) return;
     setLoading(true);
     const { error } = await db.from("tasks").insert({

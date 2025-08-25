@@ -8,7 +8,7 @@ export type PlaybackHandle = {
 
 /**
  * Play hypnosis text using high quality audio when available.
- * Falls back to the Web Speech API if the Supabase function fails.
+ * Falls back to the Web Speech API if the backend function fails.
  */
 export async function playHypno(
   text: string,
@@ -20,7 +20,7 @@ export async function playHypno(
     onEnd();
     return null;
   }
-  // Try ElevenLabs via Supabase function
+  // Try ElevenLabs via backend function
   try {
     const { data, error } = await db.functions.invoke("tts-generate", {
       body: { text, voiceId: mode === "cloned" ? voiceId : undefined },

@@ -38,10 +38,10 @@ export function CurrentFocusCard({
   const [busy, setBusy] = useState(false);
 
   const markDoneAndAdvance = async () => {
-    if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to track your progress." });
-      return;
-    }
+      if (!user) {
+        toast({ title: "Sign in required", description: "Sign in to track your progress." });
+        return;
+      }
     if (!task) return;
 
     setBusy(true);

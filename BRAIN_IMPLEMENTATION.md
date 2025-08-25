@@ -32,7 +32,7 @@ function recall(query: string) {
 
 ## Vector Database Choice
 - **Local:** [LanceDB](https://lancedb.com) backed by SQLite for fast on-device vector search.
-- **Cloud Backup (optional):** Supabase with the pgvector extension mirrors the `memories` table when cloud sync is enabled.
+- **Cloud Backup (optional):** A Ton or CouchDB service can mirror the `memories` table when cloud sync is enabled.
 
 ```ts
 // Sync new memory to cloud when available

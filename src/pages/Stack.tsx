@@ -99,7 +99,7 @@ export default function StackPage() {
                 <dd className="font-medium">{hasSTT ? "available" : "unavailable"}</dd>
               </div>
               <div className="flex items-center justify-between rounded-md bg-white/5 px-3 py-2">
-                <dt className="text-muted-foreground">Supabase client</dt>
+                <dt className="text-muted-foreground">DB client</dt>
                 <dd className="font-medium">{dbReady ? "initialized" : "not ready"}</dd>
               </div>
               <div className="flex items-center justify-between rounded-md bg-white/5 px-3 py-2">
@@ -151,9 +151,10 @@ export default function StackPage() {
           <section aria-labelledby="backend" className="glass-panel rounded-xl p-4 elev">
             <h2 id="backend" className="text-lg font-medium mb-3">Backend & integrations</h2>
             <ul className="space-y-1 text-sm list-disc pl-5">
-              <li>Supabase (auth, DB, edge functions)</li>
+              <li>Cloud backend (auth, DB, edge functions)</li>
               <li>Edge function: db/functions/tts-generate</li>
-              <li>Client-side app with Supabase functions for server needs</li>
+              <li>Client-side app with serverless functions for backend needs</li>
+
             </ul>
           </section>
 

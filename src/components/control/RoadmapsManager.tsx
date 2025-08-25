@@ -55,7 +55,7 @@ export default function RoadmapsManager() {
   useEffect(()=> { fetchRoadmaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
 
   const setActive = async (roadmapId: string) => {
-    if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to manage roadmaps." }); return; }
+      if (!user) { toast({ title: "Sign in required", description: "Sign in to manage roadmaps." }); return; }
     try {
       await setActiveRoadmap(user.id, roadmapId);
     } catch (e) {

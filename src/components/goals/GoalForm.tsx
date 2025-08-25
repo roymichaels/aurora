@@ -37,7 +37,7 @@ export default function GoalForm() {
     setTitle("");
     setWhy("");
     setNextAction("");
-    toast({ title: "Goal saved", description: "Your goal was saved to Supabase." });
+      toast({ title: "Goal saved", description: "Your goal was saved." });
   };
 
   return (

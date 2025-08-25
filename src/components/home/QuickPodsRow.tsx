@@ -42,10 +42,11 @@ export function QuickPodsRow() {
   const [noteText, setNoteText] = useState("");
   const saveNote = async () => {
     const user = (await db.auth.getUser()).data.user;
-    if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to capture notes." });
-      return;
-    }
+      if (!user) {
+        toast({ title: "Sign in required", description: "Sign in to capture notes." });
+        return;
+      }
+
     if (!noteText.trim()) return;
     const { error } = await db.from("moments").insert({
       user_id: user.id,
@@ -78,10 +79,11 @@ export function QuickPodsRow() {
 
   const startRecording = async () => {
     const authUser = (await db.auth.getUser()).data.user;
-    if (!authUser) {
-      toast({ title: "Sign in required", description: "Connect Supabase to record voice notes." });
-      return;
-    }
+      if (!authUser) {
+        toast({ title: "Sign in required", description: "Sign in to record voice notes." });
+        return;
+      }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });

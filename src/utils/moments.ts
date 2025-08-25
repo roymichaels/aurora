@@ -5,7 +5,7 @@ export async function addNote() {
   const auth = await db.auth.getUser();
   const user = auth.data.user;
   if (!user) {
-    toast({ title: "Sign in required", description: "Connect Supabase to capture notes." });
+    toast({ title: "Sign in required", description: "Sign in to capture notes." });
     return;
   }
   const text = window.prompt("Enter note text");
@@ -30,7 +30,7 @@ export async function startVoiceNote() {
   const auth = await db.auth.getUser();
   const user = auth.data.user;
   if (!user) {
-    toast({ title: "Sign in required", description: "Connect Supabase to record voice notes." });
+    toast({ title: "Sign in required", description: "Sign in to record voice notes." });
     return;
   }
   try {

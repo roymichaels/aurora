@@ -15,7 +15,7 @@ export default function RoadmapForm({ onCreated }: { onCreated?: (id: string) =>
 
   const submit = async () => {
     if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to create roadmaps." });
+        toast({ title: "Sign in required", description: "Sign in to create roadmaps." });
       return;
     }
     if (!title.trim()) return;

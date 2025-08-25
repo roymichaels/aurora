@@ -30,12 +30,12 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 /**
- * Try to synthesize speech using the user's cloned voice via Supabase edge function.
+ * Try to synthesize speech using the user's cloned voice via a backend function.
  * Supports emotion, speed, pitch and expression parameters. Audio is cached for
  * offline reuse and the voice model is cached locally the first time it is used.
  * Returns an object with the HTMLAudioElement if playback was started. If the
  * request fails, `audio` will be null and `error` will contain any error
- * returned by the Supabase function.
+ * returned by the backend function.
  */
 export async function playClonedVoice(
   text: string,
