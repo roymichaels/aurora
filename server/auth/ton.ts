@@ -1,24 +1,29 @@
-import type { FastifyPluginAsync } from 'fastify';
-import { SignJWT } from 'jose';
-import { nanoid } from 'nanoid';
-import { z } from 'zod';
+import type { FastifyPluginAsync } from "fastify";
+import { SignJWT } from "jose";
+import { nanoid } from "nanoid";
+import { z } from "zod";
 
 // tonweb is a CommonJS module so we load it via dynamic import
-const TonWeb = (await import('tonweb')).default;
+const TonWeb = (await import("tonweb")).default;
 
 const CHALLENGE_TTL = 120; // seconds
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = process.env.JWT_SECRET || "secret";
 const JWT_SECRET_BYTES = new TextEncoder().encode(JWT_SECRET);
 
-const { stringToBytes, hexToBytes, nacl } = TonWeb.utils;
+const { stringToBytes, hexToBytes, base64ToBytes, nacl } = TonWeb.utils;
 
 export function composeMessage(
   challenge: string,
   scopes: string[] = [],
   sessionPubKey?: string,
-  exp?: number
+  exp?: number,
 ): string {
-  return [challenge, sessionPubKey || '', exp ? String(exp) : '', scopes.join(',')].join('|');
+  return [
+    challenge,
+    sessionPubKey || "",
+    exp ? String(exp) : "",
+    scopes.join(","),
+  ].join("|");
 }
 
 const verifySchema = z.object({
@@ -33,27 +38,28 @@ const verifySchema = z.object({
 const plugin: FastifyPluginAsync = async (fastify) => {
   const challenges = new Map<string, number>();
 
-  fastify.post('/auth/ton/start', async (_req, reply) => {
+  fastify.post("/auth/ton/start", async (_req, reply) => {
     const challenge = nanoid();
     const ttl = CHALLENGE_TTL;
     challenges.set(challenge, Date.now() + ttl * 1000);
     return reply.send({ challenge, ttl });
   });
 
-  fastify.post('/auth/ton/verify', async (req, reply) => {
+  fastify.post("/auth/ton/verify", async (req, reply) => {
     const body = verifySchema.safeParse(req.body);
     if (!body.success) {
-      return reply.code(400).send({ error: 'invalid_payload' });
+      return reply.code(400).send({ error: "invalid_payload" });
     }
-    const { publicKey, signature, challenge, sessionPubKey, scopes, exp } = body.data;
+    const { publicKey, signature, challenge, sessionPubKey, scopes, exp } =
+      body.data;
 
     const expiresAt = challenges.get(challenge);
     if (!expiresAt) {
-      return reply.code(400).send({ error: 'invalid_challenge' });
+      return reply.code(400).send({ error: "invalid_challenge" });
     }
     if (Date.now() > expiresAt) {
       challenges.delete(challenge);
-      return reply.code(400).send({ error: 'challenge_expired' });
+      return reply.code(400).send({ error: "challenge_expired" });
     }
     challenges.delete(challenge);
 
@@ -61,17 +67,29 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     try {
       pkBytes = hexToBytes(publicKey);
     } catch {
-      return reply.code(400).send({ error: 'invalid_public_key' });
+      return reply.code(400).send({ error: "invalid_public_key" });
     }
 
     const message = composeMessage(challenge, scopes, sessionPubKey, exp);
+
+    let sigBytes: Uint8Array;
+    try {
+      sigBytes = hexToBytes(signature);
+    } catch {
+      try {
+        sigBytes = base64ToBytes(signature);
+      } catch {
+        return reply.code(400).send({ error: "invalid_signature" });
+      }
+    }
+
     const ok = nacl.sign.detached.verify(
       stringToBytes(message),
-      hexToBytes(signature),
-      pkBytes
+      sigBytes,
+      pkBytes,
     );
     if (!ok) {
-      return reply.code(401).send({ error: 'invalid_signature' });
+      return reply.code(401).send({ error: "invalid_signature" });
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -89,7 +107,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     if (sessionPubKey) {
       // session key must expire within one hour
       if (!exp || exp > Date.now() + 60 * 60 * 1000) {
-        return reply.code(400).send({ error: 'invalid_grant_exp' });
+        return reply.code(400).send({ error: "invalid_grant_exp" });
       }
       payload.session = sessionPubKey;
       payload.sessionExp = Math.floor(exp / 1000);
@@ -99,24 +117,24 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
     // a fresh JWT is issued for every verification to force rotation
     const token = await new SignJWT(payload)
-      .setProtectedHeader({ alg: 'HS256' })
+      .setProtectedHeader({ alg: "HS256" })
       .setExpirationTime(tokenExp)
       .sign(JWT_SECRET_BYTES);
-    reply.setCookie('sid', token, {
+    reply.setCookie("sid", token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: req.protocol === 'https',
-      path: '/',
+      sameSite: "lax",
+      secure: req.protocol === "https",
+      path: "/",
     });
     return reply.send({ ok: true });
   });
 
-  fastify.post('/auth/logout', async (req, reply) => {
-    reply.clearCookie('sid', {
+  fastify.post("/auth/logout", async (req, reply) => {
+    reply.clearCookie("sid", {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: req.protocol === 'https',
-      path: '/',
+      sameSite: "lax",
+      secure: req.protocol === "https",
+      path: "/",
     });
     return reply.send({ ok: true });
   });

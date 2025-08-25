@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { TonConnectUI } from "@tonconnect/ui";
+import { CHAIN, TonConnectUI } from "@tonconnect/ui";
 
 // Create a single TonConnectUI instance for the app
 export const connector = new TonConnectUI({
@@ -10,9 +10,14 @@ function composeMessage(
   challenge: string,
   scopes: string[] = [],
   sessionPubKey?: string,
-  exp?: number
+  exp?: number,
 ): string {
-  return [challenge, sessionPubKey || "", exp ? String(exp) : "", scopes.join(",")].join("|");
+  return [
+    challenge,
+    sessionPubKey || "",
+    exp ? String(exp) : "",
+    scopes.join(","),
+  ].join("|");
 }
 
 export function useTonAuth() {
@@ -34,13 +39,20 @@ export function useTonAuth() {
     const { signature } = await connector.signData({
       type: "text",
       text: message,
+      network: CHAIN.TESTNET,
     });
     const publicKey = connector.wallet?.account.publicKey;
     if (!publicKey) throw new Error("missing_public_key");
+    const hexSignature = Buffer.from(signature, "base64").toString("hex");
     await fetch("/auth/ton/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ publicKey, signature, challenge, scopes }),
+      body: JSON.stringify({
+        publicKey,
+        signature: hexSignature,
+        challenge,
+        scopes,
+      }),
     });
     const addr = connector.wallet?.account.address;
     setAddress(addr || null);
@@ -52,13 +64,19 @@ export function useTonAuth() {
       if (!connector.wallet) {
         await connector.connectWallet();
       }
+      if (connector.wallet?.account.chain !== CHAIN.TESTNET) {
+        console.warn("Wallet is not on TON testnet");
+      }
       await signAndVerify(scopes);
       if (refreshTimer.current) clearInterval(refreshTimer.current);
-      refreshTimer.current = setInterval(() => {
-        signAndVerify(scopes).catch(() => {
-          /* ignore refresh errors */
-        });
-      }, 50 * 60 * 1000); // refresh roughly every 50 minutes
+      refreshTimer.current = setInterval(
+        () => {
+          signAndVerify(scopes).catch(() => {
+            /* ignore refresh errors */
+          });
+        },
+        50 * 60 * 1000,
+      ); // refresh roughly every 50 minutes
     } finally {
       setLoading(false);
     }
@@ -76,4 +94,3 @@ export function useTonAuth() {
 
   return { address, login, logout, loading };
 }
-
