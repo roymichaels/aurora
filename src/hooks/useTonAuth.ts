@@ -62,7 +62,7 @@ export function useTonAuth() {
     setLoading(true);
     try {
       if (!connector.wallet) {
-        await connector.tonConnect.connectWallet({ chain: CHAIN.TESTNET });
+        await connector.connectWallet();
       }
       if (connector.wallet?.account.chain !== CHAIN.TESTNET) {
         console.warn("Wallet is not on TON testnet");
