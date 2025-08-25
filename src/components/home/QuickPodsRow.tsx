@@ -46,6 +46,7 @@ export function QuickPodsRow() {
         toast({ title: "Sign in required", description: "Sign in to capture notes." });
         return;
       }
+
     if (!noteText.trim()) return;
     const { error } = await db.from("moments").insert({
       user_id: user.id,
@@ -82,6 +83,7 @@ export function QuickPodsRow() {
         toast({ title: "Sign in required", description: "Sign in to record voice notes." });
         return;
       }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
