@@ -63,7 +63,7 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     let key: string | undefined;
     for await (const part of parts) {
       if (part.type === 'file' && part.fieldname === 'file') file = part;
-      if (part.type === 'field' && part.fieldname === 'key') key = part.value;
+      if (part.type === 'field' && part.fieldname === 'key') key = String(part.value);
     }
     if (!file || !key || !isValidKey(key)) {
       return reply.code(400).send({ error: 'invalid_payload' });
