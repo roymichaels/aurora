@@ -15,18 +15,18 @@ jest.mock('framer-motion', () => {
   };
 });
 
-jest.mock('@/hooks/use-toast', () => ({ toast: jest.fn<void, any[]>() }));
+jest.mock('@/hooks/use-toast', () => ({ toast: jest.fn<() => void>() }));
 
 jest.mock('@/modules/payments/api/subscription', () => ({
   createCheckoutSession: jest
-    .fn<Promise<{ sessionId: string; url: string }>, any[]>()
+    .fn<() => Promise<{ sessionId: string; url: string }>>()
     .mockResolvedValue({ sessionId: 'session123', url: 'https://example.com' }),
 }));
 
 jest.mock('@/modules/payments/hooks/useSubscription', () => ({
   useSubscription: jest
-    .fn<{ subscription: null; refetch: jest.Mock }, any[]>()
-    .mockReturnValue({ subscription: null, refetch: jest.fn<void, any[]>() }),
+    .fn<() => { subscription: null; refetch: jest.Mock }>()
+    .mockReturnValue({ subscription: null, refetch: jest.fn<() => void>() }),
 }));
 
 import { createCheckoutSession } from '@/modules/payments/api/subscription';
