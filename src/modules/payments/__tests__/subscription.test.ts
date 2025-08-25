@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 
 // Mock loggedFetch to avoid real network calls and side effects
-const mockLoggedFetch = jest.fn<Promise<Response>, any[]>();
+const mockLoggedFetch = jest.fn<(...args: any[]) => Promise<Response>>();
 jest.mock('@/lib/loggedFetch', () => ({ loggedFetch: mockLoggedFetch }));
 
 let getSubscription: any;
@@ -30,7 +30,7 @@ beforeEach(() => {
   mockLoggedFetch.mockReset();
   // minimal localStorage stub
   (global as any).localStorage = {
-    getItem: jest.fn<string | null, any[]>(() => null),
+    getItem: jest.fn<() => string | null>(() => null),
   };
 });
 
