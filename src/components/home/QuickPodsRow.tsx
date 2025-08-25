@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import FocusRunner from "@/nodes/FocusRunner";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
+import { getTonUser } from "@/integrations/auth";
+import { uploadToStorage } from "@/integrations/storage";
 
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
   { key: "focus", label: "Focus", icon: Target },
@@ -41,13 +43,13 @@ export function QuickPodsRow() {
   };
   const [noteText, setNoteText] = useState("");
   const saveNote = async () => {
-    const user = (await supabase.auth.getUser()).data.user;
+    const user = await getTonUser();
     if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to capture notes." });
+      toast({ title: "Sign in required", description: "Sign in to capture notes." });
       return;
     }
     if (!noteText.trim()) return;
-    const { error } = await supabase.from("moments").insert({
+    const { error } = await db.from("moments").insert({
       user_id: user.id,
       type: "text",
       content: noteText.trim(),
@@ -77,9 +79,9 @@ export function QuickPodsRow() {
   const timerRef = useRef<number | null>(null);
 
   const startRecording = async () => {
-    const authUser = (await supabase.auth.getUser()).data.user;
+    const authUser = await getTonUser();
     if (!authUser) {
-      toast({ title: "Sign in required", description: "Connect Supabase to record voice notes." });
+      toast({ title: "Sign in required", description: "Sign in to record voice notes." });
       return;
     }
     try {
@@ -94,9 +96,9 @@ export function QuickPodsRow() {
         try {
           const blob = new Blob(chunks, { type: "audio/webm" });
           const filePath = `${authUser!.id}/${Date.now()}.webm`;
-          const { error: upErr } = await supabase.storage.from("voice-notes").upload(filePath, blob, { contentType: "audio/webm" });
+          const { error: upErr } = await uploadToStorage("voice-notes", filePath, blob, "audio/webm");
           if (upErr) throw upErr;
-          const { error: insErr } = await supabase.from("moments").insert({
+          const { error: insErr } = await db.from("moments").insert({
             user_id: authUser!.id,
             type: "audio",
             content: "Voice note",
@@ -156,7 +158,7 @@ export function QuickPodsRow() {
     let mounted = true;
     (async () => {
       setTracksLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("tracks")
         .select("id, title, audio_url, description")
         .order("created_at", { ascending: false })

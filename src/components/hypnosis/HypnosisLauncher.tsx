@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useBackgroundAudio } from "@/hooks/useBackgroundAudio";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
@@ -56,7 +56,7 @@ export default function HypnosisLauncher() {
     const fetchAudioDataUrl = async (text: string): Promise<string> => {
       logger.debug("[Hypnosis] Requesting TTS for", text.slice(0, 40), "...");
       const voiceId = useVoiceStore.getState().voiceId;
-      const { data, error } = await supabase.functions.invoke("tts-generate", {
+      const { data, error } = await db.functions.invoke("tts-generate", {
         body: { text, voiceId },
       });
     if (error) {

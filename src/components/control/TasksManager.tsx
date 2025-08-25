@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
 import { useRoadmapProgress } from "@/hooks/useRoadmapProgress";
@@ -48,7 +48,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   const fetchTasks = async () => {
     if (!user) return;
     setLoading(true);
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("tasks")
       .select("id, title, description, due_at, roadmap_id, status, position, created_at")
       .eq("user_id", user.id)
@@ -71,7 +71,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
     scheduleTaskTriggers(normalized, { email: user?.email ?? undefined });
     if (needsUpdate) {
       // Persist positions
-      await Promise.all(normalized.map((t) => supabase.from("tasks").update({ position: t.position }).eq("id", t.id)));
+      await Promise.all(normalized.map((t) => db.from("tasks").update({ position: t.position }).eq("id", t.id)));
     }
     setLoading(false);
   };
@@ -99,7 +99,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
     if (!user || !editingId) return;
     const title = editTitle.trim();
     const due_at = editDue ? new Date(editDue).toISOString() : null;
-    const { error } = await supabase.from("tasks").update({ title, due_at }).eq("id", editingId).eq("user_id", user.id);
+    const { error } = await db.from("tasks").update({ title, due_at }).eq("id", editingId).eq("user_id", user.id);
     if (error) console.error(error);
     setEditingId(null);
     await fetchTasks();
@@ -110,10 +110,10 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
   };
 
   const addTask = async () => {
-    if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to add tasks." }); return; }
+      if (!user) { toast({ title: "Sign in required", description: "Sign in to add tasks." }); return; }
     if (!title.trim()) return;
     setLoading(true);
-    const { error } = await supabase.from("tasks").insert({
+    const { error } = await db.from("tasks").insert({
       user_id: user.id,
       roadmap_id: roadmapId,
       title: title.trim(),
@@ -132,7 +132,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
     const now = new Date().toISOString();
     const update: any = { status };
     if (status === "done") update.completed_at = now; else update.completed_at = null;
-    const { error } = await supabase.from("tasks").update(update).eq("id", taskId).eq("user_id", user.id);
+    const { error } = await db.from("tasks").update(update).eq("id", taskId).eq("user_id", user.id);
     if (error) console.error(error);
     await fetchTasks();
   };
@@ -141,7 +141,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
     const t = tasks.find(t=> t.id===taskId); if (!t) return;
     const next = window.prompt("Rename task", t.title);
     if (next && next.trim() && next.trim() !== t.title) {
-      const { error } = await supabase.from("tasks").update({ title: next.trim() }).eq("id", taskId);
+      const { error } = await db.from("tasks").update({ title: next.trim() }).eq("id", taskId);
       if (error) console.error(error);
       await fetchTasks();
     }
@@ -149,7 +149,7 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
 
   const removeTask = async (taskId: string) => {
     if (!window.confirm("Delete this task?")) return;
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+    const { error } = await db.from("tasks").delete().eq("id", taskId);
     if (error) console.error(error);
     await fetchTasks();
   };
@@ -160,8 +160,8 @@ export default function TasksManager({ roadmapId }: { roadmapId: string }) {
     const a = tasks[idx]; const b = tasks[otherIdx];
     const aPos = a.position ?? idx+1; const bPos = b.position ?? otherIdx+1;
     // swap
-    const { error: e1 } = await supabase.from("tasks").update({ position: bPos }).eq("id", a.id);
-    const { error: e2 } = await supabase.from("tasks").update({ position: aPos }).eq("id", b.id);
+    const { error: e1 } = await db.from("tasks").update({ position: bPos }).eq("id", a.id);
+    const { error: e2 } = await db.from("tasks").update({ position: aPos }).eq("id", b.id);
     if (e1) console.error(e1); if (e2) console.error(e2);
     await fetchTasks();
   };

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { Progress } from "@/components/ui/progress";
 
 export function XPBar() {
@@ -13,7 +13,7 @@ export function XPBar() {
     let mounted = true;
     (async () => {
       if (!user) { setTotal(0); return; }
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("user_stats")
         .select("total_xp")
         .eq("user_id", user.id)

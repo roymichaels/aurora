@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 export interface StoreRecord {
   id: string;
@@ -18,6 +18,6 @@ export async function mintStoreNFT({
   const nftId = crypto.randomUUID();
   const record: StoreRecord = { id, name, owner, nftId };
 
-  await supabase.from("stores").insert(record);
+  await db.from("stores").insert(record);
   return record;
 }

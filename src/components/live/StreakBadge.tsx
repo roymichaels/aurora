@@ -1,7 +1,7 @@
 import { Flame } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 export function StreakBadge() {
   const { user } = useTonSession();
@@ -13,7 +13,7 @@ export function StreakBadge() {
     let mounted = true;
     (async () => {
       if (!user) { setStreak(0); return; }
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("user_stats")
         .select("streak_count")
         .eq("user_id", user.id)

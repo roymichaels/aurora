@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
+import { createSignedUrl } from "@/integrations/storage";
 import { useQuery } from "@tanstack/react-query";
 import { PanelHeaderUnified } from "@/components/layout/PanelHeaderUnified";
 // Basic types for archive entities
@@ -40,7 +41,7 @@ export default function ArchivePanel() {
   const { data: moments, isLoading: momentsLoading } = useQuery<Moment[]>({
     queryKey: ["moments"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("moments")
         .select("id, type, content, storage_path, folder, tags, created_at")
         .order("created_at", { ascending: false })
@@ -54,7 +55,7 @@ export default function ArchivePanel() {
   const { data: ideas, isLoading: ideasLoading, error: ideasError } = useQuery<Idea[]>({
     queryKey: ["ideas"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("ideas")
         .select("id, content, created_at")
         .order("created_at", { ascending: false })
@@ -68,7 +69,7 @@ export default function ArchivePanel() {
   const { data: analyses, isLoading: analysesLoading, error: analysesError } = useQuery<Analysis[]>({
     queryKey: ["analyses"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("analyses")
         .select("id, framework, created_at")
         .order("created_at", { ascending: false })
@@ -78,7 +79,7 @@ export default function ArchivePanel() {
     },
   });
 
-  // Build signed URLs for audio moments stored in Supabase storage
+  // Build signed URLs for audio moments stored in cloud storage
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
   useEffect(() => {
     (async () => {
@@ -90,7 +91,7 @@ export default function ArchivePanel() {
         const [bucket, ...rest] = sp.split("/");
         const path = rest.join("/");
         if (!bucket || !path) continue;
-        const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+        const { data, error } = await createSignedUrl(bucket, path, 60 * 60);
         if (!error && data?.signedUrl) {
           entries.push([m.id, data.signedUrl]);
         }

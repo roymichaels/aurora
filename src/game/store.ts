@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/db";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
+import { getTonUser } from "@/integrations/auth";
 import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };
@@ -67,10 +68,9 @@ export const useGameStore = create<GameState>((set, get) => {
   return {
     ...init,
     fetchStats: async () => {
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+      const user = await getTonUser();
       if (!user) return;
-      const { data: stats } = await supabase
+      const { data: stats } = await db
         .from("user_stats")
         .select("total_xp, streak_count")
         .eq("user_id", user.id)

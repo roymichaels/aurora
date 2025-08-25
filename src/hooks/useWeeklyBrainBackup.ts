@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
 import { useTonSession } from './useTonSession';
-import { supabase } from '@/integrations/db';
+import { uploadToStorage } from '@/integrations/storage';
 import { exportEncryptedBrain } from '@/memory/brainBackup';
 
 export default function useWeeklyBrainBackup() {
@@ -22,7 +22,7 @@ export default function useWeeklyBrainBackup() {
       try {
         const blob = await exportEncryptedBrain(passphrase);
         const path = `${user.id}/${now.toISOString()}.bin`;
-        await supabase.storage.from('brain-backups').upload(path, blob);
+        await uploadToStorage('brain-backups', path, blob);
       } catch (e) {
         console.error('Weekly brain backup failed', e);
       } finally {

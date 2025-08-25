@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useTonSession } from "@/hooks/useTonSession";
@@ -21,7 +21,7 @@ export default function GoalForm() {
       return;
     }
 
-    const { error } = await supabase.from("goals").insert({
+    const { error } = await db.from("goals").insert({
       user_id: user.id,
       title,
       why: why || null,
@@ -37,7 +37,7 @@ export default function GoalForm() {
     setTitle("");
     setWhy("");
     setNextAction("");
-    toast({ title: "Goal saved", description: "Your goal was saved to Supabase." });
+      toast({ title: "Goal saved", description: "Your goal was saved." });
   };
 
   return (

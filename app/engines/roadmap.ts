@@ -1,6 +1,6 @@
 // Utility types and helpers to construct a simple roadmap.
 // Avoid Node-specific APIs so this file can be imported in
-// both Node and Deno environments (e.g. Supabase Edge Functions).
+// both Node and Deno environments (e.g. serverless edge functions).
 
 export interface Milestone {
   label: string;
