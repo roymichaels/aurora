@@ -1,4 +1,8 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type {
+  FastifyPluginAsync,
+  FastifyRequest,
+  FastifyReply,
+} from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
@@ -31,14 +35,25 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  async function authorize(req: any, reply: any) {
+  interface TokenPayload {
+    scopes?: string[];
+    sub?: string;
+  }
+
+  async function authorize(
+    req: FastifyRequest,
+    reply: FastifyReply,
+  ): Promise<TokenPayload | null> {
     const auth = req.headers.authorization;
     if (!auth || !auth.startsWith('Bearer ')) {
       reply.code(401).send({ error: 'missing_token' });
       return null;
     }
     try {
-      const { payload }: any = await jwtVerify(auth.slice(7), jwtSecretBytes);
+      const { payload } = await jwtVerify<TokenPayload>(
+        auth.slice(7),
+        jwtSecretBytes,
+      );
       if (!Array.isArray(payload.scopes) || !payload.scopes.includes('replicate')) {
         reply.code(401).send({ error: 'invalid_scope' });
         return null;
@@ -54,7 +69,11 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
   }
 
-  async function proxy(req: any, reply: any, action: string) {
+  async function proxy(
+    req: FastifyRequest<{ Params: { collection: string }; Body: unknown }>,
+    reply: FastifyReply,
+    action: string,
+  ) {
     const params = paramsSchema.safeParse(req.params);
     if (!params.success) {
       return reply.code(400).send({ error: 'invalid_params' });
@@ -62,8 +81,8 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     const payload = await authorize(req, reply);
     if (!payload) return;
     const dbName = encodeURIComponent(`${payload.sub}-${params.data.collection}`);
-    const queryIndex = req.raw.url.indexOf('?');
-    const query = queryIndex >= 0 ? req.raw.url.slice(queryIndex) : '';
+    const queryIndex = req.url.indexOf('?');
+    const query = queryIndex >= 0 ? req.url.slice(queryIndex) : '';
     const couchUrl = process.env.COUCH_URL || 'http://localhost:5984';
     const url = `${couchUrl}/${dbName}/${action}${query}`;
     const res = await fetch(url, {
@@ -80,13 +99,19 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     }
   }
 
-  fastify.all('/replicate/:collection/_changes', async (req, reply) => {
-    await proxy(req, reply, '_changes');
-  });
+  fastify.all<{ Params: { collection: string }; Body: unknown }>(
+    '/replicate/:collection/_changes',
+    async (req, reply) => {
+      await proxy(req, reply, '_changes');
+    },
+  );
 
-  fastify.post('/replicate/:collection/_bulk_docs', async (req, reply) => {
-    await proxy(req, reply, '_bulk_docs');
-  });
+  fastify.post<{ Params: { collection: string }; Body: unknown }>(
+    '/replicate/:collection/_bulk_docs',
+    async (req, reply) => {
+      await proxy(req, reply, '_bulk_docs');
+    },
+  );
 };
 
 export default plugin;
