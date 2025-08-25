@@ -4,7 +4,7 @@ import { useVoiceStore } from "@/state/voice";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 export default function VoiceSetup() {
   const {
@@ -45,16 +45,16 @@ export default function VoiceSetup() {
         setMode("cloned");
         setLocale(navigator.language || "en-US");
         try {
-          const { data: auth } = await supabase.auth.getUser();
+          const { data: auth } = await db.auth.getUser();
           const uid = auth.user?.id;
           if (uid) {
-            const { data: prof } = await supabase
+            const { data: prof } = await db
               .from("profiles")
               .select("persona")
               .eq("id", uid)
               .single();
             const persona = (prof?.persona as any) || {};
-            await supabase
+            await db
               .from("profiles")
               .update({ persona: { ...persona, voiceId: json.voice_id } })
               .eq("id", uid);

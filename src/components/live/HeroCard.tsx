@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame } from "lucide-react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 interface HeroCardProps {
   taskTitle: string | null;
@@ -23,7 +23,7 @@ export default function HeroCard({ taskTitle }: HeroCardProps) {
     let mounted = true;
     (async () => {
       if (!user) { setXp(0); return; }
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("user_stats")
         .select("total_xp")
         .eq("user_id", user.id)

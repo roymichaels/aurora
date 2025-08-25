@@ -20,7 +20,6 @@
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
     "@capacitor/ios": "^6.2.1",
-
     "@fastify/cookie": "^9.4.0",
     "@fastify/cors": "^8.5.0",
     "@fastify/helmet": "^11.1.1",
@@ -55,7 +54,6 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
-    "@supabase/supabase-js": "^2.54.0",
     "@tanstack/react-query": "^5.83.0",
     "@tonconnect/ui": "^2.2.0",
     "class-variance-authority": "^0.7.1",
@@ -90,7 +88,6 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.179.1",
-
     "@react-three/postprocessing": "^2.15.0",
     "postprocessing": "^6.37.7",
     "tonweb": "^0.0.66",

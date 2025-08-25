@@ -77,7 +77,7 @@ export default function BrainBackupPanel() {
       </div>
       <div className="flex items-center gap-2">
         <Switch id="brain-weekly" checked={enabled} onCheckedChange={setEnabled} />
-        <Label htmlFor="brain-weekly">Upload weekly to Supabase</Label>
+          <Label htmlFor="brain-weekly">Upload weekly to cloud</Label>
       </div>
       <div className="flex items-center gap-2">
         <Switch

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 import { usePlanUpdater } from "@/hooks/usePlanUpdater";
@@ -74,19 +74,19 @@ export default function MasterPlanView() {
     if (!user) return;
     setLoading(true);
     const [{ data: planData }, { data: roadmapData }, { data: habitData }] = await Promise.all([
-      supabase
+      db
         .from("master_plans")
         .select("plan")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
-      supabase
+      db
         .from("roadmaps")
         .select("id, title, description")
         .eq("user_id", user.id)
         .order("created_at", { ascending: true }),
-      supabase
+      db
         .from("habits")
         .select("id, title, frequency, trigger, status")
         .eq("user_id", user.id)
@@ -153,8 +153,8 @@ export default function MasterPlanView() {
   };
 
   const updateHabit = async (id: string, fields: { title?: string; frequency?: string; trigger?: string }) => {
-    if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to edit habits." }); return; }
-    const { error } = await supabase
+    if (!user) { toast({ title: "Sign in required", description: "Sign in to edit habits." }); return; }
+    const { error } = await db
       .from("habits")
       .update(fields)
       .eq("id", id)
@@ -165,9 +165,9 @@ export default function MasterPlanView() {
   };
 
   const requestRevision = async () => {
-    if (!user) { toast({ title: "Sign in required", description: "Connect Supabase to generate." }); return; }
+    if (!user) { toast({ title: "Sign in required", description: "Sign in to generate." }); return; }
     setLoading(true);
-    const { data: answersData, error: answersError } = await supabase
+    const { data: answersData, error: answersError } = await db
       .from("onboarding_answers")
       .select("question, answer")
       .eq("user_id", user.id);
@@ -186,7 +186,7 @@ export default function MasterPlanView() {
       body.plan = plan;
     }
 
-    const { error } = await supabase.functions.invoke("generate-plan", { body });
+    const { error } = await db.functions.invoke("generate-plan", { body });
     if (error) { console.error(error); toast({ title: "Error", description: "Could not regenerate plan." }); }
     else toast({ title: "Regenerated", description: "Plan regenerated." });
     await fetchData();

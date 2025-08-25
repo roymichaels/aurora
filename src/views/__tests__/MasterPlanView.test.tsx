@@ -68,7 +68,7 @@ jest.mock('@/components/ui/select', () => ({
 jest.mock('@/hooks/use-toast', () => ({ toast: jest.fn() }));
 
 jest.mock('@/integrations/db', () => ({
-  supabase: {
+  db: {
     from: jest.fn((table: string) => {
       if (table === 'master_plans') {
         return {

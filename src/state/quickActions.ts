@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 registerQuickAction({
   id: "journal",
@@ -31,12 +31,12 @@ registerQuickAction({
   onClick: async () => {
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await db.auth.getUser();
 
     let roadmapId: string | undefined;
 
     if (user) {
-      const { data } = await supabase
+      const { data } = await db
         .from("roadmaps")
         .select("id, status")
         .eq("user_id", user.id)

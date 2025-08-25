@@ -25,11 +25,9 @@ export default defineConfig(({ mode }) => {
       },
       dedupe: ["react", "react-dom"],
     },
-    define: {
-      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL),
-      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY),
-      'process.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
-    },
+      define: {
+        'process.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
+      },
     optimizeDeps: {
       exclude: ["@mlc-ai/web-llm"],
     },
