@@ -190,11 +190,13 @@ export async function openBrainDb(): Promise<BrainDatabase> {
     if (opfsHandle) {
       try {
         const file = await opfsHandle.getFile();
-        let buffer = new Uint8Array(await file.arrayBuffer());
+        let buffer: Uint8Array<ArrayBufferLike> = new Uint8Array(
+          await file.arrayBuffer(),
+        );
         const { passphrase } = getEncryptionSettings();
         if (passphrase && buffer.byteLength) {
           try {
-            buffer = (await decryptData(buffer, passphrase)) as Uint8Array;
+            buffer = await decryptData(buffer, passphrase);
           } catch {}
         }
         db = buffer.byteLength
