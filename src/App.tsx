@@ -20,12 +20,12 @@ import StackPage from './pages/Stack';
 import AccountPlanPage from './pages/AccountPlan';
 import HomeSnapshot from './pages/HomeSnapshot';
 import AppShell from '@/routes/AppShell';
-import HomeGalaxy from '@/views/HomeGalaxy';
 import { views } from '@/views/registry';
 import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
 import LiveShell from '@/routes/live/LiveShell';
 import { TTSPill } from '@/voice/TTSPill';
 const queryClient = new QueryClient();
+const HomeGalaxy = views.find((v) => v.id === 'home')!.component;
 
 function RequireRoadmap({ children }: { children: React.ReactNode }) {
   const location = useLocation();
