@@ -54,15 +54,13 @@ export function AnchoredChatBar() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
     const rec: SpeechRecognition = new SR();
     rec.continuous = false;
     rec.interimResults = false;
     rec.onresult = (e: SpeechRecognitionEvent) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transcript = (e.results as any)?.[0]?.[0]?.transcript as string;
+      const transcript = e.results[0]?.[0]?.transcript;
       if (transcript) {
         setSuggestion(transcript);
       }
