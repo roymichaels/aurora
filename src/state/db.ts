@@ -1,12 +1,13 @@
 import { addRxPlugin, createRxDatabase, type RxCollection, type RxDatabase, type RxJsonSchema } from 'rxdb';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
-import { RxDBEncryptionPlugin } from 'rxdb/plugins/encryption-crypto-js';
+import { wrappedKeyEncryptionCryptoJsStorage } from 'rxdb/plugins/encryption-crypto-js';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import type { Observable } from 'rxjs';
 import { getDataKey, waitForDataKey } from './keyManager';
 
 addRxPlugin(RxDBAttachmentsPlugin);
-addRxPlugin(RxDBEncryptionPlugin);
+
+const storage = wrappedKeyEncryptionCryptoJsStorage({ storage: getRxStorageDexie() });
 
 export interface JournalEntry {
   id: string;
@@ -103,7 +104,7 @@ export async function createDatabase(): Promise<RxDatabase<Collections>> {
     const password = btoa(String.fromCharCode(...key));
     dbPromise = createRxDatabase<Collections>({
       name: 'brain',
-      storage: getRxStorageDexie(),
+      storage,
       password,
     }).then(async (db) => {
       await db.addCollections({
