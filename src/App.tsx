@@ -24,11 +24,9 @@ import { views } from '@/views/registry';
 import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
 import LiveShell from '@/routes/live/LiveShell';
 import { TTSPill } from '@/voice/TTSPill';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 const queryClient = new QueryClient();
 const HomeGalaxy = views.find((v) => v.id === 'home')!.component;
-
-const HomeGalaxy = lazy(() => import('@/views/HomeGalaxy'));
 
 function RequireRoadmap({ children }: { children: React.ReactNode }) {
   const location = useLocation();
