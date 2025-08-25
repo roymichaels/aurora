@@ -1,5 +1,5 @@
 {
-  "url": "%VITE_ORIGIN%",
+  "url": "http://localhost:8080",
   "name": "Aurora (Dev)",
   "iconUrl": "/icon.png"
 }
