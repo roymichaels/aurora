@@ -6,15 +6,16 @@ preferences and UI state.
 ## RNG requirement
 
 `keyManager.ts` uses [`secrets.js-grempe`](https://www.npmjs.com/package/secrets.js-grempe)
-for secret sharing. The library does not automatically use a
-cryptographically secure random number generator, so it must be
-initialized before generating key shards:
+for secret sharing. The library is loaded dynamically only in browser
+environments that expose `crypto.getRandomValues`:
 
 ```ts
-import secrets from 'secrets.js-grempe';
-secrets.init();
-secrets.setRNG('browserCryptoGetRandomValues');
+if (typeof window !== 'undefined' && globalThis.crypto?.getRandomValues) {
+  const { default: secrets } = await import('secrets.js-grempe/lib/secrets.js');
+  secrets.init();
+  secrets.setRNG('browserCryptoGetRandomValues');
+}
 ```
 
-If the RNG is not configured, shard generation will throw an error to
-avoid silently falling back to an insecure source.
+If a secure random number generator is unavailable, shard generation will
+throw an error instead of silently falling back to an insecure source.
