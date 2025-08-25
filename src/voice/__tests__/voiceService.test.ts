@@ -10,10 +10,10 @@ import * as ts from 'typescript';
 let voiceService: typeof import('../voiceService').voiceService;
 
 jest.mock('@/modules/payments/guard', () => ({
-  guardPremiumAction: jest.fn<Promise<'pro' | 'free' | null>, any[]>(),
+  guardPremiumAction: jest.fn<Promise<'pro' | 'free' | null>, []>(),
 }));
 jest.mock('@/voice/voiceClone', () => ({
-  playClonedVoice: jest.fn<Promise<{ audio: any; error?: unknown }>, any[]>(),
+  playClonedVoice: jest.fn<Promise<{ audio: any; error?: unknown }>, []>(),
 }));
 jest.mock('@/state/voice', () => {
   const { create } = require('zustand');
@@ -36,7 +36,7 @@ jest.mock('@/state/featureFlags', () => ({
 }));
 
 class MockTrack {
-  stop = jest.fn<void, any[]>();
+  stop = jest.fn<void, []>();
 }
 class MockMediaStream {
   private tracks = [new MockTrack()];
@@ -45,22 +45,22 @@ class MockMediaStream {
   }
 }
 class MockAudio {
-  play = jest.fn<Promise<void>, any[]>().mockResolvedValue(undefined);
-  pause = jest.fn<void, any[]>();
+  play = jest.fn<Promise<void>, []>().mockResolvedValue(undefined);
+  pause = jest.fn<void, []>();
   srcObject: any = null;
 }
 class MockRTCPeerConnection {
   ondatachannel: any;
   ontrack: any;
-  addTrack = jest.fn<void, any[]>();
-  getSenders = jest.fn<{ track: MockTrack }[], any[]>(() => [{ track: new MockTrack() }]);
-  createOffer = jest.fn<Promise<{ sdp: string; type: string }>, any[]>().mockResolvedValue({
+  addTrack = jest.fn<void, []>();
+  getSenders = jest.fn<{ track: MockTrack }[], []>(() => [{ track: new MockTrack() }]);
+  createOffer = jest.fn<Promise<{ sdp: string; type: string }>, []>().mockResolvedValue({
     sdp: 'offer',
     type: 'offer',
   });
-  setLocalDescription = jest.fn<void, any[]>();
-  setRemoteDescription = jest.fn<void, any[]>();
-  close = jest.fn<void, any[]>();
+  setLocalDescription = jest.fn<void, []>();
+  setRemoteDescription = jest.fn<void, []>();
+  close = jest.fn<void, []>();
 }
 
 beforeAll(() => {
@@ -79,22 +79,27 @@ beforeAll(() => {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  (global as any).Audio = jest.fn<MockAudio, any[]>(() => new MockAudio());
+  (global as any).Audio = jest.fn<MockAudio, []>(() => new MockAudio());
   (global as any).RTCPeerConnection = MockRTCPeerConnection as any;
   Object.defineProperty(global.navigator, 'mediaDevices', {
-    value: { getUserMedia: jest.fn<Promise<MockMediaStream>, any[]>().mockResolvedValue(new MockMediaStream()) },
+    value: { getUserMedia: jest.fn<Promise<MockMediaStream>, []>().mockResolvedValue(new MockMediaStream()) },
     configurable: true,
   });
-  (global as any).fetch = jest.fn<Promise<any>, any[]>().mockResolvedValue({
-    ok: true,
-    json: async () => ({ sdp: 'answer', type: 'answer' }),
-  });
+  (global as any).fetch = jest
+    .fn<
+      Promise<{ ok: boolean; json: () => Promise<{ sdp: string; type: string }> }>,
+      []
+    >()
+    .mockResolvedValue({
+      ok: true,
+      json: async () => ({ sdp: 'answer', type: 'answer' }),
+    });
 
   (window as any).speechSynthesis = {
-    cancel: jest.fn<void, any[]>(),
-    speak: jest.fn<void, any[]>(),
-    getVoices: jest.fn<{ lang: string }[], any[]>(() => [{ lang: 'en-US' }]),
-    resume: jest.fn<void, any[]>(),
+    cancel: jest.fn<void, []>(),
+    speak: jest.fn<void, []>(),
+    getVoices: jest.fn<{ lang: string }[], []>(() => [{ lang: 'en-US' }]),
+    resume: jest.fn<void, []>(),
   } as any;
   (global as any).SpeechSynthesisUtterance = class {
     text: string;
@@ -145,7 +150,7 @@ describe('voiceService', () => {
     useVoiceStore.getState().setMode('eleven-default', false);
     (playClonedVoice as jest.Mock).mockResolvedValue({
       audio: new (class extends MockAudio {
-        play = jest.fn<Promise<unknown>, any[]>().mockRejectedValue({ name: 'NotAllowedError' });
+        play = jest.fn<Promise<void>, []>().mockRejectedValue({ name: 'NotAllowedError' });
       })(),
       error: { name: 'NotAllowedError' },
     });
