@@ -225,6 +225,8 @@ async function getDatabase(): Promise<RxDatabase<Collections>> {
   return dbPromise;
 }
 
+export { getDatabase as createDatabase };
+
 export const db = {
   open: async () => {
     await getDatabase();
