@@ -1,4 +1,4 @@
-import secrets from 'secrets.js-grempe';
+import secrets from 'secrets.js-grempe/lib/secrets.js';
 
 let dataKey: Uint8Array | undefined;
 let resolveKey: ((key: Uint8Array) => void) | undefined;
@@ -93,6 +93,15 @@ export function generateKeyShards(total: number, threshold: number): string[] {
   if (!dataKey) {
     throw new Error('No data key set');
   }
+  secrets.setRNG((bits: number) => {
+    const bytes = new Uint8Array(Math.ceil(bits / 8));
+    globalThis.crypto.getRandomValues(bytes);
+    let out = '';
+    for (let i = 0; i < bytes.length; i++) {
+      out += bytes[i].toString(2).padStart(8, '0');
+    }
+    return out.slice(0, bits);
+  });
   const hex = bytesToHex(dataKey);
   return secrets.share(hex, total, threshold);
 }
