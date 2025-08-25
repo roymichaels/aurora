@@ -8,7 +8,6 @@ import type { AvatarMood } from '@/state/avatar';
 import { AuroraMood } from '@/components/avatar/AuroraSphere';
 import HoloBrain from './HoloBrain';
 import type { Scene } from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
 const toAuroraMood = (mood: AvatarMood): AuroraMood =>
   mood === 'focused' ? 'focused' : 'calm';
@@ -42,7 +41,10 @@ export { default as HoloBrain } from './HoloBrain';
  * @param scene - The scene to export.
  * @returns A promise that resolves with the GLB blob.
  */
-export function exportSceneToGLB(scene: Scene): Promise<Blob> {
+export async function exportSceneToGLB(scene: Scene): Promise<Blob> {
+  const { GLTFExporter } = await import(
+    'three/examples/jsm/exporters/GLTFExporter.js'
+  );
   const exporter = new GLTFExporter();
 
   return new Promise((resolve, reject) => {

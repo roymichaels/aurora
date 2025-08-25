@@ -69,5 +69,37 @@ export default defineConfig(({ mode }) => {
     ssr: {
       noExternal: ["@mlc-ai/web-llm"],
     },
+    build: {
+      chunkSizeWarningLimit: 6000,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('react')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@mlc-ai/web-llm')) {
+                return 'llm';
+              }
+              if (id.includes('three/examples')) {
+                return 'three-examples';
+              }
+              if (id.includes('three')) {
+                return 'three-core';
+              }
+              if (id.includes('@react-three/fiber')) {
+                return 'r3f';
+              }
+              if (id.includes('@react-three/drei')) {
+                return 'drei';
+              }
+              if (id.includes('@react-three/postprocessing')) {
+                return 'postprocessing';
+              }
+            }
+          },
+        },
+      },
+    },
   };
 });

@@ -20,12 +20,14 @@ import StackPage from './pages/Stack';
 import AccountPlanPage from './pages/AccountPlan';
 import HomeSnapshot from './pages/HomeSnapshot';
 import AppShell from '@/routes/AppShell';
-import HomeGalaxy from '@/views/HomeGalaxy';
 import { views } from '@/views/registry';
 import { useRoadmapProgress } from '@/hooks/useRoadmapProgress';
 import LiveShell from '@/routes/live/LiveShell';
 import { TTSPill } from '@/voice/TTSPill';
+import { lazy, Suspense } from 'react';
 const queryClient = new QueryClient();
+
+const HomeGalaxy = lazy(() => import('@/views/HomeGalaxy'));
 
 function RequireRoadmap({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -55,7 +57,14 @@ function AppRoutesWithShell() {
             </RequireRoadmap>
           }
         >
-          <Route index element={<HomeGalaxy />} />
+          <Route
+            index
+            element={
+              <Suspense fallback={null}>
+                <HomeGalaxy />
+              </Suspense>
+            }
+          />
           {views
             .filter((v) => v.id !== 'home')
             .map((v) => (
@@ -98,7 +107,14 @@ function LegacyRoutes() {
           </RequireRoadmap>
         }
       >
-        <Route index element={<HomeGalaxy />} />
+        <Route
+          index
+          element={
+            <Suspense fallback={null}>
+              <HomeGalaxy />
+            </Suspense>
+          }
+        />
         {views
           .filter((v) => v.id !== 'home')
           .map((v) => (

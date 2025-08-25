@@ -1,9 +1,5 @@
-import BrainView from "@/views/BrainView";
-import JournalView from "@/views/JournalView";
 import LiveFocusView from "@/components/live/LiveFocusView";
-import FocusView from "@/views/FocusView";
 import HypnoPanel from "@/components/hypno/HypnoPanel";
-import VoiceView from "@/views/VoiceView";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import AnalyticsModal from "@/components/modals/AnalyticsModal";
 import GoalsModal from "@/components/modals/GoalsModal";
 import SettingsModal from "@/components/modals/SettingsModal";
@@ -23,6 +19,11 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import OnboardingSheet from "@/components/modals/OnboardingSheet";
 import ConfirmSheet from "@/components/modals/ConfirmSheet";
+
+const BrainView = lazy(() => import("@/views/BrainView"));
+const JournalView = lazy(() => import("@/views/JournalView"));
+const FocusView = lazy(() => import("@/views/FocusView"));
+const VoiceView = lazy(() => import("@/views/VoiceView"));
 
 export default function ModalHost() {
   const { activeModal, closeModal, modalArgs } = useUIStore();
@@ -68,19 +69,35 @@ export default function ModalHost() {
   let className: string | undefined;
   switch (activeModal) {
     case "brain":
-      content = <BrainView />;
+      content = (
+        <Suspense fallback={null}>
+          <BrainView />
+        </Suspense>
+      );
       break;
     case "focus":
-      content = <FocusView />;
+      content = (
+        <Suspense fallback={null}>
+          <FocusView />
+        </Suspense>
+      );
       break;
     case "hypno":
       content = <HypnoPanel onClose={closeModal} />;
       break;
     case "journal":
-      content = <JournalView />;
+      content = (
+        <Suspense fallback={null}>
+          <JournalView />
+        </Suspense>
+      );
       break;
     case "voice":
-      content = <VoiceView />;
+      content = (
+        <Suspense fallback={null}>
+          <VoiceView />
+        </Suspense>
+      );
       break;
     case "live":
       content = <LiveFocusView />;
