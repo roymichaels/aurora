@@ -1,4 +1,6 @@
-let secrets: typeof import('secrets.js-grempe/lib/secrets.js').default | undefined;
+type Secrets = typeof import('secrets.js-grempe');
+let secrets: Secrets | undefined;
+
 
 async function loadSecrets() {
   if (secrets) {
@@ -8,8 +10,11 @@ async function loadSecrets() {
     if (typeof globalThis.crypto.getRandomValues !== 'function') {
       throw new Error('Secure random number generator not available');
     }
-    const module = await import('secrets.js-grempe/lib/secrets.js');
-    secrets = module.default;
+    const { default: loaded } = await import(
+      'secrets.js-grempe/secrets.js'
+    ) as { default: Secrets };
+    secrets = loaded;
+
     try {
       secrets.init();
       secrets.setRNG('browserCryptoGetRandomValues');
