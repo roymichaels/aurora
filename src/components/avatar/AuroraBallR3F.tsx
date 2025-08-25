@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { useMemo, useRef, forwardRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 
-export type AuroraBallProps = Omit<JSX.IntrinsicElements['group'], 'children'> & {
+export type AuroraBallProps = JSX.IntrinsicElements['group'] & {
   size?: number;
 };
 
@@ -31,19 +31,14 @@ const isAllowedGroupProp = (
 const AuroraBallR3F = forwardRef<THREE.Group, AuroraBallProps>(
   (props, ref) => {
     const { size = 1, children, ...restProps } = props;
-    const { lov, ...safeProps } = restProps;
     const matRef = useRef<THREE.ShaderMaterial>(null!);
 
     const groupProps = useMemo(() => {
-
-      const entries = Object.entries(safeProps as Record<string, unknown>).filter(
+      const entries = Object.entries(restProps as Record<string, unknown>).filter(
         ([key]) => !key.startsWith('data-') && !key.startsWith('aria-')
       );
-      return Object.fromEntries(entries) as Omit<
-        JSX.IntrinsicElements['group'],
-        'children'
-      >;
-    }, [safeProps]);
+      return Object.fromEntries(entries) as JSX.IntrinsicElements['group'];
+    }, [restProps]);
 
 
     const uniforms = useMemo(
