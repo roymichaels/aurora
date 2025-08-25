@@ -154,6 +154,7 @@ export default function MasterPlanView() {
 
   const updateHabit = async (id: string, fields: { title?: string; frequency?: string; trigger?: string }) => {
     if (!user) { toast({ title: "Sign in required", description: "Sign in to edit habits." }); return; }
+
     const { error } = await db
       .from("habits")
       .update(fields)

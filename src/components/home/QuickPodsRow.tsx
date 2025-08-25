@@ -48,6 +48,7 @@ export function QuickPodsRow() {
       toast({ title: "Sign in required", description: "Sign in to capture notes." });
       return;
     }
+
     if (!noteText.trim()) return;
     const { error } = await db.from("moments").insert({
       user_id: user.id,
@@ -84,6 +85,7 @@ export function QuickPodsRow() {
       toast({ title: "Sign in required", description: "Sign in to record voice notes." });
       return;
     }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
@@ -97,6 +99,7 @@ export function QuickPodsRow() {
           const blob = new Blob(chunks, { type: "audio/webm" });
           const filePath = `${authUser!.id}/${Date.now()}.webm`;
           const { error: upErr } = await uploadToStorage("voice-notes", filePath, blob, "audio/webm");
+
           if (upErr) throw upErr;
           const { error: insErr } = await db.from("moments").insert({
             user_id: authUser!.id,

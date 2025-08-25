@@ -92,6 +92,7 @@ export default function ArchivePanel() {
         const path = rest.join("/");
         if (!bucket || !path) continue;
         const { data, error } = await createSignedUrl(bucket, path, 60 * 60);
+
         if (!error && data?.signedUrl) {
           entries.push([m.id, data.signedUrl]);
         }

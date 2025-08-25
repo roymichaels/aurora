@@ -23,6 +23,7 @@ export default function useWeeklyBrainBackup() {
         const blob = await exportEncryptedBrain(passphrase);
         const path = `${user.id}/${now.toISOString()}.bin`;
         await uploadToStorage('brain-backups', path, blob);
+
       } catch (e) {
         console.error('Weekly brain backup failed', e);
       } finally {

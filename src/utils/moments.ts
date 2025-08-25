@@ -5,6 +5,7 @@ import { uploadToStorage } from "@/integrations/storage";
 
 export async function addNote() {
   const user = await getTonUser();
+
   if (!user) {
     toast({ title: "Sign in required", description: "Sign in to capture notes." });
     return;
@@ -50,6 +51,7 @@ export async function startVoiceNote() {
           blob,
           "audio/webm",
         );
+
         if (upErr) throw upErr;
         const { error: insErr } = await db.from("moments").insert({
           user_id: user.id,

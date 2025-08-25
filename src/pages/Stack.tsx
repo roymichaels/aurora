@@ -154,6 +154,7 @@ export default function StackPage() {
               <li>Cloud backend (auth, DB, edge functions)</li>
               <li>Edge function: db/functions/tts-generate</li>
               <li>Client-side app with serverless functions for backend needs</li>
+
             </ul>
           </section>
 

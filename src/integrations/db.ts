@@ -16,7 +16,7 @@ class TonDbClient {
   functions = {
     invoke: async (_fn: string, _args?: any): Promise<QueryResult<any>> => ({ data: null, error: null }),
   };
-}
+
 
 export const db = new TonDbClient();
 
