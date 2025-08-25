@@ -58,15 +58,13 @@ export async function routeChat(
 
   const safeMessages = stripSensitive(messages);
   const safeProfile = sanitizeProfile(profile);
-  const { data, error } = await db.functions.invoke<{
-    content: string;
-    sentiment: number;
-  }>('aurora-chat', {
+  const { data, error } = await db.functions.invoke('aurora-chat', {
     body: { messages: safeMessages, profile: safeProfile, ...options },
   });
   if (error) throw error;
-  if (!data?.content) {
+  const result = data as { content: string; sentiment: number } | null;
+  if (!result?.content) {
     throw new Error('Empty response from aurora-chat');
   }
-  return data;
+  return result;
 }

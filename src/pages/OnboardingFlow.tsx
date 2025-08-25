@@ -322,15 +322,15 @@ export default function OnboardingFlow() {
       });
     }
 
-    const { data, error } = await db.functions.invoke<{ content: string }>(
-      "aurora-chat",
-      { body: { messages: baseMessages } },
-    );
-    if (error || !data?.content) {
+    const { data, error } = await db.functions.invoke("aurora-chat", {
+      body: { messages: baseMessages },
+    });
+    const result = data as { content: string } | null;
+    if (error || !result?.content) {
       console.error("aurora-chat error", error, data);
       sendPrompt("Sorry, I had trouble responding. Please try again.");
     } else {
-      setMessages((m) => [...m, { role: "assistant", content: data.content }]);
+      setMessages((m) => [...m, { role: "assistant", content: result.content }]);
     }
     if (validationError) return;
 
