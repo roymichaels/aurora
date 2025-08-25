@@ -1,28 +1,39 @@
 import { defineConfig, loadEnv } from "vite";
+import type { Plugin, ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
 import fs from "fs";
+import type { IncomingMessage, ServerResponse } from "http";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const tonConnectManifest = () => {
-    const manifestPath = path.resolve(__dirname, "public/tonconnect-manifest.json");
+  const tonConnectManifest = (): Plugin => {
+    const manifestPath = path.resolve(
+      __dirname,
+      "public/tonconnect-manifest.json",
+    );
     return {
       name: "tonconnect-manifest",
       apply: "serve",
-      configureServer(server) {
-        server.middlewares.use((req, res, next) => {
-          if (req.url === "/tonconnect-manifest.json") {
-            const raw = fs.readFileSync(manifestPath, "utf-8");
-            const origin = env.VITE_ORIGIN || `http://${req.headers.host}`;
-            res.setHeader("Content-Type", "application/json");
-            res.end(raw.replace("%VITE_ORIGIN%", origin));
-            return;
-          }
-          next();
-        });
+      configureServer(server: ViteDevServer) {
+        server.middlewares.use(
+          (
+            req: IncomingMessage,
+            res: ServerResponse,
+            next: () => void,
+          ) => {
+            if (req.url === "/tonconnect-manifest.json") {
+              const raw = fs.readFileSync(manifestPath, "utf-8");
+              const origin = env.VITE_ORIGIN || `http://${req.headers.host}`;
+              res.setHeader("Content-Type", "application/json");
+              res.end(raw.replace("%VITE_ORIGIN%", origin));
+              return;
+            }
+            next();
+          },
+        );
       },
     };
   };
