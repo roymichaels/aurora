@@ -1,6 +1,7 @@
 // [AURORA-BEGIN:asset-routes]
 import type { FastifyPluginAsync } from 'fastify';
 import multipart from '@fastify/multipart';
+import '@fastify/multipart';
 import { z } from 'zod';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { jwtVerify } from 'jose';
