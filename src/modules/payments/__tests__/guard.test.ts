@@ -3,7 +3,7 @@ import { guardPremiumAction } from '../guard';
 import { logEvent } from '@/integrations/db';
 
 jest.mock('@/integrations/db', () => ({
-  logEvent: jest.fn().mockResolvedValue(undefined),
+  logEvent: jest.fn<Promise<void>, any[]>().mockResolvedValue(undefined),
 }));
 
 describe('guardPremiumAction', () => {
@@ -20,23 +20,23 @@ describe('guardPremiumAction', () => {
   });
 
   it('prompts and logs when feature is unavailable', async () => {
-    global.confirm = jest.fn(() => true);
+    global.confirm = jest.fn<boolean, any[]>(() => true);
     const result = await guardPremiumAction(() => false, 'voice_features', 'voice_clone', 'use default voice');
     expect(result).toBe('free');
     expect(logEvent).toHaveBeenCalledWith('pro_action_upsell', { action: 'voice_clone' });
   });
 
   it('returns null when user cancels', async () => {
-    global.confirm = jest.fn(() => false);
+    global.confirm = jest.fn<boolean, any[]>(() => false);
     const result = await guardPremiumAction(() => false, 'voice_features', 'voice_clone', 'use default voice');
     expect(result).toBeNull();
     expect(logEvent).toHaveBeenCalledWith('pro_action_upsell', { action: 'voice_clone' });
   });
 
   it('executes free alternative after confirmation', async () => {
-    global.confirm = jest.fn(() => true);
+    global.confirm = jest.fn<boolean, any[]>(() => true);
     const result = await guardPremiumAction(() => false, 'voice_features', 'voice_clone', 'use default voice');
-    const alternative = jest.fn();
+    const alternative = jest.fn<void, any[]>();
     if (result === 'free') {
       alternative();
     }
