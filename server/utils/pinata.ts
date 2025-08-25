@@ -1,38 +1,49 @@
 // [AURORA-BEGIN:pinata-util]
-import fetch from 'node-fetch';
-import FormData from 'form-data';
 
-const PINATA_JWT = process.env.PINATA_JWT!;
+interface PinataPinResponse {
+  IpfsHash: string;
+}
+
+function getPinataJwt(): string {
+  const jwt = process.env.PINATA_JWT;
+  if (!jwt) {
+    const message = 'PINATA_JWT environment variable is not set';
+    console.error(message);
+    throw new Error(message);
+  }
+  return jwt;
+}
 
 export async function pinFile(name: string, data: Buffer, mime: string) {
   const form = new FormData();
-  form.append('file', data, { filename: name, contentType: mime });
+  const file = new File([data as unknown as BlobPart], name, { type: mime });
+  form.append('file', file);
   const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${PINATA_JWT}` },
-    body: form as any,
+    headers: { Authorization: `Bearer ${getPinataJwt()}` },
+    body: form,
   });
   if (!res.ok) {
     throw new Error('pinFile failed');
   }
-  const json: any = await res.json();
-  return json.IpfsHash as string;
+  const json: PinataPinResponse = await res.json();
+  return json.IpfsHash;
 }
 
-export async function pinJSON(name: string, json: any) {
+export async function pinJSON(name: string, json: unknown) {
   const res = await fetch('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
-      Authorization: `Bearer ${PINATA_JWT}`,
+      Authorization: `Bearer ${getPinataJwt()}`,
     },
     body: JSON.stringify({ pinataMetadata: { name }, pinataContent: json }),
   });
   if (!res.ok) {
     throw new Error('pinJSON failed');
   }
-  const body = await res.json();
-  return body.IpfsHash as string;
+  const body: PinataPinResponse = await res.json();
+  return body.IpfsHash;
 }
 
 export const ipfsUri = (cid: string) => `ipfs://${cid}`;
