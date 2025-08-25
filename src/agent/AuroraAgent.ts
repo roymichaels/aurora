@@ -12,6 +12,7 @@ import brain from "@/brain/Brain";
 import { filterRegistry } from "@/brain/filters";
 import { scanResponse, explainIssues } from "@/agent/safety";
 import { useAvatarStore } from "@/state/avatar";
+import type { ChatMessage } from "@/types/chat";
 
 export type AgentEvents = {
   onPartial?: (text: string) => void;
@@ -74,21 +75,26 @@ export class AuroraAgent {
 
     if (!validateAnswer(text)) {
       try {
-        const messages = [
+        const messages: ChatMessage[] = [
           {
             role: 'system',
             content: `Recent user statements: ${userSummary}`,
           },
-          ...(memoryContext
-            ? [{ role: 'system', content: `Relevant memories:\n${memoryContext}` }]
-            : []),
-          {
-            role: 'system',
-            content:
-              "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
-          },
-          ...this.history,
         ];
+        if (memoryContext) {
+          messages.push({
+            role: 'system',
+            content: `Relevant memories:\n${memoryContext}`,
+          });
+        }
+        messages.push({
+          role: 'system',
+          content:
+            "The user's response was incomplete or unclear. Ask a follow-up question to clarify.",
+        });
+        for (const item of this.history) {
+          messages.push(item);
+        }
         const { content, sentiment } = await auroraChat(messages, { confidence });
         this.say(content, sentiment);
       } catch (e) {
@@ -138,16 +144,21 @@ export class AuroraAgent {
     }
 
     try {
-      const messages = [
+      const messages: ChatMessage[] = [
         {
           role: 'system',
           content: `Recent user statements: ${userSummary}. Use this context and reference earlier user comments when appropriate.`,
         },
-        ...(memoryContext
-          ? [{ role: 'system', content: `Relevant memories:\n${memoryContext}` }]
-          : []),
-        ...this.history,
       ];
+      if (memoryContext) {
+        messages.push({
+          role: 'system',
+          content: `Relevant memories:\n${memoryContext}`,
+        });
+      }
+      for (const item of this.history) {
+        messages.push(item);
+      }
       const { content, sentiment } = await auroraChat(messages, { confidence });
       this.say(content, sentiment);
     } catch (e) {
