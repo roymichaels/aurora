@@ -2,6 +2,24 @@ import { useVoiceStore } from '@/state/voice';
 import { voiceService } from '@/voice/voiceService';
 import { bus } from '@/utils/bus';
 
+declare global {
+  interface SpeechRecognition {
+    lang: string;
+    interimResults: boolean;
+    maxAlternatives: number;
+    onresult: ((event: any) => void) | null;
+    onerror: ((event: any) => void) | null;
+    onend: (() => void) | null;
+    start(): void;
+    stop(): void;
+  }
+
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognition;
+    webkitSpeechRecognition?: new () => SpeechRecognition;
+  }
+}
+
 export type VoiceCallbacks = {
   onPartial?: (text: string) => void;
   onFinal?: (text: string) => void;
@@ -21,7 +39,10 @@ export class VoiceIO {
   }
 
   startPushToTalk() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SR =
+      typeof window !== 'undefined'
+        ? window.SpeechRecognition || window.webkitSpeechRecognition
+        : undefined;
     if (!SR) {
       this.callbacks.onError?.(new Error('Web Speech API not available'));
       return;
