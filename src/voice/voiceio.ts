@@ -1,6 +1,7 @@
 import { useVoiceStore } from '@/state/voice';
 import { voiceService } from '@/voice/voiceService';
 import { bus } from '@/utils/bus';
+import type { WebSpeechRecognition } from '@/types/web-speech';
 
 declare global {
   interface Window {
@@ -17,7 +18,7 @@ export type VoiceCallbacks = {
 };
 
 export class VoiceIO {
-  private recognition: SpeechRecognition | null = null;
+  private recognition: WebSpeechRecognition | null = null;
   private callbacks: VoiceCallbacks;
 
   constructor(callbacks: VoiceCallbacks = {}) {
@@ -36,7 +37,7 @@ export class VoiceIO {
       this.callbacks.onError?.(new Error('Web Speech API not available'));
       return;
     }
-    this.recognition = new SR();
+    this.recognition = new SR() as WebSpeechRecognition;
     const { locale } = useVoiceStore.getState();
     this.recognition.lang = locale;
     this.recognition.interimResults = true;
