@@ -49,7 +49,7 @@ export default function KeyRecoveryPanel() {
       return;
     }
     try {
-      const shards = generateKeyShards(guardians.length, threshold);
+      const shards = await generateKeyShards(guardians.length, threshold);
       const encrypted = await Promise.all(guardians.map((g, i) => encryptShare(shards[i], passphrase, g)));
       localStorage.setItem('recovery.data', JSON.stringify({ threshold, guardians, shares: encrypted }));
       setGenerated(shards);
@@ -74,7 +74,7 @@ export default function KeyRecoveryPanel() {
     }
   };
 
-  const restore = () => {
+  const restore = async () => {
     const shards = restoreShares.split('\n').map(s => s.trim()).filter(Boolean);
     const stored = localStorage.getItem('recovery.data');
     const required = stored ? (JSON.parse(stored).threshold as number) : 2;
@@ -83,7 +83,7 @@ export default function KeyRecoveryPanel() {
       return;
     }
     try {
-      const key = restoreKeyFromShards(shards);
+      const key = await restoreKeyFromShards(shards);
       if (key) {
         toast({ title: 'Key restored', description: 'Data key has been reconstructed.' });
       }
