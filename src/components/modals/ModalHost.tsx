@@ -1,9 +1,4 @@
-import BrainView from "@/views/BrainView";
-import JournalView from "@/views/JournalView";
-import LiveFocusView from "@/components/live/LiveFocusView";
-import FocusView from "@/views/FocusView";
-import HypnoPanel from "@/components/hypno/HypnoPanel";
-import VoiceView from "@/views/VoiceView";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,16 +8,24 @@ import {
 } from "@/components/ui/dialog";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
-import { useEffect, type ReactNode } from "react";
-import AnalyticsModal from "@/components/modals/AnalyticsModal";
-import GoalsModal from "@/components/modals/GoalsModal";
-import SettingsModal from "@/components/modals/SettingsModal";
-import TasksModal from "@/components/modals/TasksModal";
+import { views } from "@/views/registry";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import OnboardingSheet from "@/components/modals/OnboardingSheet";
-import ConfirmSheet from "@/components/modals/ConfirmSheet";
+
+const BrainView = views.find((v) => v.id === "brain")!.component;
+const FocusView = views.find((v) => v.id === "focus")!.component;
+const JournalView = views.find((v) => v.id === "journal")!.component;
+const VoiceView = views.find((v) => v.id === "voice")!.component;
+
+const LiveFocusView = lazy(() => import("@/components/live/LiveFocusView"));
+const HypnoPanel = lazy(() => import("@/components/hypno/HypnoPanel"));
+const AnalyticsModal = lazy(() => import("./AnalyticsModal"));
+const GoalsModal = lazy(() => import("./GoalsModal"));
+const SettingsModal = lazy(() => import("./SettingsModal"));
+const TasksModal = lazy(() => import("./TasksModal"));
+const OnboardingSheet = lazy(() => import("./OnboardingSheet"));
+const ConfirmSheet = lazy(() => import("./ConfirmSheet"));
 
 export default function ModalHost() {
   const { activeModal, closeModal, modalArgs } = useUIStore();
@@ -138,7 +141,7 @@ export default function ModalHost() {
             <DialogTitle>Modal</DialogTitle>
             <DialogDescription>Modal content</DialogDescription>
           </DialogHeader>
-          {content}
+          <Suspense fallback={null}>{content}</Suspense>
         </DialogContent>
       )}
     </Dialog>
