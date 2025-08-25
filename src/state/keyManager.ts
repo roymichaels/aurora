@@ -1,5 +1,15 @@
 import secrets from 'secrets.js-grempe/lib/secrets.js';
 
+// secrets.js does not automatically use a CSPRNG. Initialize the library and
+// explicitly set the RNG so shard generation relies on `crypto.getRandomValues`.
+try {
+  secrets.init();
+  secrets.setRNG('browserCryptoGetRandomValues');
+} catch (err) {
+  // eslint-disable-next-line no-console
+  console.error('Failed to initialize secrets.js RNG', err);
+}
+
 let dataKey: Uint8Array | undefined;
 let resolveKey: ((key: Uint8Array) => void) | undefined;
 const dataKeyPromise = new Promise<Uint8Array>((resolve) => {
@@ -93,17 +103,17 @@ export function generateKeyShards(total: number, threshold: number): string[] {
   if (!dataKey) {
     throw new Error('No data key set');
   }
-  secrets.setRNG((bits: number) => {
-    const bytes = new Uint8Array(Math.ceil(bits / 8));
-    globalThis.crypto.getRandomValues(bytes);
-    let out = '';
-    for (let i = 0; i < bytes.length; i++) {
-      out += bytes[i].toString(2).padStart(8, '0');
-    }
-    return out.slice(0, bits);
-  });
-  const hex = bytesToHex(dataKey);
-  return secrets.share(hex, total, threshold);
+  if (!secrets.getConfig().hasCSPRNG) {
+    throw new Error('RNG not initialized');
+  }
+  try {
+    const hex = bytesToHex(dataKey);
+    return secrets.share(hex, total, threshold);
+  } catch (err) {
+    throw new Error(
+      `Failed to generate key shards: ${(err as Error).message}`
+    );
+  }
 }
 
 export function restoreKeyFromShards(shards: string[]): Uint8Array {
