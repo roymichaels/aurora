@@ -3,7 +3,7 @@ import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TasksManager from "@/components/control/TasksManager";
 import { useUIStore } from "@/state/ui";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 export default function TasksModal() {
   const tasksRoadmapId = useUIStore((s) => s.tasksRoadmapId);

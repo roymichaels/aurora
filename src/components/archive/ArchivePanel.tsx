@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useQuery } from "@tanstack/react-query";
 import { PanelHeaderUnified } from "@/components/layout/PanelHeaderUnified";
 // Basic types for archive entities

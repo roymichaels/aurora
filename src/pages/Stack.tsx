@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Capacitor } from "@capacitor/core";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useAvatarStore } from "@/state/avatar";
 
 const setMeta = (name: string, content: string) => {

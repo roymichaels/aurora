@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 

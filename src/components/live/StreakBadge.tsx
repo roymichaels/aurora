@@ -1,7 +1,7 @@
 import { Flame } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 export function StreakBadge() {
   const { user } = useTonSession();

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { Progress } from "@/components/ui/progress";
 
 export function XPBar() {
