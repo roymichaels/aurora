@@ -1,5 +1,3 @@
-import LiveFocusView from "@/components/live/LiveFocusView";
-import HypnoPanel from "@/components/hypno/HypnoPanel";
 import {
   Dialog,
   DialogContent,
@@ -10,18 +8,9 @@ import {
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { useUIStore } from "@/state/ui";
 import { lazy, Suspense, useEffect, type ReactNode } from "react";
-import AnalyticsModal from "@/components/modals/AnalyticsModal";
-import GoalsModal from "@/components/modals/GoalsModal";
-import SettingsModal from "@/components/modals/SettingsModal";
-import TasksModal from "@/components/modals/TasksModal";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-
-const BrainView = views.find((v) => v.id === "brain")!.component;
-const FocusView = views.find((v) => v.id === "focus")!.component;
-const JournalView = views.find((v) => v.id === "journal")!.component;
-const VoiceView = views.find((v) => v.id === "voice")!.component;
 
 const LiveFocusView = lazy(() => import("@/components/live/LiveFocusView"));
 const HypnoPanel = lazy(() => import("@/components/hypno/HypnoPanel"));
