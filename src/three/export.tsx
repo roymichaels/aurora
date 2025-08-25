@@ -4,16 +4,26 @@ import { ComposedIdentityScene, ComposedIdentitySceneProps } from './ComposedIde
 import { onVisualEvent } from '@/visual/events';
 import { useProgressStore } from '@/state/progress';
 import { useAvatarStore } from '@/state/avatar';
+import type { AvatarMood } from '@/state/avatar';
+import { AuroraMood } from '@/components/avatar/AuroraSphere';
 import HoloBrain from './HoloBrain';
 import type { Scene } from 'three';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
+const toAuroraMood = (mood: AvatarMood): AuroraMood =>
+  mood === 'focused' ? 'focused' : 'calm';
+
 export function IdentityVisualizer() {
   const { xp, streak } = useProgressStore((s) => ({ xp: s.xp, streak: s.streak }));
-  const mood = useAvatarStore((s) => s.mood);
-  const [props, setProps] = useState<ComposedIdentitySceneProps>({ xp, streak, mood });
+  const avatarMood = useAvatarStore((s) => s.mood);
+  const auroraMood = toAuroraMood(avatarMood);
+  const [props, setProps] = useState<ComposedIdentitySceneProps>({
+    xp,
+    streak,
+    mood: auroraMood,
+  });
 
-  useEffect(() => setProps({ xp, streak, mood }), [xp, streak, mood]);
+  useEffect(() => setProps({ xp, streak, mood: auroraMood }), [xp, streak, auroraMood]);
 
   useEffect(() =>
     onVisualEvent('xp-total-update', (e) =>
