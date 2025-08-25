@@ -2,6 +2,7 @@ import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
+import type { LightMyRequestResponse } from 'light-my-request';
 import tonAuth, { composeMessage } from '../ton';
 
 import type TonWeb from 'tonweb';
@@ -16,6 +17,27 @@ let stringToBytes: TonUtils['stringToBytes'];
 
 function toHex(buf: Uint8Array): string {
   return bytesToHex(buf);
+}
+
+function getCookie(res: LightMyRequestResponse, name: string) {
+  const raw = res.headers['set-cookie'];
+  const header = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  for (const c of header) {
+    const [head, ...parts] = c.split(';').map((p) => p.trim());
+    const [cookieName, cookieValue] = head.split('=');
+    if (cookieName !== name) continue;
+    const cookie: any = { name: cookieName, value: cookieValue };
+    for (const part of parts) {
+      const [k, v] = part.split('=');
+      const key = k.toLowerCase();
+      if (key === 'httponly') cookie.httpOnly = true;
+      else if (key === 'secure') cookie.secure = true;
+      else if (key === 'samesite') cookie.sameSite = v;
+      else if (key === 'expires') cookie.expires = new Date(v);
+    }
+    return cookie;
+  }
+  return undefined;
 }
 
 describe('TON auth', () => {
@@ -41,12 +63,15 @@ describe('TON auth', () => {
   });
 
   test('sets cookie attributes over HTTP', async () => {
-    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const start: LightMyRequestResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/start',
+    });
     const { challenge } = start.json();
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
-    const res = await app.inject({
+    const res: LightMyRequestResponse = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
@@ -55,23 +80,25 @@ describe('TON auth', () => {
         scopes,
         signature: sig,
       },
-      protocol: 'http',
     });
     expect(res.statusCode).toBe(200);
-    const cookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
+    const cookie = getCookie(res, 'sid');
     expect(cookie).toBeDefined();
-    expect(cookie.httpOnly).toBe(true);
-    expect(cookie.sameSite).toBe('Lax');
-    expect(cookie.secure).toBeUndefined();
+    expect(cookie!.httpOnly).toBe(true);
+    expect(cookie!.sameSite).toBe('Lax');
+    expect(cookie!.secure).toBeUndefined();
   });
 
   test('sets secure cookie over HTTPS', async () => {
-    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const start: LightMyRequestResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/start',
+    });
     const { challenge } = start.json();
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
-    const res = await app.inject({
+    const res: LightMyRequestResponse = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
@@ -80,23 +107,25 @@ describe('TON auth', () => {
         scopes,
         signature: sig,
       },
-      protocol: 'https',
       headers: { 'x-forwarded-proto': 'https' },
     });
     expect(res.statusCode).toBe(200);
-    const cookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
+    const cookie = getCookie(res, 'sid');
     expect(cookie).toBeDefined();
-    expect(cookie.httpOnly).toBe(true);
-    expect(cookie.sameSite).toBe('Lax');
-    expect(cookie.secure).toBe(true);
+    expect(cookie!.httpOnly).toBe(true);
+    expect(cookie!.sameSite).toBe('Lax');
+    expect(cookie!.secure).toBe(true);
   });
 
   test('clears cookie on logout', async () => {
-    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const start: LightMyRequestResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/start',
+    });
     const { challenge } = start.json();
     const msg = composeMessage(challenge, []);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
-    const login = await app.inject({
+    const login: LightMyRequestResponse = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
@@ -105,37 +134,37 @@ describe('TON auth', () => {
         scopes: [],
         signature: sig,
       },
-      protocol: 'https',
       headers: { 'x-forwarded-proto': 'https' },
     });
-    const token = login.cookies.find((c: { name: string }) => c.name === 'sid');
+    const token = getCookie(login, 'sid');
     expect(token).toBeDefined();
 
-    const res = await app.inject({
+    const res: LightMyRequestResponse = await app.inject({
       method: 'POST',
       url: '/auth/logout',
-      cookies: { sid: token.value },
-      protocol: 'https',
+      cookies: { sid: token!.value },
       headers: { 'x-forwarded-proto': 'https' },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ ok: true });
-    const cleared = res.cookies.find((c: { name: string }) => c.name === 'sid');
+    const cleared = getCookie(res, 'sid');
     expect(cleared).toBeDefined();
-    expect(cleared.value).toBe('');
-    expect(cleared.expires.toISOString()).toBe('1970-01-01T00:00:00.000Z');
-    expect(cleared.secure).toBe(true);
+    expect(cleared!.value).toBe('');
+    expect(cleared!.expires.toISOString()).toBe('1970-01-01T00:00:00.000Z');
+    expect(cleared!.secure).toBe(true);
   });
 
   test('rejects replayed challenges', async () => {
-
-    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const start: LightMyRequestResponse = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/start',
+    });
     const { challenge, ttl } = start.json();
     expect(ttl).toBe(120);
     const scopes = ['read'];
     const msg = composeMessage(challenge, scopes);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
-    const res = await app.inject({
+    const res: LightMyRequestResponse = await app.inject({
       method: 'POST',
       url: '/auth/ton/verify',
       payload: {
@@ -146,9 +175,12 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(200);
-    const tokenCookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
+    const tokenCookie = getCookie(res, 'sid');
     expect(tokenCookie).toBeDefined();
-    const { payload: tokenPayload } = await jwtVerify(tokenCookie.value, secretBytes);
+    const { payload: tokenPayload } = await jwtVerify(
+      tokenCookie!.value,
+      secretBytes,
+    );
     expect(tokenPayload.sub).toBe(toHex(keypair.publicKey));
     expect(tokenPayload.scopes).toEqual(scopes);
   });
@@ -355,8 +387,8 @@ describe('TON auth', () => {
         signature: sig1,
       },
     });
-    const t1 = first.cookies.find((c: { name: string }) => c.name === 'sid');
-    const { payload: p1 } = await jwtVerify(t1.value, secretBytes);
+    const t1 = getCookie(first as LightMyRequestResponse, 'sid');
+    const { payload: p1 } = await jwtVerify(t1!.value, secretBytes);
 
     // ensure a different expiration timestamp for the rotated token
     await new Promise((r) => setTimeout(r, 1000));
@@ -375,8 +407,8 @@ describe('TON auth', () => {
         signature: sig2,
       },
     });
-    const t2 = second.cookies.find((c: { name: string }) => c.name === 'sid');
-    const { payload: p2 } = await jwtVerify(t2.value, secretBytes);
+    const t2 = getCookie(second as LightMyRequestResponse, 'sid');
+    const { payload: p2 } = await jwtVerify(t2!.value, secretBytes);
     // second token should have a later expiry, proving rotation
     expect(p2.exp).toBeGreaterThan(p1.exp);
     expect(p2.exp).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 60 * 60);
@@ -402,8 +434,8 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(200);
-    const tokenCookie = res.cookies.find((c: { name: string }) => c.name === 'sid');
-    const { payload } = await jwtVerify(tokenCookie.value, secretBytes);
+    const tokenCookie = getCookie(res as LightMyRequestResponse, 'sid');
+    const { payload } = await jwtVerify(tokenCookie!.value, secretBytes);
     expect(payload.session).toBe(session);
     expect(payload.sessionExp).toBe(Math.floor(exp / 1000));
     expect(payload.exp).toBeLessThanOrEqual(payload.sessionExp);
