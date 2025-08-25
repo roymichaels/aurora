@@ -22,17 +22,15 @@ async function build() {
 build();
 
 // [AURORA-BEGIN:ton-manifest-dev]
-if (process.env.NODE_ENV === 'development') {
-  server.get('/tonconnect-manifest.json', async (req, reply) => {
-    const p = path.join(process.cwd(), 'tonconnect-manifest.json'); // drop file in project root
-    if (!fs.existsSync(p)) return reply.code(404).send({ error: 'manifest not found' });
-    const json = fs.readFileSync(p, 'utf8');
-    reply
-      .header('Content-Type', 'application/json; charset=utf-8')
-      .header('Access-Control-Allow-Origin', '*')
-      .send(json);
-  });
-}
+server.get('/tonconnect-manifest.json', async (req, reply) => {
+  const p = path.join(process.cwd(), 'tonconnect-manifest.json'); // drop file in project root
+  if (!fs.existsSync(p)) return reply.code(404).send({ error: 'manifest not found' });
+  const json = fs.readFileSync(p, 'utf8');
+  reply
+    .header('Content-Type', 'application/json; charset=utf-8')
+    .header('Access-Control-Allow-Origin', '*')
+    .send(json);
+});
 // [AURORA-END:ton-manifest-dev]
 
 const port = Number(process.env.PORT) || 3000;
