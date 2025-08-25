@@ -1,13 +1,25 @@
-import secrets from 'secrets.js-grempe/lib/secrets.js';
+let secrets: typeof import('secrets.js-grempe/lib/secrets.js').default | undefined;
 
-// secrets.js does not automatically use a CSPRNG. Initialize the library and
-// explicitly set the RNG so shard generation relies on `crypto.getRandomValues`.
-try {
-  secrets.init();
-  secrets.setRNG('browserCryptoGetRandomValues');
-} catch (err) {
-  // eslint-disable-next-line no-console
-  console.error('Failed to initialize secrets.js RNG', err);
+async function loadSecrets() {
+  if (secrets) {
+    return secrets;
+  }
+  if (typeof window !== 'undefined' && globalThis.crypto) {
+    if (typeof globalThis.crypto.getRandomValues !== 'function') {
+      throw new Error('Secure random number generator not available');
+    }
+    const module = await import('secrets.js-grempe/lib/secrets.js');
+    secrets = module.default;
+    try {
+      secrets.init();
+      secrets.setRNG('browserCryptoGetRandomValues');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to initialize secrets.js RNG', err);
+    }
+    return secrets;
+  }
+  throw new Error('Secure random number generator not available');
 }
 
 let dataKey: Uint8Array | undefined;
@@ -99,16 +111,20 @@ export function waitForDataKey(): Promise<Uint8Array> {
   return dataKeyPromise;
 }
 
-export function generateKeyShards(total: number, threshold: number): string[] {
+export async function generateKeyShards(
+  total: number,
+  threshold: number
+): Promise<string[]> {
   if (!dataKey) {
     throw new Error('No data key set');
   }
-  if (!secrets.getConfig().hasCSPRNG) {
+  const s = await loadSecrets();
+  if (!s.getConfig().hasCSPRNG) {
     throw new Error('RNG not initialized');
   }
   try {
     const hex = bytesToHex(dataKey);
-    return secrets.share(hex, total, threshold);
+    return s.share(hex, total, threshold);
   } catch (err) {
     throw new Error(
       `Failed to generate key shards: ${(err as Error).message}`
@@ -116,8 +132,11 @@ export function generateKeyShards(total: number, threshold: number): string[] {
   }
 }
 
-export function restoreKeyFromShards(shards: string[]): Uint8Array {
-  const hex = secrets.combine(shards);
+export async function restoreKeyFromShards(
+  shards: string[]
+): Promise<Uint8Array> {
+  const s = await loadSecrets();
+  const hex = s.combine(shards);
   const key = hexToBytes(hex);
   setDataKey(key);
   return key;
