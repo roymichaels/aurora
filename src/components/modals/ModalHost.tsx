@@ -11,6 +11,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { views } from "@/views/registry";
 
 const LiveFocusView = lazy(() => import("@/components/live/LiveFocusView"));
 const HypnoPanel = lazy(() => import("@/components/hypno/HypnoPanel"));
@@ -20,11 +21,6 @@ const SettingsModal = lazy(() => import("./SettingsModal"));
 const TasksModal = lazy(() => import("./TasksModal"));
 const OnboardingSheet = lazy(() => import("./OnboardingSheet"));
 const ConfirmSheet = lazy(() => import("./ConfirmSheet"));
-
-const BrainView = lazy(() => import("@/views/BrainView"));
-const JournalView = lazy(() => import("@/views/JournalView"));
-const FocusView = lazy(() => import("@/views/FocusView"));
-const VoiceView = lazy(() => import("@/views/VoiceView"));
 
 export default function ModalHost() {
   const { activeModal, closeModal, modalArgs } = useUIStore();
