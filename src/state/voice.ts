@@ -35,7 +35,6 @@ type VoiceState = {
   pitch: number;
   expression: number;
   emotion: string;
-  listenMode: ListenMode;
   setListening: (v: boolean) => void;
   setThinking: (v: boolean) => void;
   setSpeaking: (v: boolean) => void;
@@ -49,7 +48,6 @@ type VoiceState = {
   setPitch: (v: number) => void;
   setExpression: (v: number) => void;
   setEmotion: (v: string) => void;
-  setListenMode: (m: ListenMode) => void;
 };
 
 export const useVoiceStore = create<VoiceState>((set) => {
@@ -92,9 +90,6 @@ export const useVoiceStore = create<VoiceState>((set) => {
     emotion: hasWindow
       ? ls!.getItem(VOICE_EMOTION_KEY) || 'neutral'
       : 'neutral',
-    listenMode: hasWindow
-      ? ((ls!.getItem(VOICE_LISTEN_MODE_KEY) as ListenMode) || 'push-to-talk')
-      : 'push-to-talk',
 
     setListening: (v) => set({ isListening: v }),
     setThinking: (v) => set({ isThinking: v }),
@@ -179,15 +174,6 @@ export const useVoiceStore = create<VoiceState>((set) => {
         /* empty */
       }
       set({ emotion });
-    },
-
-    setListenMode: (listenMode) => {
-      try {
-        ls?.setItem(VOICE_LISTEN_MODE_KEY, listenMode);
-      } catch {
-        /* empty */
-      }
-      set({ listenMode });
-    }, // <- no extra comma after the last property
+    }
   };
 });
