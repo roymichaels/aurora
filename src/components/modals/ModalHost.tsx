@@ -17,8 +17,20 @@ import TasksModal from "@/components/modals/TasksModal";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import OnboardingSheet from "@/components/modals/OnboardingSheet";
-import ConfirmSheet from "@/components/modals/ConfirmSheet";
+
+const BrainView = views.find((v) => v.id === "brain")!.component;
+const FocusView = views.find((v) => v.id === "focus")!.component;
+const JournalView = views.find((v) => v.id === "journal")!.component;
+const VoiceView = views.find((v) => v.id === "voice")!.component;
+
+const LiveFocusView = lazy(() => import("@/components/live/LiveFocusView"));
+const HypnoPanel = lazy(() => import("@/components/hypno/HypnoPanel"));
+const AnalyticsModal = lazy(() => import("./AnalyticsModal"));
+const GoalsModal = lazy(() => import("./GoalsModal"));
+const SettingsModal = lazy(() => import("./SettingsModal"));
+const TasksModal = lazy(() => import("./TasksModal"));
+const OnboardingSheet = lazy(() => import("./OnboardingSheet"));
+const ConfirmSheet = lazy(() => import("./ConfirmSheet"));
 
 const BrainView = lazy(() => import("@/views/BrainView"));
 const JournalView = lazy(() => import("@/views/JournalView"));
@@ -155,7 +167,7 @@ export default function ModalHost() {
             <DialogTitle>Modal</DialogTitle>
             <DialogDescription>Modal content</DialogDescription>
           </DialogHeader>
-          {content}
+          <Suspense fallback={null}>{content}</Suspense>
         </DialogContent>
       )}
     </Dialog>
