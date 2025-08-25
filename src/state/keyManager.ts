@@ -82,21 +82,21 @@ export function clearDataKey() {
 export async function deriveDataKey(signedMessage: string, passcode: string) {
   const messageBytes = decodeSignedMessage(signedMessage);
   const msgHash = new Uint8Array(
-    await crypto.subtle.digest('SHA-256', messageBytes)
+    await crypto.subtle.digest('SHA-256', messageBytes as BufferSource)
   );
   const enc = new TextEncoder();
   const passBytes = enc.encode(passcode);
   const combined = new Uint8Array(msgHash.length + passBytes.length);
   combined.set(msgHash);
   combined.set(passBytes, msgHash.length);
-  const baseKey = await crypto.subtle.importKey('raw', combined, 'PBKDF2', false, ['deriveBits']);
+  const baseKey = await crypto.subtle.importKey('raw', combined as BufferSource, 'PBKDF2', false, ['deriveBits']);
   const salt = new Uint8Array(
-    await crypto.subtle.digest('SHA-256', passBytes)
+    await crypto.subtle.digest('SHA-256', passBytes as BufferSource)
   );
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as BufferSource,
       iterations: 150_000,
       hash: 'SHA-256'
     },

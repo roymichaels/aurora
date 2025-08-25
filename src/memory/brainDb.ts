@@ -47,13 +47,18 @@ async function deriveKey(
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     "raw",
-    enc.encode(passphrase),
+    enc.encode(passphrase) as BufferSource,
     "PBKDF2",
     false,
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
+    {
+      name: "PBKDF2",
+      salt: salt as BufferSource,
+      iterations: 100000,
+      hash: "SHA-256",
+    },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -70,9 +75,9 @@ async function encryptData(
   const key = await deriveKey(passphrase, salt);
   const encrypted = new Uint8Array(
     await crypto.subtle.encrypt(
-      { name: "AES-GCM", iv },
+      { name: "AES-GCM", iv: iv as BufferSource },
       key,
-      data,
+      data as BufferSource,
     ),
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
@@ -93,9 +98,9 @@ async function decryptData(
   const key = await deriveKey(passphrase, salt);
   const decrypted = new Uint8Array(
     await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv },
+      { name: "AES-GCM", iv: iv as BufferSource },
       key,
-      enc,
+      enc as BufferSource,
     ),
   );
   return decrypted;
@@ -221,7 +226,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
       if (opfsHandle) {
         try {
           const writable = await opfsHandle.createWritable();
-          await writable.write(data);
+          await writable.write(data as BufferSource);
           await writable.close();
         } catch {
           toast({ title: "Storage error", description: "OPFS write failed" });
@@ -239,7 +244,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
             const root = await (navigator as any).storage.getDirectory();
             opfsHandle = await root.getFileHandle(DB_FILE, { create: true });
             const writable = await opfsHandle.createWritable();
-            await writable.write(data);
+            await writable.write(data as BufferSource);
             await writable.close();
           } catch {
             toast({ title: "Storage error", description: "OPFS sync failed" });
