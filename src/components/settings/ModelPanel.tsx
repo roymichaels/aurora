@@ -18,7 +18,7 @@ export default function ModelPanel() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="auto">Auto (remote with fallback)</SelectItem>
-            <SelectItem value="remote">Remote (Supabase)</SelectItem>
+              <SelectItem value="remote">Remote (cloud)</SelectItem>
             <SelectItem value="local">Local (on-device)</SelectItem>
           </SelectContent>
         </Select>

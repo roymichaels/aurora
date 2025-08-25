@@ -1,6 +1,6 @@
 # Offline Mode
 
-Aurora stores tasks, stats, and achievements locally in an encrypted RxDB database. Supabase synchronization has been removed, so all data stays on the device.
+Aurora stores tasks, stats, and achievements locally in an encrypted RxDB database. Cloud synchronization has been removed, so all data stays on the device.
 
 ## Behavior
 - No remote synchronization is performed.

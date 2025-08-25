@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -210,7 +210,7 @@ export default function OnboardingFlow() {
   const showSummary = async () => {
     const brief = { headline, deadline, priors };
     if (user) {
-      const { data } = await supabase.functions.invoke("synthesize-mission", {
+      const { data } = await db.functions.invoke("synthesize-mission", {
         body: { user_id: user.id, brief, scopes },
       });
       if (data) setMissionPreview(data);
@@ -322,7 +322,7 @@ export default function OnboardingFlow() {
       });
     }
 
-    const { data, error } = await supabase.functions.invoke<{ content: string }>(
+    const { data, error } = await db.functions.invoke<{ content: string }>(
       "aurora-chat",
       { body: { messages: baseMessages } },
     );
@@ -338,7 +338,7 @@ export default function OnboardingFlow() {
       const updatedAnswers = answers.map((a) => [...a]);
 
       if (user) {
-        await supabase.from("onboarding_answers").insert({
+        await db.from("onboarding_answers").insert({
           user_id: user.id,
           question: MODULES[currentModule].questions[questionIndex].prompt,
           answer: userMsg.content,
@@ -359,7 +359,7 @@ export default function OnboardingFlow() {
       const profileData = buildProfile(responses);
       saveProfile(profileData);
       if (user) {
-        await supabase
+        await db
           .from("profiles")
           .update({ persona: profileData })
           .eq("id", user.id);
@@ -394,7 +394,7 @@ export default function OnboardingFlow() {
 
   const handleFinish = async () => {
     if (user) {
-      await supabase.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("id", user.id);
+      await db.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("id", user.id);
     }
     navigate("/app/plan", { replace: true });
   };
@@ -402,7 +402,7 @@ export default function OnboardingFlow() {
   const handleRegenerate = async () => {
     if (!user) return;
     const brief = { headline, deadline, priors };
-    const { data } = await supabase.functions.invoke("synthesize-mission", {
+    const { data } = await db.functions.invoke("synthesize-mission", {
       body: { user_id: user.id, brief, scopes },
     });
     if (data) setMissionPreview(data);

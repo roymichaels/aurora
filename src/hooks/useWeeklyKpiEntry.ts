@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 /**
  * Hook that determines whether a KPI should be updated this week
@@ -16,7 +16,7 @@ export function useWeeklyKpiEntry(
   useEffect(() => {
     async function check() {
       if (!userId || !kpiId) return;
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("kpi_records")
         .select("recorded_at")
         .eq("user_id", userId)
@@ -40,7 +40,7 @@ export function useWeeklyKpiEntry(
 
   const record = async (value: number, source: string) => {
     if (!userId || !missionId || !kpiId) return;
-    const { error } = await supabase.from("kpi_records").insert({
+    const { error } = await db.from("kpi_records").insert({
       user_id: userId,
       mission_id: missionId,
       kpi_id: kpiId,
@@ -52,7 +52,7 @@ export function useWeeklyKpiEntry(
       return;
     }
     setShouldPrompt(false);
-    const { error: factErr } = await supabase.from("facts").insert({
+    const { error: factErr } = await db.from("facts").insert({
       user_id: userId,
       task_id: null,
       content: `Recorded KPI ${kpiId} = ${value}`,

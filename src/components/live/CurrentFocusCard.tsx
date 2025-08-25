@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
@@ -38,17 +38,17 @@ export function CurrentFocusCard({
   const [busy, setBusy] = useState(false);
 
   const markDoneAndAdvance = async () => {
-    if (!user) {
-      toast({ title: "Sign in required", description: "Connect Supabase to track your progress." });
-      return;
-    }
+      if (!user) {
+        toast({ title: "Sign in required", description: "Sign in to track your progress." });
+        return;
+      }
     if (!task) return;
 
     setBusy(true);
     const now = new Date().toISOString();
 
     // 1) mark current task done
-    const { error: updErr } = await supabase
+    const { error: updErr } = await db
       .from("tasks")
       .update({ status: "done", completed_at: now })
       .eq("id", task.id)

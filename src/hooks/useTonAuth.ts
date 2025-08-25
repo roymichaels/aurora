@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CHAIN, TonConnectUI } from "@tonconnect/ui";
+import { setDataKey } from "@/state/keyManager";
+import { db as localDb } from "@/data/db";
 
 // Create a single TonConnectUI instance for the app. All connections must use the TON testnet.
 export const connector = new TonConnectUI({
@@ -69,6 +71,14 @@ export function useTonAuth() {
         throw new Error("Only TON testnet is supported");
       }
       await signAndVerify(scopes);
+      // ensure a data key exists for encrypted Dexie storage
+      const key = crypto.getRandomValues(new Uint8Array(32));
+      setDataKey(key);
+      try {
+        await localDb.open();
+      } catch {
+        /* ignore db open errors */
+      }
       if (refreshTimer.current) clearInterval(refreshTimer.current);
       refreshTimer.current = setInterval(
         () => {
