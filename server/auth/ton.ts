@@ -69,6 +69,9 @@ const plugin: FastifyPluginAsync = async (fastify) => {
     } catch {
       return reply.code(400).send({ error: "invalid_public_key" });
     }
+    if (pkBytes.length !== 32) {
+      return reply.code(400).send({ error: "invalid_public_key" });
+    }
 
     const message = composeMessage(challenge, scopes, sessionPubKey, exp);
 
@@ -82,12 +85,20 @@ const plugin: FastifyPluginAsync = async (fastify) => {
         return reply.code(400).send({ error: "invalid_signature" });
       }
     }
+    if (sigBytes.length !== 64) {
+      return reply.code(400).send({ error: "invalid_signature" });
+    }
 
-    const ok = nacl.sign.detached.verify(
-      stringToBytes(message),
-      sigBytes,
-      pkBytes,
-    );
+    let ok: boolean;
+    try {
+      ok = nacl.sign.detached.verify(
+        stringToBytes(message),
+        sigBytes,
+        pkBytes,
+      );
+    } catch {
+      return reply.code(401).send({ error: "invalid_signature" });
+    }
     if (!ok) {
       return reply.code(401).send({ error: "invalid_signature" });
     }
