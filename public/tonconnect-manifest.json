@@ -1,5 +1,5 @@
 {
-  "url": "<YOUR_APP_ORIGIN>",
-  "name": "Aurora",
-  "iconUrl": "/icons/aurora.png"
+  "url": "http://localhost:8080",
+  "name": "Aurora (Dev)",
+  "iconUrl": "/icon.png"
 }
