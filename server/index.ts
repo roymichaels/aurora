@@ -3,14 +3,12 @@ import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import authTon from './auth/ton';
 import replicate from './replicate';
 
 const server = Fastify({ logger: true });
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const manifestPath = path.resolve(__dirname, '../public/tonconnect-manifest.json');
+const manifestPath = path.resolve(process.cwd(), 'public/tonconnect-manifest.json');
 
 async function build() {
   await server.register(cookie);
@@ -21,9 +19,17 @@ async function build() {
     await server.register(nftAssets);
   }
   server.get('/tonconnect-manifest.json', async (req, reply) => {
-    const raw = await fs.readFile(manifestPath, 'utf-8');
-    const origin = process.env.VITE_ORIGIN || `${req.protocol}://${req.headers.host}`;
-    reply.header('Content-Type', 'application/json').send(raw.replace('%VITE_ORIGIN%', origin));
+    try {
+      const raw = await fs.readFile(manifestPath, 'utf-8');
+      const origin =
+        process.env.VITE_ORIGIN || `${req.protocol}://${req.headers.host}`;
+      reply
+        .header('Content-Type', 'application/json')
+        .send(raw.replace('%VITE_ORIGIN%', origin));
+    } catch (err) {
+      server.log.error(err);
+      reply.code(404).send({ error: 'tonconnect-manifest.json not found' });
+    }
   });
 }
 
