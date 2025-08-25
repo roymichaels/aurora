@@ -7,13 +7,18 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    enc.encode(passphrase),
+    enc.encode(passphrase) as BufferSource,
     'PBKDF2',
     false,
     ['deriveKey']
   );
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    {
+      name: 'PBKDF2',
+      salt: salt as BufferSource,
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -29,7 +34,11 @@ export async function exportEncryptedBrain(passphrase: string): Promise<ArrayBuf
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
   const encrypted = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data)
+    await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv: iv as BufferSource },
+      key,
+      data as BufferSource,
+    )
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
   out.set(salt, 0);
@@ -46,7 +55,7 @@ async function writeBrain(bytes: Uint8Array) {
       const root = await (navigator as any).storage.getDirectory();
       const handle = await root.getFileHandle(DB_FILE, { create: true });
       const writable = await handle.createWritable();
-      await writable.write(bytes);
+      await writable.write(bytes as BufferSource);
       await writable.close();
       return;
     } catch {
@@ -85,7 +94,11 @@ export async function importEncryptedBrain(buffer: ArrayBuffer, passphrase: stri
   const data = buf.slice(28);
   const key = await deriveKey(passphrase, salt);
   const decrypted = new Uint8Array(
-    await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data)
+    await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as BufferSource },
+      key,
+      data as BufferSource,
+    )
   );
   await writeBrain(decrypted);
 }
