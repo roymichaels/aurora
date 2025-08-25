@@ -10,7 +10,7 @@ export type ViewMeta = {
   label: string;
   path: string;
   icon?: JSX.Element;
-  component: React.LazyExoticComponent<() => JSX.Element>;
+  component: React.LazyExoticComponent<React.ComponentType<any>>;
   hotkey?: string;
 };
 
