@@ -13,7 +13,7 @@ export async function retryWithBackoff<T>(
     try {
       const result = await fn();
       if (t && attempt > 0) {
-        t.update({ description: 'Success' });
+        t.update({ id: t.id, description: 'Success' });
         setTimeout(() => t?.dismiss(), 2000);
       }
       return result;
@@ -23,7 +23,7 @@ export async function retryWithBackoff<T>(
       }
       attempt++;
       if (attempt > maxRetries) {
-        t.update({ description: 'Failed', variant: 'destructive' });
+        t.update({ id: t.id, description: 'Failed', variant: 'destructive' });
         setTimeout(() => t?.dismiss(), 2000);
         throw err;
       }
