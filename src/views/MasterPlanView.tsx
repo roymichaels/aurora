@@ -14,34 +14,9 @@ import { toast } from "@/hooks/use-toast";
 import { usePlanUpdater } from "@/hooks/usePlanUpdater";
 import { UserProfile } from "@/data/profile";
 import { useHabitStore } from "@/state/habits";
+import { MasterPlan, Goal, Task } from "@/brain/masterPlan";
 
-interface PlanTask {
-  title: string;
-  description?: string;
-}
-
-interface PlanMilestone {
-  title: string;
-  tasks?: PlanTask[];
-}
-
-interface PlanGoal {
-  title: string;
-  description?: string;
-  milestones?: PlanMilestone[];
-}
-
-interface PlanHabit {
-  title: string;
-  frequency?: string;
-  trigger?: string;
-}
-
-interface MasterPlan {
-  goals?: PlanGoal[];
-  habits?: PlanHabit[];
-  plan_versions?: MasterPlan[];
-}
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface Roadmap {
   id: string;
@@ -203,7 +178,8 @@ export default function MasterPlanView() {
   }
 
   const displayPlan = versionIndex === -1 ? plan : plan?.plan_versions?.[versionIndex];
-  const habits = displayPlan?.habits ?? [];
+  const goals: Goal[] = displayPlan?.goals ?? [];
+  const habits: Task[] = displayPlan?.habits ?? [];
 
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
@@ -232,14 +208,16 @@ export default function MasterPlanView() {
               <h2 className="text-xl font-semibold">Goals</h2>
               <Button variant="ghost" size="sm" onClick={() => openEdit("goals")}>Edit</Button>
             </div>
-            {displayPlan.goals?.map((g: any, idx: number) => (
+            {goals.map((g: Goal, idx: number) => (
               <div key={idx} className="rounded-lg border border-border p-4 space-y-3">
                 <div>
-                  <div className="font-medium">{g.title ?? g.name}</div>
-                  {g.description && <p className="text-sm text-muted-foreground">{g.description}</p>}
+                  <div className="font-medium">{(g as any).title ?? g.name}</div>
+                  {(g as any).description && (
+                    <p className="text-sm text-muted-foreground">{(g as any).description}</p>
+                  )}
                 </div>
-                {Array.isArray(g.milestones)
-                  ? g.milestones.map((m: any, j: number) => (
+                {Array.isArray((g as any).milestones)
+                  ? (g as any).milestones.map((m: any, j: number) => (
                       <div key={j} className="ml-4 space-y-1">
                         <div className="font-medium">{m.title ?? m}</div>
                         {m.tasks && (
@@ -251,14 +229,14 @@ export default function MasterPlanView() {
                         )}
                       </div>
                     ))
-                  : g.milestones?.annual?.map((m: any, j: number) => (
+                  : g.milestones.annual.map((m: any, j: number) => (
                       <div key={j} className="ml-4 space-y-1">
                         <div className="font-medium">{m}</div>
                       </div>
                     ))}
-                {roadmapByTitle[g.title ?? g.name] && (
+                {roadmapByTitle[(g as any).title ?? g.name] && (
                   <div className="mt-4">
-                    <TasksManager roadmapId={roadmapByTitle[g.title ?? g.name]} />
+                    <TasksManager roadmapId={roadmapByTitle[(g as any).title ?? g.name]} />
                   </div>
                 )}
               </div>
@@ -274,7 +252,7 @@ export default function MasterPlanView() {
               <Button variant="ghost" size="sm" onClick={() => openEdit("habits")}>Edit</Button>
             </div>
             {habits.length === 0 && <p className="text-sm text-muted-foreground">No habits yet.</p>}
-            {habits.map((h: PlanHabit, i: number) => (
+            {habits.map((h: Task, i: number) => (
               <div
                 key={i}
                 className="rounded-lg border border-border p-3 flex flex-col sm:flex-row sm:items-center gap-3"
@@ -283,9 +261,9 @@ export default function MasterPlanView() {
                 {h.frequency && (
                   <div className="text-sm text-muted-foreground">{h.frequency}</div>
                 )}
-                {h.trigger && (
+                {h.triggers && h.triggers.length > 0 && (
                   <div className="text-sm text-muted-foreground sm:ml-auto">
-                    {h.trigger}
+                    {h.triggers.map((t) => t.message).join(", ")}
                   </div>
                 )}
               </div>
