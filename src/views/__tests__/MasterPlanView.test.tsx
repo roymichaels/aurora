@@ -4,11 +4,23 @@ import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import MasterPlanView from '../MasterPlanView';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 const mockPlan = {
   goals: [],
   habits: [
-    { title: 'Drink Water', frequency: 'daily', trigger: 'Morning' },
-    { title: 'Read Book', frequency: 'weekly', trigger: 'Evening' },
+    {
+      id: '1',
+      title: 'Drink Water',
+      frequency: 'daily',
+      triggers: [{ type: 'notification', message: 'Morning' }],
+    },
+    {
+      id: '2',
+      title: 'Read Book',
+      frequency: 'weekly',
+      triggers: [{ type: 'notification', message: 'Evening' }],
+    },
   ],
   plan_versions: [],
 };
