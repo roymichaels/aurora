@@ -11,7 +11,11 @@ import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { AuroraSphere } from "@/components/avatar/AuroraSphere";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { views } from "@/views/registry";
+
+const BrainView = lazy(() => import("@/views/BrainView"));
+const FocusView = lazy(() => import("@/views/FocusView"));
+const JournalView = lazy(() => import("@/views/JournalView"));
+const VoiceView = lazy(() => import("@/views/VoiceView"));
 
 const LiveFocusView = lazy(() => import("@/components/live/LiveFocusView"));
 const HypnoPanel = lazy(() => import("@/components/hypno/HypnoPanel"));
