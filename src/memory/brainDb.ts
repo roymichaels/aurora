@@ -53,7 +53,7 @@ async function deriveKey(
     ["deriveKey"],
   );
   return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt: salt.buffer, iterations: 100000, hash: "SHA-256" },
+    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
     keyMaterial,
     { name: "AES-GCM", length: 256 },
     false,
@@ -72,7 +72,7 @@ async function encryptData(
     await crypto.subtle.encrypt(
       { name: "AES-GCM", iv },
       key,
-      data.buffer,
+      data,
     ),
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
@@ -95,7 +95,7 @@ async function decryptData(
     await crypto.subtle.decrypt(
       { name: "AES-GCM", iv },
       key,
-      enc.buffer,
+      enc,
     ),
   );
   return decrypted;
@@ -189,7 +189,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
         const { passphrase } = getEncryptionSettings();
         if (passphrase && buffer.byteLength) {
           try {
-            buffer = await decryptData(buffer, passphrase);
+            buffer = (await decryptData(buffer, passphrase)) as Uint8Array;
           } catch {}
         }
         db = buffer.byteLength
@@ -204,7 +204,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
       const { passphrase } = getEncryptionSettings();
       if (bytes && passphrase) {
         try {
-          bytes = await decryptData(bytes, passphrase);
+          bytes = (await decryptData(bytes, passphrase)) as Uint8Array;
         } catch {}
       }
       db = bytes
@@ -221,7 +221,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
       if (opfsHandle) {
         try {
           const writable = await opfsHandle.createWritable();
-          await writable.write(data.buffer);
+          await writable.write(data);
           await writable.close();
         } catch {
           toast({ title: "Storage error", description: "OPFS write failed" });
@@ -239,7 +239,7 @@ export async function openBrainDb(): Promise<BrainDatabase> {
             const root = await (navigator as any).storage.getDirectory();
             opfsHandle = await root.getFileHandle(DB_FILE, { create: true });
             const writable = await opfsHandle.createWritable();
-            await writable.write(data.buffer);
+            await writable.write(data);
             await writable.close();
           } catch {
             toast({ title: "Storage error", description: "OPFS sync failed" });
