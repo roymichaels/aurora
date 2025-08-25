@@ -4,7 +4,7 @@ import HypnosisLauncher from "@/components/hypnosis/HypnosisLauncher";
 import { useGameStore } from "@/game/store";
 import { REWARDS } from "@/game/QuestEngine";
 import { award } from "@/game/gamification/award";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { logEvent } from "@/integrations/db";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -32,10 +32,10 @@ export default function HypnoPanel({ onClose }: Props) {
     award({ xp: REWARDS.completeQuest });
 
     // Server: create a session start row (if signed-in)
-    const { data } = await supabase.auth.getUser();
+    const { data } = await db.auth.getUser();
     const uid = data.user?.id;
     if (uid) {
-      supabase.from("sessions").insert({
+      db.from("sessions").insert({
         user_id: uid,
         type: "hypno",
         mood_before: mood,

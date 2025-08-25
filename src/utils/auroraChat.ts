@@ -3,7 +3,7 @@ import brain from '@/brain/Brain';
 import { getFilterName } from '@/brain/filters';
 import { routeChat } from '@/agent/router';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
-import { supabase } from '@/integrations/db';
+import { db } from '@/integrations/db';
 import { useModelPreference } from '@/state/modelPreference';
 import { buildPrompt } from '../../core/prompt.ts';
 
@@ -42,7 +42,7 @@ let cachedProfile: UserProfile | null | undefined;
 async function getProfile(): Promise<UserProfile | null> {
   if (cachedProfile !== undefined) return cachedProfile;
   try {
-    const { data } = await supabase
+    const { data } = await db
       .from('profiles')
       .select('persona')
       .single();

@@ -3,7 +3,7 @@ import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TasksManager from "@/components/control/TasksManager";
 import { useUIStore } from "@/state/ui";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 export default function TasksModal() {
   const tasksRoadmapId = useUIStore((s) => s.tasksRoadmapId);
@@ -14,7 +14,7 @@ export default function TasksModal() {
     if (tasksRoadmapId || !user) return;
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
+      const { data } = await db
         .from("roadmaps")
         .select("id, status")
         .eq("user_id", user.id)

@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 
 export default function RoadmapForm({ onCreated }: { onCreated?: (id: string) => void }) {
@@ -20,7 +20,7 @@ export default function RoadmapForm({ onCreated }: { onCreated?: (id: string) =>
     }
     if (!title.trim()) return;
     setBusy(true);
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("roadmaps")
       .insert({
         user_id: user.id,

@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
@@ -43,7 +43,7 @@ export function useBackgroundAudio() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("sounds")
         .select("id, title, category, audio_url")
         .order("title", { ascending: true });
@@ -70,7 +70,7 @@ export function useBackgroundAudio() {
         return;
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("user_audio_settings")
         .select("*")
         .eq("user_id", user.id)
@@ -84,7 +84,7 @@ export function useBackgroundAudio() {
 
       // If no row, create a default row
       if (!data) {
-        const { error: insErr } = await supabase.from("user_audio_settings").insert({
+        const { error: insErr } = await db.from("user_audio_settings").insert({
           user_id: user.id,
           is_playing: false,
           loop: true,
@@ -130,7 +130,7 @@ export function useBackgroundAudio() {
 
   const persist = async (patch: Partial<{ background_sound_id: string | null; is_playing: boolean; loop: boolean; volume: number }>) => {
     if (!user) return; // In-memory only if not logged in
-    const { error } = await supabase
+    const { error } = await db
       .from("user_audio_settings")
       .upsert({ user_id: user.id, ...patch }, { onConflict: "user_id" });
     if (error) console.error("Persist user_audio_settings error:", error);

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/db';
+import { db } from '@/integrations/db';
 import { localChat } from '@/agent/localModel';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
 import type { UserProfile } from '@/data/profile';
@@ -58,7 +58,7 @@ export async function routeChat(
 
   const safeMessages = stripSensitive(messages);
   const safeProfile = sanitizeProfile(profile);
-  const { data, error } = await supabase.functions.invoke<{
+  const { data, error } = await db.functions.invoke<{
     content: string;
     sentiment: number;
   }>('aurora-chat', {

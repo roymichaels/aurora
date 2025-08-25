@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "./useTonSession";
 
 /**
@@ -22,13 +22,13 @@ export default function useWeeklyReview(missionId: string | null) {
     const run = async () => {
       try {
         // touch KPI records so updated_at reflects review
-        await supabase
+        await db
           .from("kpis")
           .update({ updated_at: now.toISOString() })
           .eq("mission_id", missionId);
 
         // prefetch the next sprint for surface
-        const { data: next } = await supabase
+        const { data: next } = await db
           .from("sprints")
           .select("id, start_date")
           .eq("mission_id", missionId)

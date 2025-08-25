@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/db';
+import { db } from '@/integrations/db';
 
 export type Task = {
   id: string;
@@ -13,7 +13,7 @@ export type Task = {
 // Ensure exactly one active roadmap for a user by pausing others then activating the desired one.
 export async function setActiveRoadmap(userId: string, roadmapId: string) {
   // Pause all other active roadmaps for the user
-  await supabase
+  await db
     .from('roadmaps')
     .update({ status: 'paused' })
     .eq('user_id', userId)
@@ -21,7 +21,7 @@ export async function setActiveRoadmap(userId: string, roadmapId: string) {
     .eq('status', 'active');
 
   // Activate the requested roadmap
-  const { error } = await supabase
+  const { error } = await db
     .from('roadmaps')
     .update({ status: 'active' })
     .eq('user_id', userId)
@@ -32,7 +32,7 @@ export async function setActiveRoadmap(userId: string, roadmapId: string) {
 
 // Fetch the next pending task for the given roadmap
 export async function fetchNextTask(userId: string, roadmapId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('tasks')
     .select('id, title, description, due_at, roadmap_id, status, position')
     .eq('user_id', userId)

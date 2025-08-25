@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTonSession } from '@/hooks/useTonSession';
-import { supabase } from '@/integrations/db';
+import { db } from '@/integrations/db';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useCurrentTask, type Task } from '@/state/task';
@@ -46,7 +46,7 @@ export default function LiveFocusView() {
       }
 
       // All roadmaps
-      const { data: rms, error: rmsErr } = await supabase
+      const { data: rms, error: rmsErr } = await db
         .from('roadmaps')
         .select('id, title, description, color, status')
         .eq('user_id', user.id)
@@ -62,7 +62,7 @@ export default function LiveFocusView() {
       setActiveRoadmap(active);
 
       // Current focus
-      const { data: cf, error: cfErr } = await supabase
+      const { data: cf, error: cfErr } = await db
         .from('current_focus')
         .select('task_id, started_at')
         .eq('user_id', user.id)
@@ -71,7 +71,7 @@ export default function LiveFocusView() {
 
       let currentTask: Task | null = null;
       if (cf?.task_id) {
-        const { data: t, error: tErr } = await supabase
+        const { data: t, error: tErr } = await db
           .from('tasks')
           .select(
             'id, title, description, due_at, roadmap_id, status, position'
@@ -87,7 +87,7 @@ export default function LiveFocusView() {
         (!currentTask || (active && currentTask.roadmap_id !== active.id)) &&
         active
       ) {
-        const { data: next, error: nextErr } = await supabase
+        const { data: next, error: nextErr } = await db
           .from('tasks')
           .select(
             'id, title, description, due_at, roadmap_id, status, position'
@@ -105,7 +105,7 @@ export default function LiveFocusView() {
         currentTask = (next?.[0] as Task) ?? null;
 
         // Persist focus
-        const { error: upErr } = await supabase.from('current_focus').upsert({
+        const { error: upErr } = await db.from('current_focus').upsert({
           user_id: user.id,
           task_id: currentTask ? currentTask.id : null,
           started_at: new Date().toISOString(),
@@ -128,7 +128,7 @@ export default function LiveFocusView() {
 
   useEffect(() => {
     if (!user) return;
-    const channel = supabase
+    const channel = db
       .channel('live-sync')
       .on(
         'postgres_changes',
@@ -165,7 +165,7 @@ export default function LiveFocusView() {
       )
       .subscribe();
     return () => {
-      supabase.removeChannel(channel);
+      db.removeChannel(channel);
     };
   }, [user]);
 

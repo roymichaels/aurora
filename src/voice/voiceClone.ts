@@ -1,11 +1,11 @@
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 
 async function cacheVoiceModel(voiceId: string) {
   if (typeof window === "undefined") return;
   const key = `aurora_voice_model_${voiceId}`;
   if (localStorage.getItem(key)) return;
   try {
-    const { data } = await supabase.storage
+    const { data } = await db.storage
       .from("voice-models")
       .download(`${voiceId}.bin`);
     if (data) {
@@ -75,7 +75,7 @@ export async function playClonedVoice(
       }
     }
 
-    const { data, error } = await supabase.functions.invoke("tts-generate", {
+    const { data, error } = await db.functions.invoke("tts-generate", {
       body: { text, voiceId, emotion, speed, pitch, expression },
     });
     if (!error && data?.audioBase64) {
