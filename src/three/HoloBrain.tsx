@@ -1,5 +1,5 @@
 // [AURORA-BEGIN:three-holobrain]
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, type Ref } from 'react';
 import * as THREE from 'three';
 import { extend, useFrame, type ReactThreeFiber } from '@react-three/fiber';
 import { shaderMaterial } from '@react-three/drei';
@@ -116,7 +116,9 @@ export function HoloBrain({
   return (
     <group ref={group} {...props}>
       <mesh geometry={geometry}>
-        <fresnelMaterial ref={material} />
+        <fresnelMaterial
+          ref={material as unknown as Ref<THREE.ShaderMaterial>}
+        />
       </mesh>
       <points geometry={particleGeometry}>
         <pointsMaterial size={0.02} color={color} transparent opacity={0.6} />
