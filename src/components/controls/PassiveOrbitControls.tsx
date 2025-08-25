@@ -48,7 +48,6 @@ export default function PassiveOrbitControls({
   useEffect(() => {
     if (!makeDefault) return;
     const previous = get().controls;
-    // @ts-expect-error - the three fiber typings don't include our custom controls
     set({ controls: controlsRef.current });
     return () => set({ controls: previous });
   }, [makeDefault, set, get]);
