@@ -219,6 +219,83 @@ describe('TON auth', () => {
     expect(res.statusCode).toBe(400);
   });
 
+  test('rejects short public key', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const shortPk = toHex(keypair.publicKey).slice(0, 60);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        publicKey: shortPk,
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects long public key', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
+    const longPk = toHex(keypair.publicKey) + 'aa';
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        publicKey: longPk,
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects short signature', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig = toHex(
+      nacl.sign.detached(stringToBytes(msg), keypair.secretKey)
+    ).slice(0, 120);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        publicKey: toHex(keypair.publicKey),
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  test('rejects long signature', async () => {
+    const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
+    const { challenge } = start.json();
+    const msg = composeMessage(challenge, []);
+    const sig =
+      toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey)) + 'aa';
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/ton/verify',
+      payload: {
+        publicKey: toHex(keypair.publicKey),
+        challenge,
+        scopes: [],
+        signature: sig,
+      },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
   test('rejects expired challenge', async () => {
     const start = await app.inject({ method: 'POST', url: '/auth/ton/start' });
     const { challenge, ttl } = start.json();
@@ -280,6 +357,9 @@ describe('TON auth', () => {
     });
     const t1 = first.cookies.find((c: { name: string }) => c.name === 'sid');
     const { payload: p1 } = await jwtVerify(t1.value, secretBytes);
+
+    // ensure a different expiration timestamp for the rotated token
+    await new Promise((r) => setTimeout(r, 1000));
 
     const start2 = await app.inject({ method: 'POST', url: '/auth/ton/start' });
     const { challenge: ch2 } = start2.json();
