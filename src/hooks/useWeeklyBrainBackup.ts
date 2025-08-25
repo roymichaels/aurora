@@ -20,7 +20,8 @@ export default function useWeeklyBrainBackup() {
     }
     const run = async () => {
       try {
-        const blob = await exportEncryptedBrain(passphrase);
+        const data = await exportEncryptedBrain(passphrase);
+        const blob = new Blob([data], { type: 'application/x-aurora' });
         const path = `${user.id}/${now.toISOString()}.bin`;
         await uploadToStorage('brain-backups', path, blob);
 
