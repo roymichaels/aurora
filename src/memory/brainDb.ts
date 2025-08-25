@@ -1,4 +1,4 @@
-import initSqlJs, { Database } from "sql.js";
+import initSqlJs, { type Database } from "sql.js";
 import wasmUrl from "sql.js/dist/sql-wasm.wasm?url";
 import { toast } from "@/hooks/use-toast";
 

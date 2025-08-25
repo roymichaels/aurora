@@ -8,5 +8,5 @@
     "strict": false,
     "noFallthroughCasesInSwitch": false
   },
-  "include": ["src", "server"]
+  "include": ["src", "server", "types"]
 }
