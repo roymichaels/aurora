@@ -11,17 +11,18 @@ interface ModelState {
 
 const STORAGE_KEY = 'modelPreference';
 
-export const useModelPreference = create<ModelState>((set) => {
+export const useModelPreference = create<ModelState>((set): ModelState => {
   const raw =
     typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
-  const initial = raw
-    ? (JSON.parse(raw) as { preference: ModelPreference; fallbackToCloud: boolean })
+  const initial: Pick<ModelState, 'preference' | 'fallbackToCloud'> = raw
+    ? (JSON.parse(raw) as Pick<ModelState, 'preference' | 'fallbackToCloud'>)
     : { preference: 'auto', fallbackToCloud: true };
+
   return {
     ...initial,
-    setPreference: (p) =>
+    setPreference: (p: ModelPreference) =>
       set((state) => {
-        const next = { ...state, preference: p } as ModelState;
+        const next: ModelState = { ...state, preference: p };
         try {
           const { preference, fallbackToCloud } = next;
           localStorage.setItem(
@@ -31,9 +32,9 @@ export const useModelPreference = create<ModelState>((set) => {
         } catch {}
         return next;
       }),
-    setFallback: (f) =>
+    setFallback: (f: boolean) =>
       set((state) => {
-        const next = { ...state, fallbackToCloud: f } as ModelState;
+        const next: ModelState = { ...state, fallbackToCloud: f };
         try {
           const { preference, fallbackToCloud } = next;
           localStorage.setItem(
