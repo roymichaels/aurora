@@ -39,12 +39,16 @@ class VoiceService {
 
   onTranscript(cb: (text: string) => void) {
     this.transcriptListeners.add(cb);
-    return () => this.transcriptListeners.delete(cb);
+    return () => {
+      this.transcriptListeners.delete(cb);
+    };
   }
 
   onPlaybackBlocked(cb: (callback: (() => void) | null) => void) {
     this.playbackBlockedListeners.add(cb);
-    return () => this.playbackBlockedListeners.delete(cb);
+    return () => {
+      this.playbackBlockedListeners.delete(cb);
+    };
   }
 
   private emitTranscript(text: string) {
