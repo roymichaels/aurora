@@ -5,7 +5,10 @@ import { db as localDb } from "@/data/db";
 
 // Create a single TonConnectUI instance for the app. All connections must use the TON testnet.
 export const connector = new TonConnectUI({
-  manifestUrl: "/tonconnect-manifest.json",
+  manifestUrl: new URL(
+    "/tonconnect-manifest.json",
+    window.location.origin,
+  ).toString(),
 });
 
 function composeMessage(
