@@ -105,8 +105,10 @@ export default function AppShell() {
     );
   }
 
-  if (!user && loc.pathname !== '/auth') {
-    return <Navigate to="/auth" replace />;
+  if (!user) {
+    return loc.pathname === '/auth'
+      ? <Outlet />           // render login form alone
+      : <Navigate to="/auth" replace />;
   }
 
   return (
