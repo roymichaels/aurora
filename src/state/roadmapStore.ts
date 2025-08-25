@@ -201,6 +201,8 @@ export async function createTask(
   const dbTask: DBTask = {
     id: task.id,
     roadmap_id: goalId,
+    goal_id: goalId,
+    sprint_id: sprintId,
     title: task.title,
     description: task.notes ?? null,
     status: task.status,
