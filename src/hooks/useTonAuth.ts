@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CHAIN, TonConnectUI } from "@tonconnect/ui";
 
-// Create a single TonConnectUI instance for the app
+// Create a single TonConnectUI instance for the app. All connections must use the TON testnet.
 export const connector = new TonConnectUI({
   manifestUrl: "/tonconnect-manifest.json",
 });
@@ -62,10 +62,11 @@ export function useTonAuth() {
     setLoading(true);
     try {
       if (!connector.wallet) {
-        await connector.connectWallet();
+        await connector.tonConnect.connectWallet({ chain: CHAIN.TESTNET });
       }
       if (connector.wallet?.account.chain !== CHAIN.TESTNET) {
         console.warn("Wallet is not on TON testnet");
+        throw new Error("Only TON testnet is supported");
       }
       await signAndVerify(scopes);
       if (refreshTimer.current) clearInterval(refreshTimer.current);
