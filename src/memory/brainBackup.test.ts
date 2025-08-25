@@ -16,7 +16,8 @@ describe('brain backup round trip', () => {
     const stmt = db2.prepare("SELECT content FROM memories");
     let content = '';
     if (stmt.step()) {
-      content = String(stmt.getAsObject().content || '');
+      const row = stmt.getAsObject() as { content?: string };
+      content = String(row.content || '');
     }
     stmt.free();
     expect(content).toBe('hello');
