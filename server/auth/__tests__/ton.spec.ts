@@ -2,11 +2,21 @@ import fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import { jwtVerify } from 'jose';
-import type { LightMyRequestResponse } from 'light-my-request';
+import type { JWTPayload } from 'jose';
+import type { Response as LightMyRequestResponse } from 'light-my-request';
 import tonAuth, { composeMessage } from '../ton';
 
 import type TonWeb from 'tonweb';
 import type { SignKeyPair } from 'tweetnacl';
+
+interface ExpPayload extends JWTPayload {
+  exp: number;
+}
+
+interface SessionExpPayload extends ExpPayload {
+  session: string;
+  sessionExp: number;
+}
 
 type TonUtils = typeof TonWeb.utils;
 let nacl: TonUtils['nacl'];
@@ -335,8 +345,7 @@ describe('TON auth', () => {
     const originalNow = Date.now;
     const now = originalNow();
     // simulate expiration
-    // @ts-expect-error: override Date.now for test
-    Date.now = () => now + (ttl + 1) * 1000;
+    (Date as any).now = () => now + (ttl + 1) * 1000;
     const msg = composeMessage(challenge, []);
     const sig = toHex(nacl.sign.detached(stringToBytes(msg), keypair.secretKey));
     const res = await app.inject({
@@ -350,7 +359,7 @@ describe('TON auth', () => {
       },
     });
     expect(res.statusCode).toBe(400);
-    Date.now = originalNow;
+    (Date as any).now = originalNow;
   });
 
   test('rejects scope escalation', async () => {
@@ -388,7 +397,9 @@ describe('TON auth', () => {
       },
     });
     const t1 = getCookie(first as LightMyRequestResponse, 'sid');
-    const { payload: p1 } = await jwtVerify(t1!.value, secretBytes);
+    const { payload: p1 } = (await jwtVerify(t1!.value, secretBytes)) as {
+      payload: ExpPayload;
+    };
 
     // ensure a different expiration timestamp for the rotated token
     await new Promise((r) => setTimeout(r, 1000));
@@ -408,10 +419,14 @@ describe('TON auth', () => {
       },
     });
     const t2 = getCookie(second as LightMyRequestResponse, 'sid');
-    const { payload: p2 } = await jwtVerify(t2!.value, secretBytes);
+    const { payload: p2 } = (await jwtVerify(t2!.value, secretBytes)) as {
+      payload: ExpPayload;
+    };
     // second token should have a later expiry, proving rotation
     expect(p2.exp).toBeGreaterThan(p1.exp);
-    expect(p2.exp).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 60 * 60);
+    expect(p2.exp).toBeLessThanOrEqual(
+      Math.floor(Date.now() / 1000) + 60 * 60,
+    );
   });
 
   test('includes session key expiration in token', async () => {
@@ -435,7 +450,9 @@ describe('TON auth', () => {
     });
     expect(res.statusCode).toBe(200);
     const tokenCookie = getCookie(res as LightMyRequestResponse, 'sid');
-    const { payload } = await jwtVerify(tokenCookie!.value, secretBytes);
+    const { payload } = (await jwtVerify(tokenCookie!.value, secretBytes)) as {
+      payload: SessionExpPayload;
+    };
     expect(payload.session).toBe(session);
     expect(payload.sessionExp).toBe(Math.floor(exp / 1000));
     expect(payload.exp).toBeLessThanOrEqual(payload.sessionExp);
