@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Capacitor } from "@capacitor/core";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useAvatarStore } from "@/state/avatar";
 
 const setMeta = (name: string, content: string) => {
@@ -45,7 +45,7 @@ export default function StackPage() {
     typeof window.chrome !== "undefined" &&
     !!window.chrome?.runtime?.id;
   const online = typeof navigator !== "undefined" && navigator.onLine;
-  const supabaseReady = !!supabase;
+  const dbReady = !!db;
   const { enabled, color, setEnabled, setColor } = useAvatarStore();
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function StackPage() {
               </div>
               <div className="flex items-center justify-between rounded-md bg-white/5 px-3 py-2">
                 <dt className="text-muted-foreground">Supabase client</dt>
-                <dd className="font-medium">{supabaseReady ? "initialized" : "not ready"}</dd>
+                <dd className="font-medium">{dbReady ? "initialized" : "not ready"}</dd>
               </div>
               <div className="flex items-center justify-between rounded-md bg-white/5 px-3 py-2">
                 <dt className="text-muted-foreground">Network</dt>
@@ -152,7 +152,7 @@ export default function StackPage() {
             <h2 id="backend" className="text-lg font-medium mb-3">Backend & integrations</h2>
             <ul className="space-y-1 text-sm list-disc pl-5">
               <li>Supabase (auth, DB, edge functions)</li>
-              <li>Edge function: supabase/functions/tts-generate</li>
+              <li>Edge function: db/functions/tts-generate</li>
               <li>Client-side app with Supabase functions for server needs</li>
             </ul>
           </section>

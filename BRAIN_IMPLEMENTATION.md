@@ -37,7 +37,7 @@ function recall(query: string) {
 ```ts
 // Sync new memory to cloud when available
 if (cloudEnabled) {
-  supabase.from('memories').insert({ content, embedding });
+  db.from('memories').insert({ content, embedding });
 }
 ```
 

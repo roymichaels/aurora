@@ -4,7 +4,7 @@ import { useTonSession } from "@/hooks/useTonSession";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { startOfTodayISO } from "@/lib/utils";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 
@@ -42,8 +42,8 @@ export default function ShareCard({ open, onOpenChange, progressPercent }: Props
       if (!open || !user) return;
       try {
         const [{ data: stats }, { data: tasks }] = await Promise.all([
-          supabase.from('user_stats').select('streak_count, total_xp').eq('user_id', user.id).maybeSingle(),
-          supabase
+          db.from('user_stats').select('streak_count, total_xp').eq('user_id', user.id).maybeSingle(),
+          db
             .from('tasks')
             .select('title, completed_at')
             .eq('user_id', user.id)

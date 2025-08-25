@@ -1,6 +1,6 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { Button } from "@/components/ui/button";
 import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ type Goal = {
 };
 
 async function fetchGoals() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from("goals")
     .select("*")
     .order("created_at", { ascending: false });
@@ -39,7 +39,7 @@ export default function GoalsList() {
   });
 
   const onDelete = async (id: string) => {
-    const { error: delError } = await supabase.from("goals").delete().eq("id", id);
+    const { error: delError } = await db.from("goals").delete().eq("id", id);
     if (delError) {
       toast({ title: "Delete failed", description: delError.message });
       return;

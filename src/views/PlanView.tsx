@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import useWeeklyReview from "@/hooks/useWeeklyReview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,27 +25,27 @@ export default function PlanView() {
   useEffect(() => {
     if (!user || !missionId) return;
     const fetchAll = async () => {
-      const { data: missionData } = await supabase
+      const { data: missionData } = await db
         .from("missions")
         .select("id, title, description")
         .eq("id", missionId)
         .maybeSingle();
       setMission(missionData as Mission | null);
 
-      const { data: kpiData } = await supabase
+      const { data: kpiData } = await db
         .from("kpis")
         .select("id, name, target, current, unit")
         .eq("mission_id", missionId);
       setKpis((kpiData as KPI[]) || []);
 
-      const { data: sprintData } = await supabase
+      const { data: sprintData } = await db
         .from("sprints")
         .select("id, title, start_date, end_date")
         .eq("mission_id", missionId)
         .order("start_date", { ascending: true });
       setSprints((sprintData as Sprint[]) || []);
 
-      const { data: taskData } = await supabase
+      const { data: taskData } = await db
         .from("tasks")
         .select("id, title, sprint_id")
         .eq("mission_id", missionId);

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { MoodCheck } from "./MoodCheck";
 
 interface Props {
@@ -22,7 +22,7 @@ export default function DailyKickoff({ visible, onComplete }: Props) {
     let mounted = true;
     (async () => {
       if (!user) return;
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("tasks")
         .select("id,title")
         .eq("user_id", user.id)

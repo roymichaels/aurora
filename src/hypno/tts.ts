@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 import { useVoiceStore } from "@/state/voice";
 
@@ -22,7 +22,7 @@ export async function playHypno(
   }
   // Try ElevenLabs via Supabase function
   try {
-    const { data, error } = await supabase.functions.invoke("tts-generate", {
+    const { data, error } = await db.functions.invoke("tts-generate", {
       body: { text, voiceId: mode === "cloned" ? voiceId : undefined },
     });
     if (mode !== "browser-tts" && !error && data?.audioBase64) {

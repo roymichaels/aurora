@@ -1,8 +1,8 @@
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 
 export async function addNote() {
-  const auth = await supabase.auth.getUser();
+  const auth = await db.auth.getUser();
   const user = auth.data.user;
   if (!user) {
     toast({ title: "Sign in required", description: "Connect Supabase to capture notes." });
@@ -10,7 +10,7 @@ export async function addNote() {
   }
   const text = window.prompt("Enter note text");
   if (!text || !text.trim()) return;
-  const { error } = await supabase.from("moments").insert({
+  const { error } = await db.from("moments").insert({
     user_id: user.id,
     type: "text",
     content: text.trim(),
@@ -27,7 +27,7 @@ export async function addNote() {
 }
 
 export async function startVoiceNote() {
-  const auth = await supabase.auth.getUser();
+  const auth = await db.auth.getUser();
   const user = auth.data.user;
   if (!user) {
     toast({ title: "Sign in required", description: "Connect Supabase to record voice notes." });
@@ -44,11 +44,11 @@ export async function startVoiceNote() {
       try {
         const blob = new Blob(chunks, { type: "audio/webm" });
         const filePath = `${user.id}/${Date.now()}.webm`;
-        const { error: upErr } = await supabase.storage
+        const { error: upErr } = await db.storage
           .from("voice-notes")
           .upload(filePath, blob, { contentType: "audio/webm" });
         if (upErr) throw upErr;
-        const { error: insErr } = await supabase.from("moments").insert({
+        const { error: insErr } = await db.from("moments").insert({
           user_id: user.id,
           type: "audio",
           content: "Voice note",

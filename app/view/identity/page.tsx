@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import ComposedIdentityScene from "@/components/identity/ComposedIdentityScene";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 
 export default function IdentityPage() {
@@ -15,7 +15,7 @@ export default function IdentityPage() {
     (async () => {
       if (!user) return;
       try {
-        const { data } = await supabase
+        const { data } = await db
           .from("user_stats")
           .select("*")
           .eq("user_id", user.id)

@@ -3,7 +3,7 @@ import RoadmapForm from "./RoadmapForm";
 import RoadmapsList, { RoadmapItem } from "./RoadmapsList";
 import TasksManager from "./TasksManager";
 import { useTonSession } from "@/hooks/useTonSession";
-import { supabase } from "@/integrations/db";
+import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -25,7 +25,7 @@ export default function RoadmapsManager() {
 
   const fetchRoadmaps = async () => {
     if (!user) { setItems([]); return; }
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("roadmaps")
       .select("id, title, color, status, position")
       .eq("user_id", user.id)
@@ -38,7 +38,7 @@ export default function RoadmapsManager() {
       const toPause = actives.slice(1);
       await Promise.all(
         toPause.map(r =>
-          supabase
+          db
             .from("roadmaps")
             .update({ status: 'paused' })
             .eq("id", r.id)
@@ -67,7 +67,7 @@ export default function RoadmapsManager() {
 
     // Set the next TODO as current_focus
     const nextTask = await fetchNextTask(user.id, roadmapId);
-    await supabase.from("current_focus").upsert({ user_id: user.id, task_id: nextTask ? nextTask.id : null, started_at: new Date().toISOString() });
+    await db.from("current_focus").upsert({ user_id: user.id, task_id: nextTask ? nextTask.id : null, started_at: new Date().toISOString() });
 
     setSelectedId(roadmapId);
     await fetchRoadmaps();
@@ -77,14 +77,14 @@ export default function RoadmapsManager() {
     const r = items.find(i=> i.id===id); if (!r) return;
     const next = window.prompt("Rename roadmap", r.title);
     if (!next || !next.trim() || next.trim() === r.title) return;
-    const { error } = await supabase.from("roadmaps").update({ title: next.trim() }).eq("id", id);
+    const { error } = await db.from("roadmaps").update({ title: next.trim() }).eq("id", id);
     if (error) console.error(error); else toast({ title: "Updated", description: "Roadmap renamed." });
     await fetchRoadmaps();
   };
 
   const remove = async (id: string) => {
     if (!window.confirm("Delete this roadmap? This does not delete tasks automatically.")) return;
-    const { error } = await supabase.from("roadmaps").delete().eq("id", id);
+    const { error } = await db.from("roadmaps").delete().eq("id", id);
     if (error) console.error(error); else toast({ title: "Deleted", description: "Roadmap removed." });
     if (selectedId === id) setSelectedId(null);
     await fetchRoadmaps();
