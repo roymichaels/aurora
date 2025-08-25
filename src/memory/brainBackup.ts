@@ -13,7 +13,7 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
     ['deriveKey']
   );
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: salt.buffer, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
     keyMaterial,
     { name: 'AES-GCM', length: 256 },
     false,
@@ -29,7 +29,7 @@ export async function exportEncryptedBrain(passphrase: string): Promise<ArrayBuf
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await deriveKey(passphrase, salt);
   const encrypted = new Uint8Array(
-    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data.buffer)
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data)
   );
   const out = new Uint8Array(salt.length + iv.length + encrypted.length);
   out.set(salt, 0);
@@ -85,7 +85,7 @@ export async function importEncryptedBrain(buffer: ArrayBuffer, passphrase: stri
   const data = buf.slice(28);
   const key = await deriveKey(passphrase, salt);
   const decrypted = new Uint8Array(
-    await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data.buffer)
+    await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data)
   );
   await writeBrain(decrypted);
 }
