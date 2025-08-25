@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { openBrainDb } from '@/memory/brainDb';
+import { openBrainDb, type BrainDatabase } from '@/memory/brainDb';
 import { exportEncryptedBrain, importEncryptedBrain } from '@/memory/brainBackup';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ export default function BrainView() {
   }, []);
 
   const load = async () => {
-    const db = await openBrainDb();
+    const db: BrainDatabase = await openBrainDb();
     db.run(
       "CREATE TABLE IF NOT EXISTS memories (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, tags TEXT, type TEXT, importance INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0, ts INTEGER DEFAULT (strftime('%s','now')))"
     );
@@ -150,7 +150,7 @@ export default function BrainView() {
 
   const saveEdit = async () => {
     if (!editing) return;
-    const db = await openBrainDb();
+    const db: BrainDatabase = await openBrainDb();
     db.run(
       `UPDATE memories SET content='${editContent.replace(/'/g, "''")}', tags='${editTags.replace(/'/g, "''")}', type='${editType}', importance=${Number(editImportance)} WHERE id=${editing.id}`
     );
@@ -160,14 +160,14 @@ export default function BrainView() {
   };
 
   const togglePin = async (m: Memory) => {
-    const db = await openBrainDb();
+    const db: BrainDatabase = await openBrainDb();
     db.run(`UPDATE memories SET pinned=${m.pinned ? 0 : 1} WHERE id=${m.id}`);
     await db.saveToDisk();
     load();
   };
 
   const remove = async (id: number) => {
-    const db = await openBrainDb();
+    const db: BrainDatabase = await openBrainDb();
     db.run(`DELETE FROM memories WHERE id=${id}`);
     await db.saveToDisk();
     load();

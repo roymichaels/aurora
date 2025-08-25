@@ -1,4 +1,4 @@
-import { openBrainDb, __setMemoryDb } from './brainDb';
+import { openBrainDb, __setMemoryDb, type BrainDatabase } from './brainDb';
 import { toast } from '@/hooks/use-toast';
 
 const DB_FILE = 'brain.db';
@@ -16,7 +16,7 @@ async function deriveKey(passphrase: string, salt: Uint8Array) {
 }
 
 export async function exportEncryptedBrain(passphrase: string): Promise<Blob> {
-  const db = await openBrainDb();
+  const db: BrainDatabase = await openBrainDb();
   await db.saveToDisk();
   const data = db.export();
   const salt = crypto.getRandomValues(new Uint8Array(16));
