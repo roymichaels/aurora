@@ -105,7 +105,7 @@ export function AuroraSphere({
   useEffect(() => { levelRef.current = level; }, [level]);
 
   useEffect(() => {
-    const mat = materialRef.current;
+    const mat = materialRef.current as any; // eslint-disable-line @typescript-eslint/no-explicit-any
     if (mat) {
       (mat.uniforms.uNoiseStrength as THREE.IUniform<number>).value = noiseStrength;
       (mat.uniforms.uAmplitude as THREE.IUniform<number>).value = amplitude;
@@ -170,7 +170,7 @@ export function AuroraSphere({
       frameRef.current = requestAnimationFrame(animate);
       const mesh = meshRef.current;
       const halo = haloRef.current;
-      const mat = materialRef.current;
+      const mat = materialRef.current as any; // eslint-disable-line @typescript-eslint/no-explicit-any
       const ptsMat = pointsMaterialRef.current;
       if (!mesh || !halo) return;
 
@@ -245,7 +245,9 @@ export function AuroraSphere({
         cancelAnimationFrame(frameRef.current);
       };
       handleContextRestored = () => {
-        renderer.resetState();
+        if (renderer && 'resetState' in renderer) {
+          (renderer as any).resetState(); // eslint-disable-line @typescript-eslint/no-explicit-any
+        }
         animate();
       };
       renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
