@@ -6,8 +6,8 @@
   "scripts": {
     "preinstall": "node scripts/check-peer-deps.cjs",
     "dev": "vite",
-    "build": "tsc -p tsconfig.node.json && tsc -p tsconfig.app.json && vite build",
-    "build:dev": "tsc -p tsconfig.node.json && tsc -p tsconfig.app.json && vite build --mode development",
+    "build": "tsc -p tsconfig.node.json && tsc -p tsconfig.app.json && vite build && mkdir -p dist/public && cp public/tonconnect-manifest.json dist/public/tonconnect-manifest.json",
+    "build:dev": "tsc -p tsconfig.node.json && tsc -p tsconfig.app.json && vite build --mode development && mkdir -p dist/public && cp public/tonconnect-manifest.json dist/public/tonconnect-manifest.json",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
