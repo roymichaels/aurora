@@ -74,8 +74,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 
     let sigBytes: Uint8Array;
     try {
-      // TonConnect sends signatures as base64 by default; try hex first
-      // to maintain backwards compatibility, then fall back to base64.
       sigBytes = hexToBytes(signature);
     } catch {
       try {
