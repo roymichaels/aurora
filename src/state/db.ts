@@ -1,4 +1,4 @@
-import { addRxPlugin, createRxDatabase, type RxCollection, type RxDatabase, type RxJsonSchema } from 'rxdb';
+import { addRxPlugin, createRxDatabase, type RxCollection, type RxDatabase, type RxDocument, type RxJsonSchema } from 'rxdb';
 import { RxDBAttachmentsPlugin } from 'rxdb/plugins/attachments';
 import { wrappedKeyEncryptionCryptoJsStorage } from 'rxdb/plugins/encryption-crypto-js';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
@@ -140,9 +140,8 @@ export async function removeJournal(id: string) {
   return doc?.remove();
 }
 
-export async function journal$(): Promise<Observable<JournalEntry[]>> {
+export async function journal$(): Promise<Observable<RxDocument<JournalEntry>[]>> {
   const db = await createDatabase();
-  // @ts-ignore - rxdb observable type
   return db.journal.find().$;
 }
 
@@ -164,9 +163,8 @@ export async function removeFocusSession(id: string) {
   return doc?.remove();
 }
 
-export async function focusSessions$(): Promise<Observable<FocusSession[]>> {
+export async function focusSessions$(): Promise<Observable<RxDocument<FocusSession>[]>> {
   const db = await createDatabase();
-  // @ts-ignore
   return db.focus_sessions.find().$;
 }
 
@@ -188,9 +186,8 @@ export async function removeTask(id: string) {
   return doc?.remove();
 }
 
-export async function tasks$(): Promise<Observable<Task[]>> {
+export async function tasks$(): Promise<Observable<RxDocument<Task>[]>> {
   const db = await createDatabase();
-  // @ts-ignore
   return db.tasks.find().$;
 }
 
@@ -212,8 +209,7 @@ export async function removeGoal(id: string) {
   return doc?.remove();
 }
 
-export async function goals$(): Promise<Observable<Goal[]>> {
+export async function goals$(): Promise<Observable<RxDocument<Goal>[]>> {
   const db = await createDatabase();
-  // @ts-ignore
   return db.goals.find().$;
 }
