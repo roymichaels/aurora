@@ -31,7 +31,7 @@ export function ComposedIdentityScene({ xp, streak, mood }: ComposedIdentityScen
       <Canvas className="absolute inset-0" camera={{ position: [0, 0, 4], fov: 60 }}>
         <ambientLight intensity={0.4} />
         <HoloBrain seed={seed} color={color} pulse={pulse} particles={particles} />
-        <EffectComposer disableNormalPass>
+        <EffectComposer enableNormalPass={false}>
           <Bloom luminanceThreshold={0.2} intensity={0.8} />
           <FXAA />
         </EffectComposer>
