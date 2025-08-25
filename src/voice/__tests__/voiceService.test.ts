@@ -35,6 +35,9 @@ jest.mock('@/state/featureFlags', () => ({
   useFeatureFlags: { getState: () => ({ isPro: false }) },
 }));
 
+const guardMock = guardPremiumAction as jest.MockedFunction<typeof guardPremiumAction>;
+const playClonedVoiceMock = playClonedVoice as jest.MockedFunction<typeof playClonedVoice>;
+
 class MockTrack {
   stop = jest.fn<() => void>();
 }
@@ -145,9 +148,9 @@ describe('voiceService', () => {
     const off = voiceService.onPlaybackBlocked((cb) => {
       blocked = cb;
     });
-    (guardPremiumAction as jest.Mock).mockResolvedValue('pro');
+    guardMock.mockResolvedValue('pro');
     useVoiceStore.getState().setMode('eleven-default', false);
-    (playClonedVoice as jest.Mock).mockResolvedValue({
+    playClonedVoiceMock.mockResolvedValue({
       audio: new (class extends MockAudio {
         play = jest.fn<() => Promise<void>>().mockRejectedValue({ name: 'NotAllowedError' });
       })(),
@@ -164,8 +167,8 @@ describe('voiceService', () => {
   it('falls back when premium gating blocks cloned voice', async () => {
     useVoiceStore.getState().setMode('cloned', false);
     useVoiceStore.getState().setVoiceId('abc');
-    (guardPremiumAction as jest.Mock).mockResolvedValue('free');
-    (playClonedVoice as jest.Mock).mockResolvedValue({
+    guardMock.mockResolvedValue('free');
+    playClonedVoiceMock.mockResolvedValue({
       audio: new MockAudio(),
       error: null,
     });
