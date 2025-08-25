@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 registerQuickAction({
   id: "journal",

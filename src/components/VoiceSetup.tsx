@@ -4,7 +4,7 @@ import { useVoiceStore } from "@/state/voice";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 
 export default function VoiceSetup() {
   const {

@@ -4,7 +4,7 @@ import { useTonSession } from "@/hooks/useTonSession";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { startOfTodayISO } from "@/lib/utils";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 

@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import ComposedIdentityScene from "@/components/identity/ComposedIdentityScene";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 
 export default function IdentityPage() {

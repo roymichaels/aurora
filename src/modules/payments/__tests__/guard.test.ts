@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 import { guardPremiumAction } from '../guard';
-import { logEvent } from '@/integrations/supabase/gameSync';
+import { logEvent } from '@/integrations/db';
 
-jest.mock('@/integrations/supabase/gameSync', () => ({
+jest.mock('@/integrations/db', () => ({
   logEvent: jest.fn().mockResolvedValue(undefined),
 }));
 

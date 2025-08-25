@@ -1,4 +1,4 @@
-import { logEvent } from '@/integrations/supabase/gameSync';
+import { logEvent } from '@/integrations/db';
 
 export async function guardPremiumAction(
   canAccess: (feature: string) => boolean,

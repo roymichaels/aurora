@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTonSession } from '@/hooks/useTonSession';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/db';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { useCurrentTask, type Task } from '@/state/task';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useProgressStore } from "@/state/progress";
-import { awardXPRemote } from "@/integrations/supabase/gameSync";
+import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 
 type Props = { node: { id: string; label: string; minutes?: number; induction?: number }; onExit: () => void };

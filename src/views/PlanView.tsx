@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import useWeeklyReview from "@/hooks/useWeeklyReview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

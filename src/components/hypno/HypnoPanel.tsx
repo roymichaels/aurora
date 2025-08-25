@@ -4,8 +4,8 @@ import HypnosisLauncher from "@/components/hypnosis/HypnosisLauncher";
 import { useGameStore } from "@/game/store";
 import { REWARDS } from "@/game/QuestEngine";
 import { award } from "@/game/gamification/award";
-import { supabase } from "@/integrations/supabase/client";
-import { logEvent } from "@/integrations/supabase/gameSync";
+import { supabase } from "@/integrations/db";
+import { logEvent } from "@/integrations/db";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 

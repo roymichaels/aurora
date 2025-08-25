@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/db";
 import { useTonSession } from "@/hooks/useTonSession";
 import { toast } from "@/hooks/use-toast";
 import { usePlanUpdater } from "@/hooks/usePlanUpdater";

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/db';
 import { localChat } from '@/agent/localModel';
 import type { ChatMessage, ChatOptions } from '@/types/chat';
 import type { UserProfile } from '@/data/profile';
