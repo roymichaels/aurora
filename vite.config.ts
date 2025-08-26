@@ -7,7 +7,6 @@ import fs from "fs";
 import type { IncomingMessage, ServerResponse } from "http";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
-import nodePolyfills from "rollup-plugin-node-polyfills";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -47,7 +46,6 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [
       react(),
-      nodePolyfills() as unknown as Plugin,
       VitePWA({
         registerType: 'autoUpdate',
         manifest: false,
@@ -87,7 +85,7 @@ export default defineConfig(({ mode }) => {
     build: {
       chunkSizeWarningLimit: 6000,
       rollupOptions: {
-        plugins: [nodePolyfills() as unknown as Plugin],
+        plugins: [],
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
