@@ -1,5 +1,8 @@
 {
   "url": "http://localhost:3000",
-  "name": "Aurora (Dev)",
-  "iconUrl": "http://localhost:3000/icon.png"
+  "name": "Mindscape Control Panel",
+  "iconUrl": "http://localhost:3000/icon.png",
+  "termsOfUseUrl": "http://localhost:3000/terms.html",
+  "privacyPolicyUrl": "http://localhost:3000/privacy.html"
+
 }
