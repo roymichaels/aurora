@@ -1,15 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { CHAIN, TonConnectUI } from "@tonconnect/ui";
+import { CHAIN } from "@tonconnect/sdk";
+import { connector } from "@/main";
 import { setDataKey } from "@/state/keyManager";
 import { db as localDb } from "@/data/db";
-
-// Create a single TonConnectUI instance for the app. All connections must use the TON testnet.
-export const connector = new TonConnectUI({
-  manifestUrl: new URL(
-    "/tonconnect-manifest.json",
-    window.location.origin,
-  ).toString(),
-});
 
 function composeMessage(
   challenge: string,
@@ -68,13 +61,15 @@ export function useTonAuth() {
     try {
       if (!connector.wallet) {
         try {
-          // use TonConnectUI's connectWallet to prompt user connection
-          await connector.connectWallet();
+          const link = connector.connect({
+            universalLink: "https://app.tonkeeper.com/ton-connect",
+            bridgeUrl: "https://bridge.tonapi.io/bridge",
+          });
+          window.open(link, "_blank");
         } catch (err) {
           console.error("Wallet connection failed", err);
           throw err;
         }
-
       }
       if (connector.wallet?.account.chain !== CHAIN.TESTNET) {
         console.warn("Wallet is not on TON testnet");
