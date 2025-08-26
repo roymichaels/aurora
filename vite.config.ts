@@ -8,56 +8,59 @@ import type { IncomingMessage, ServerResponse } from "http";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 
-function headerString(h?: string | string[]): string | undefined {
-  if (!h) return undefined;
-  return Array.isArray(h) ? h[0] : h;
-}
-
-function detectOrigin(req: IncomingMessage): string {
-  // Respect reverse proxy headers (ngrok/cloudflared)
-  const xfProto = headerString(req.headers["x-forwarded-proto"]) || "http";
-  const xfHost = headerString(req.headers["x-forwarded-host"]);
-  const host = xfHost || headerString(req.headers.host) || "localhost:8080";
-  return `${xfProto}://${host}`;
-}
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "VITE_");
 
-  const tunnelHost =
-    process.env.TUNNEL_HOST ||
-    env.VITE_TUNNEL_HOST || // e.g. 5a4570fc293b.ngrok-free.app
-    "";
+  const publicOrigin = env.VITE_PUBLIC_ORIGIN || "";
+  const originUrl = publicOrigin ? new URL(publicOrigin) : undefined;
+  const tunnelHost = originUrl?.hostname;
+  const hmrProtocol = originUrl?.protocol === "https:" ? "wss" : "ws";
+  const hmrPort = originUrl?.port
+    ? Number(originUrl.port)
+    : originUrl?.protocol === "https:" ? 443 : 80;
 
   const tonConnectManifest = (): Plugin => {
-    const manifestPath = path.resolve(__dirname, "public/tonconnect-manifest.json");
+    const manifestPath = path.resolve(
+      __dirname,
+      "public/tonconnect-manifest.json",
+    );
     return {
       name: "tonconnect-manifest",
       apply: "serve",
       configureServer(server: ViteDevServer) {
-        server.middlewares.use((req: IncomingMessage, res: ServerResponse, next: () => void) => {
-          if (req.method === "OPTIONS") {
-            // CORS preflight
-            res.statusCode = 204;
-            res.setHeader("Access-Control-Allow-Origin", "*");
-            res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-            res.setHeader("Access-Control-Allow-Headers", "*");
-            res.end();
-            return;
-          }
+        server.middlewares.use(
+          (
+            req: IncomingMessage,
+            res: ServerResponse,
+            next: () => void,
+          ) => {
+            if (req.method === "OPTIONS") {
+              // CORS preflight
+              res.statusCode = 204;
+              res.setHeader("Access-Control-Allow-Origin", "*");
+              res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+              res.setHeader("Access-Control-Allow-Headers", "*");
+              res.end();
+              return;
+            }
 
-          if (req.url === "/tonconnect-manifest.json") {
-            const raw = fs.readFileSync(manifestPath, "utf-8");
-            const origin = env.VITE_ORIGIN || detectOrigin(req);
-            res.setHeader("Content-Type", "application/json; charset=utf-8");
-            res.setHeader("Cache-Control", "no-store");
-            res.setHeader("Access-Control-Allow-Origin", "*"); // allow Tonkeeper web to fetch
-            res.end(raw.replaceAll("%VITE_ORIGIN%", origin));
-            return;
-          }
+            if (req.url === "/tonconnect-manifest.json") {
+              const raw = fs.readFileSync(manifestPath, "utf-8");
+              res.setHeader(
+                "Content-Type",
+                "application/json; charset=utf-8",
+              );
+              res.setHeader("Cache-Control", "no-store");
+              res.setHeader("Access-Control-Allow-Origin", "*"); // allow Tonkeeper web to fetch
+              res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
+              res.setHeader("Access-Control-Allow-Headers", "*");
+              res.end(raw.replaceAll("%VITE_ORIGIN%", publicOrigin));
+              return;
+            }
 
-          next();
-        });
+            next();
+          },
+        );
       },
     };
   };
@@ -65,16 +68,14 @@ export default defineConfig(({ mode }) => {
   return {
     server: {
       host: true, // listen on 0.0.0.0
-      port: 8080, // match your tunnel
+      port: 8080,
       cors: true, // add CORS for dev
-      // Allow your public tunnel host to hit the dev server
       allowedHosts: tunnelHost ? [tunnelHost] : [],
-      // Make HMR work through the tunnel (optional but nice)
       hmr: tunnelHost
         ? {
-            protocol: "wss",
+            protocol: hmrProtocol,
             host: tunnelHost,
-            port: 443,
+            port: hmrPort,
           }
         : undefined,
     },
