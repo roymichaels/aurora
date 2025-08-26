@@ -69,6 +69,7 @@ export default defineConfig(({ mode }) => {
       global: "globalThis",
     },
     optimizeDeps: {
+      include: ["react", "react-dom"],
       exclude: ["@mlc-ai/web-llm"],
       esbuildOptions: {
         define: {
