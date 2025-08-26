@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CHAIN } from "@tonconnect/sdk";
-import { connector } from "@/main";
+import { TonConnectUI } from "@tonconnect/ui";
 import { setDataKey } from "@/state/keyManager";
 import { db as localDb } from "@/data/db";
 
@@ -18,13 +18,17 @@ function composeMessage(
   ].join("|");
 }
 
+export const tonConnectUI = new TonConnectUI({
+  manifestUrl: `${location.origin}/tonconnect-manifest.json`,
+});
+
 export function useTonAuth() {
   const [address, setAddress] = useState<string | null>(null);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = connector.onStatusChange((wallet) => {
+    const unsubscribe = tonConnectUI.onStatusChange((wallet) => {
       setAddress(wallet?.account.address ?? null);
     });
     return unsubscribe;
@@ -34,12 +38,12 @@ export function useTonAuth() {
     const res = await fetch("/auth/ton/start", { method: "POST" });
     const { challenge } = await res.json();
     const message = composeMessage(challenge, scopes);
-    const { signature } = await connector.signData({
+    const { signature } = await tonConnectUI.signData({
       type: "text",
       text: message,
       network: CHAIN.TESTNET,
     });
-    const publicKey = connector.wallet?.account.publicKey;
+    const publicKey = tonConnectUI.wallet?.account.publicKey;
     if (!publicKey) throw new Error("missing_public_key");
     const hexSignature = Buffer.from(signature, "base64").toString("hex");
     await fetch("/auth/ton/verify", {
@@ -52,26 +56,22 @@ export function useTonAuth() {
         scopes,
       }),
     });
-    const addr = connector.wallet?.account.address;
+    const addr = tonConnectUI.wallet?.account.address;
     setAddress(addr || null);
   };
 
   const login = async (scopes: string[] = []) => {
     setLoading(true);
     try {
-      if (!connector.wallet) {
+      if (!tonConnectUI.wallet) {
         try {
-          const link = connector.connect({
-            universalLink: "https://app.tonkeeper.com/ton-connect",
-            bridgeUrl: "https://bridge.tonapi.io/bridge",
-          });
-          window.open(link, "_blank");
+          await tonConnectUI.connectWallet();
         } catch (err) {
           console.error("Wallet connection failed", err);
           throw err;
         }
       }
-      if (connector.wallet?.account.chain !== CHAIN.TESTNET) {
+      if (tonConnectUI.wallet?.account.chain !== CHAIN.TESTNET) {
         console.warn("Wallet is not on TON testnet");
         throw new Error("Only TON testnet is supported");
       }
@@ -103,7 +103,7 @@ export function useTonAuth() {
       await fetch("/auth/logout", { method: "POST" });
     } finally {
       if (refreshTimer.current) clearInterval(refreshTimer.current);
-      await connector.disconnect();
+      await tonConnectUI.disconnect();
       setAddress(null);
     }
   };
