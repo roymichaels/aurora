@@ -1,5 +1,4 @@
 import './polyfills/randomUUID';
-import { TonConnect } from '@tonconnect/sdk';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -13,10 +12,9 @@ import { db } from './data/db';
 import { initializeGamificationStore } from './game/gamification/store';
 import { initializeRoadmapStore } from './state/roadmapStore';
 import { getDataKey } from './state/keyManager';
+import { tonConnectUI } from './lib/tonconnect';
 
-export const connector = new TonConnect({
-  manifestUrl: `${location.origin}/tonconnect-manifest.json`,
-});
+export { tonConnectUI as connector };
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true });
