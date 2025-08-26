@@ -17,7 +17,7 @@ import {
 } from "@/data/profile";
 import { setMemoryKey } from "@/memory/indexedDbMemory";
 import { deriveDataKey } from "@/state/keyManager";
-import { tonConnectUI } from "@/hooks/useTonAuth";
+import { getTonConnectUI } from "@/lib/tonconnect";
 import { Volume2 } from "lucide-react";
 
 
@@ -160,6 +160,7 @@ export default function OnboardingFlow() {
       try {
         const passcode = window.prompt("Set a passcode to secure your data") || "";
         if (!passcode) return;
+        const tonConnectUI = getTonConnectUI();
         const { signature } = await tonConnectUI.signData({
           type: "text",
           text: "Authorize Aurora key derivation",
