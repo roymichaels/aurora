@@ -18,13 +18,27 @@ async function build() {
     const nftAssets = (await import('./nft/assets')).default;
     await server.register(nftAssets);
   }
+  server.options('/tonconnect-manifest.json', async (_req, reply) => {
+    reply
+      .header('Access-Control-Allow-Origin', '*')
+      .header('Access-Control-Allow-Methods', 'GET,OPTIONS')
+      .header('Access-Control-Allow-Headers', '*')
+      .code(204)
+      .send();
+  });
+
   server.get('/tonconnect-manifest.json', async (req, reply) => {
     try {
       const raw = await fs.readFile(manifestPath, 'utf-8');
       const origin =
-        process.env.VITE_ORIGIN || `${req.protocol}://${req.headers.host}`;
+        process.env.VITE_PUBLIC_ORIGIN ||
+        `${req.protocol}://${req.headers.host}`;
       reply
         .header('Content-Type', 'application/json')
+        .header('Cache-Control', 'no-store')
+        .header('Access-Control-Allow-Origin', '*')
+        .header('Access-Control-Allow-Methods', 'GET,OPTIONS')
+        .header('Access-Control-Allow-Headers', '*')
         .send(raw.replace('%VITE_ORIGIN%', origin));
     } catch (err) {
       server.log.error(err);
