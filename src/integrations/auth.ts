@@ -1,4 +1,4 @@
-import { tonConnectUI } from "@/hooks/useTonAuth";
+import { getTonConnectUI } from "@/lib/tonconnect";
 
 export interface TonUser {
   id: string;
@@ -6,6 +6,7 @@ export interface TonUser {
 }
 
 export async function getTonUser(): Promise<TonUser | null> {
+  const tonConnectUI = getTonConnectUI();
   const address = tonConnectUI.wallet?.account.address;
   return address ? { id: address, email: address } : null;
 }

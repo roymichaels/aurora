@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CHAIN } from "@tonconnect/sdk";
-import { TonConnectUI } from "@tonconnect/ui";
+import { getTonConnectUI } from "@/lib/tonconnect";
 import { setDataKey } from "@/state/keyManager";
 import { db as localDb } from "@/data/db";
 
@@ -18,9 +18,7 @@ function composeMessage(
   ].join("|");
 }
 
-export const tonConnectUI = new TonConnectUI({
-  manifestUrl: `${location.origin}/tonconnect-manifest.json`,
-});
+const tonConnectUI = getTonConnectUI();
 
 export function useTonAuth() {
   const [address, setAddress] = useState<string | null>(null);
