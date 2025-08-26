@@ -52,7 +52,8 @@ export default function RoadmapsManager() {
     if (active) setSelectedId(active.id); else setSelectedId(list[0]?.id ?? null);
   };
 
-  useEffect(()=> { fetchRoadmaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchRoadmaps(); }, [user]);
 
   const setActive = async (roadmapId: string) => {
       if (!user) { toast({ title: "Sign in required", description: "Sign in to manage roadmaps." }); return; }
