@@ -49,6 +49,9 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         manifest: false,
+        devOptions: {
+          enabled: false,
+        },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
@@ -69,16 +72,18 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ["react", "react-dom"],
       exclude: ["@mlc-ai/web-llm"],
-      esbuildOptions: {
-        define: {
-          global: "globalThis",
+        esbuildOptions: {
+          define: {
+            global: "globalThis",
+          },
+          plugins: [
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            NodeGlobalsPolyfillPlugin({ buffer: true, process: true }) as any,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            NodeModulesPolyfillPlugin() as any,
+          ],
         },
-        plugins: [
-          NodeGlobalsPolyfillPlugin({ buffer: true, process: true }) as any,
-          NodeModulesPolyfillPlugin() as any,
-        ],
       },
-    },
     ssr: {
       noExternal: ["@mlc-ai/web-llm"],
     },

@@ -1,4 +1,5 @@
 import './polyfills/randomUUID';
+import { TonConnect } from '@tonconnect/sdk';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -12,6 +13,10 @@ import { db } from './data/db';
 import { initializeGamificationStore } from './game/gamification/store';
 import { initializeRoadmapStore } from './state/roadmapStore';
 import { getDataKey } from './state/keyManager';
+
+export const connector = new TonConnect({
+  manifestUrl: `${location.origin}/tonconnect-manifest.json`,
+});
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true });
@@ -29,7 +34,8 @@ async function bootstrap() {
         db.tasks.toArray(),
         db.stats.get('local'),
       ]);
-      initializeRoadmapStore(tasks as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        initializeRoadmapStore(tasks as any);
       initializeGamificationStore(stats ?? undefined);
     } catch (err) {
       console.warn('Dexie unavailable', err);
