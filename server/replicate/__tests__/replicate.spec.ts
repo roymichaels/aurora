@@ -1,16 +1,24 @@
 import fastify from 'fastify';
 import replicatePlugin from '../../replicate';
 import cookie from '@fastify/cookie';
-import { SignJWT } from 'jose';
+import * as crypto from 'crypto';
 
 const secret = 'secret';
 const secretBytes = new TextEncoder().encode(secret);
 
 async function sign(scopes: string[]) {
-  return new SignJWT({ sub: 'user1', scopes })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('1h')
-    .sign(secretBytes);
+  const header = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
+  const body = Buffer.from(
+    JSON.stringify({ sub: 'user1', scopes, exp: Math.floor(Date.now() / 1000) + 3600 }),
+  ).toString('base64url');
+  const data = `${header}.${body}`;
+  const sig = crypto
+    .createHmac('sha256', secretBytes)
+    .update(data)
+    .digest('base64url');
+  return `${data}.${sig}`;
 }
 
 describe('replicate plugin', () => {
