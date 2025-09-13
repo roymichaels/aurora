@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
@@ -111,7 +111,7 @@ const getNextState = (
 type Phase = "start" | "question" | "summary";
 
 export default function OnboardingFlow() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const navigate = useNavigate();
 
   // SINGLE instance

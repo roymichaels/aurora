@@ -5,10 +5,10 @@
 import { useEffect, useState } from "react";
 import ComposedIdentityScene from "@/components/identity/ComposedIdentityScene";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 
 export default function IdentityPage() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [stats, setStats] = useState<any | null>(null);
 
   useEffect(() => {

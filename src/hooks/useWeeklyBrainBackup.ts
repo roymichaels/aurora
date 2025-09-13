@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useLocalStorage } from './useLocalStorage';
-import { useTonSession } from './useTonSession';
+import { useNearSession } from './useNearSession';
 import { uploadToStorage } from '@/integrations/storage';
 import { exportEncryptedBrain } from '@/memory/brainBackup';
 
 export default function useWeeklyBrainBackup() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [enabled] = useLocalStorage<boolean>('brain.backup.enabled', false);
   const [passphrase] = useLocalStorage<string>('brain.backup.passphrase', '');
 

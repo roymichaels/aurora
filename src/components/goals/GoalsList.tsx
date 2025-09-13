@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { db } from "@/integrations/db";
 import { Button } from "@/components/ui/button";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { toast } from "@/hooks/use-toast";
 
 type Goal = {
@@ -24,7 +24,7 @@ async function fetchGoals() {
 }
 
 export default function GoalsList() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const qc = useQueryClient();
 
   const { data, isLoading, error } = useQuery({

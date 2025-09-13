@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 import { Progress } from "@/components/ui/progress";
 
 export function XPBar() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [total, setTotal] = useState<number>(0);
   const [spark, setSpark] = useState(false);
   const prevLevel = useRef(1);

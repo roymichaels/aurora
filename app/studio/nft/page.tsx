@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useTonAuth } from '@/hooks/useTonAuth';
+import { useNearAuth } from '@/hooks/useNearAuth';
 
 const adminWallets = (process.env.NEXT_PUBLIC_ADMIN_WALLETS || process.env.ADMIN_WALLETS || '')
   .split(',')
@@ -55,7 +55,7 @@ function AssetCard({ label, assetKey, cid, onFile, onSvg }: AssetCardProps) {
 }
 
 export default function NFTAssetStudioPage() {
-  const { address, login } = useTonAuth();
+  const { accountId, login } = useNearAuth();
   const { toast } = useToast();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [authorized, setAuthorized] = useState(false);
@@ -70,8 +70,8 @@ export default function NFTAssetStudioPage() {
   };
 
   useEffect(() => {
-    if (!address) return;
-    const isAdmin = adminWallets.includes(address.toLowerCase());
+    if (!accountId) return;
+    const isAdmin = adminWallets.includes(accountId.toLowerCase());
     if (isAdmin) {
       setAuthorized(true);
       refreshAssets().catch(() => {});
@@ -80,7 +80,7 @@ export default function NFTAssetStudioPage() {
         .then(() => setAuthorized(true))
         .catch(() => setAuthorized(false));
     }
-  }, [address]);
+  }, [accountId]);
 
   const handleFile = async (key: string, file: File | null) => {
     if (!file) return;
@@ -116,10 +116,10 @@ export default function NFTAssetStudioPage() {
     setNewBadge('');
   };
 
-  if (!address) {
+  if (!accountId) {
     return (
       <div className="p-4">
-        <Button onClick={() => login(['nft:admin'])}>Connect Admin Wallet</Button>
+        <Button onClick={() => login()}>Connect Admin Wallet</Button>
       </div>
     );
   }

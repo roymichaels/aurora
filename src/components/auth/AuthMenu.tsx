@@ -1,12 +1,12 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useTonAuth } from "@/hooks/useTonAuth";
+import { useNearAuth } from "@/hooks/useNearAuth";
 
 export function AuthMenu() {
-  const { address, logout } = useTonAuth();
+  const { accountId, logout } = useNearAuth();
 
-  if (!address) {
+  if (!accountId) {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="primary" size="lg">
@@ -16,7 +16,7 @@ export function AuthMenu() {
     );
   }
 
-  const short = `${address.slice(0, 4)}…${address.slice(-4)}`;
+  const short = `${accountId.slice(0, 4)}…${accountId.slice(-4)}`;
 
   return (
     <div className="flex items-center gap-2">

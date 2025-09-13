@@ -25,8 +25,8 @@ const mockPlan = {
   plan_versions: [],
 };
 
-jest.mock('@/hooks/useTonSession', () => ({
-  useTonSession: () => ({ user: { id: '1' } }),
+jest.mock('@/hooks/useNearSession', () => ({
+  useNearSession: () => ({ user: { id: '1' } }),
 }));
 
 jest.mock('@/hooks/usePlanUpdater', () => ({
