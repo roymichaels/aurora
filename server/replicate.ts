@@ -6,8 +6,8 @@ import type {
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
-import { jwtVerify } from 'jose';
 import { z } from 'zod';
+import * as crypto from 'crypto';
 
 const paramsSchema = z.object({
   collection: z.string().regex(/^[a-zA-Z0-9_-]+$/),
@@ -50,9 +50,17 @@ const plugin: FastifyPluginAsync = async (fastify) => {
       return null;
     }
     try {
-      const { payload } = await jwtVerify<TokenPayload>(
-        auth.slice(7),
-        jwtSecretBytes,
+      const token = auth.slice(7);
+      const [h, b, s] = token.split('.');
+      if (!h || !b || !s) throw new Error('format');
+      const data = `${h}.${b}`;
+      const expected = crypto
+        .createHmac('sha256', jwtSecretBytes)
+        .update(data)
+        .digest('base64url');
+      if (s !== expected) throw new Error('sig');
+      const payload: TokenPayload = JSON.parse(
+        Buffer.from(b, 'base64url').toString(),
       );
       if (!Array.isArray(payload.scopes) || !payload.scopes.includes('replicate')) {
         reply.code(401).send({ error: 'invalid_scope' });
