@@ -12,10 +12,6 @@ import { db } from './data/db';
 import { initializeGamificationStore } from './game/gamification/store';
 import { initializeRoadmapStore } from './state/roadmapStore';
 import { getDataKey } from './state/keyManager';
-import { getTonConnectUI } from './lib/tonconnect';
-
-const tonConnectUI = getTonConnectUI();
-export { tonConnectUI as connector };
 
 if ('serviceWorker' in navigator) {
   registerSW({ immediate: true });

@@ -1,10 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
-import type { Plugin, ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { VitePWA } from "vite-plugin-pwa";
-import fs from "fs";
-import type { IncomingMessage, ServerResponse } from "http";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import { NodeModulesPolyfillPlugin } from "@esbuild-plugins/node-modules-polyfill";
 
@@ -19,51 +16,6 @@ export default defineConfig(({ mode }) => {
     ? Number(originUrl.port)
     : originUrl?.protocol === "https:" ? 443 : 80;
 
-  const tonConnectManifest = (): Plugin => {
-    const manifestPath = path.resolve(
-      __dirname,
-      "public/tonconnect-manifest.json",
-    );
-    return {
-      name: "tonconnect-manifest",
-      apply: "serve",
-      configureServer(server: ViteDevServer) {
-        server.middlewares.use(
-          (
-            req: IncomingMessage,
-            res: ServerResponse,
-            next: () => void,
-          ) => {
-            if (req.method === "OPTIONS") {
-              // CORS preflight
-              res.statusCode = 204;
-              res.setHeader("Access-Control-Allow-Origin", "*");
-              res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-              res.setHeader("Access-Control-Allow-Headers", "*");
-              res.end();
-              return;
-            }
-
-            if (req.url === "/tonconnect-manifest.json") {
-              const raw = fs.readFileSync(manifestPath, "utf-8");
-              res.setHeader(
-                "Content-Type",
-                "application/json; charset=utf-8",
-              );
-              res.setHeader("Cache-Control", "no-store");
-              res.setHeader("Access-Control-Allow-Origin", "*"); // allow Tonkeeper web to fetch
-              res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-              res.setHeader("Access-Control-Allow-Headers", "*");
-              res.end(raw.replaceAll("%VITE_ORIGIN%", publicOrigin));
-              return;
-            }
-
-            next();
-          },
-        );
-      },
-    };
-  };
 
   return {
     server: {
@@ -95,7 +47,6 @@ export default defineConfig(({ mode }) => {
           maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         },
       }),
-      tonConnectManifest(),
     ],
     resolve: {
       alias: {

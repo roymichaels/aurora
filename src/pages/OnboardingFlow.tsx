@@ -17,7 +17,6 @@ import {
 } from "@/data/profile";
 import { setMemoryKey } from "@/memory/indexedDbMemory";
 import { deriveDataKey } from "@/state/keyManager";
-import { getTonConnectUI } from "@/lib/tonconnect";
 import { Volume2 } from "lucide-react";
 
 
@@ -55,7 +54,7 @@ function validateAnswer(
 
   switch (keyword) {
     case "deadline": {
-      const dateRegex = /\b(\d{1,2}[\/\-]\d{1,2}(?:[\/\-]\d{2,4})?|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*|next\s+(?:week|month|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tomorrow|today|tonight)\b/;
+      const dateRegex = /\b(\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?|\d{1,2}(?:st|nd|rd|th)?\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*|next\s+(?:week|month|year|monday|tuesday|wednesday|thursday|friday|saturday|sunday)|tomorrow|today|tonight)\b/;
       if (!dateRegex.test(lower)) {
         return "A timeframe helps with planning. When would you like it done?";
       }
@@ -151,7 +150,7 @@ export default function OnboardingFlow() {
   const [deadline, setDeadline] = useState("");
   const [priors, setPriors] = useState("");
   const [scopes, setScopes] = useState<string[]>([]);
-  const [missionPreview, setMissionPreview] = useState<any>(null);
+  const [missionPreview, setMissionPreview] = useState<unknown>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -160,11 +159,8 @@ export default function OnboardingFlow() {
       try {
         const passcode = window.prompt("Set a passcode to secure your data") || "";
         if (!passcode) return;
-        const tonConnectUI = getTonConnectUI();
-        const { signature } = await tonConnectUI.signData({
-          type: "text",
-          text: "Authorize Aurora key derivation",
-        });
+        const random = crypto.getRandomValues(new Uint8Array(64));
+        const signature = Array.from(random).map((b) => b.toString(16).padStart(2, "0")).join("");
         const keyBytes = await deriveDataKey(signature, passcode);
         const keyHex = Array.from(keyBytes)
           .map((b) => b.toString(16).padStart(2, "0"))

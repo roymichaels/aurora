@@ -1,12 +1,12 @@
-import { getTonConnectUI } from "@/lib/tonconnect";
+import { getWallet } from "@/lib/near";
 
-export interface TonUser {
+export interface AuthUser {
   id: string;
   email: string;
 }
 
-export async function getTonUser(): Promise<TonUser | null> {
-  const tonConnectUI = getTonConnectUI();
-  const address = tonConnectUI.wallet?.account.address;
-  return address ? { id: address, email: address } : null;
+export async function getTonUser(): Promise<AuthUser | null> {
+  const wallet = await getWallet();
+  const accountId = wallet.getAccountId();
+  return accountId ? { id: accountId, email: accountId } : null;
 }
