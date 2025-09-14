@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { SoundControl } from "@/components/sounds/SoundControl";
 import { AuthMenu } from "@/components/auth/AuthMenu";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 
 export default function AppHeader() {
-  const { user, initializing } = useTonSession();
+  const { user, initializing } = useNearSession();
   const navigate = useNavigate();
   const [online, setOnline] = useState(true);
   const headerRef = useRef<HTMLElement>(null);
