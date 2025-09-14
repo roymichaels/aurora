@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { toast } from "@/hooks/use-toast";
@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function ShareCard({ open, onOpenChange, progressPercent }: Props) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const focusChatInput = useChatInputFocus();
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const [imgUrl, setImgUrl] = useState<string | null>(null);

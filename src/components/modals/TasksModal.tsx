@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import TasksManager from "@/components/control/TasksManager";
 import { useUIStore } from "@/state/ui";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 
 export default function TasksModal() {
   const tasksRoadmapId = useUIStore((s) => s.tasksRoadmapId);
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [defaultId, setDefaultId] = useState<string | null>(null);
 
   useEffect(() => {

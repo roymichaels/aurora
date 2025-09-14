@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ export type Task = {
 };
 
 export default function TasksManager({ roadmapId }: { roadmapId: string }) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   if (!requirePro()) {
     return (
       <div className="p-4 text-center space-y-2">

@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 
 export default function RoadmapForm({ onCreated }: { onCreated?: (id: string) => void }) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [title, setTitle] = useState("");
   const [color, setColor] = useState("");
   const [description, setDescription] = useState("");

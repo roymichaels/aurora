@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import RoadmapForm from "./RoadmapForm";
 import RoadmapsList, { RoadmapItem } from "./RoadmapsList";
 import TasksManager from "./TasksManager";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import { setActiveRoadmap, fetchNextTask } from "@/modules/roadmaps";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
  
 export default function RoadmapsManager() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [items, setItems] = useState<RoadmapItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);

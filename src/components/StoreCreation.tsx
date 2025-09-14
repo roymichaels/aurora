@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { mintStoreNFT, type StoreRecord } from "@/agent/stores-agent";
 
 export default function StoreCreation() {
@@ -9,7 +9,7 @@ export default function StoreCreation() {
   const [creating, setCreating] = useState(false);
   const [store, setStore] = useState<StoreRecord | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useTonSession();
+  const { user } = useNearSession();
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

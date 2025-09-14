@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { useTonAuth } from '@/hooks/useTonAuth';
+import { useNearAuth } from '@/hooks/useNearAuth';
 
 const adminWallets = (process.env.NEXT_PUBLIC_ADMIN_WALLETS || process.env.ADMIN_WALLETS || '')
   .split(',')
@@ -55,7 +55,7 @@ function AssetCard({ label, assetKey, cid, onFile, onSvg }: AssetCardProps) {
 }
 
 export default function NFTAssetStudioPage() {
-  const { address, login } = useTonAuth();
+  const { address, login } = useNearAuth();
   const { toast } = useToast();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [authorized, setAuthorized] = useState(false);
