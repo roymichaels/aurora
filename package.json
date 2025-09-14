@@ -69,7 +69,7 @@
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "jose": "^6.0.13",
-    "js-waku": "^0.30.0",
+    "@waku/sdk": "^0.0.34",
     "lucide-react": "^0.462.0",
     "nanoid": "^3.3.11",
     "near-api-js": "^6.3.0",
@@ -140,5 +140,8 @@
     "typescript-eslint": "^8.38.0",
     "vite": "^5.4.19",
     "wait-on": "^8.0.4"
+  },
+  "overrides": {
+    "mustache": "2.3.0"
   }
 }

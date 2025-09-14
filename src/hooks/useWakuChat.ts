@@ -3,8 +3,10 @@ import {
   createLightNode,
   LightNode,
   Protocols,
-  WakuMessage,
-} from "js-waku";
+  DecodedMessage,
+  createDecoder,
+  createEncoder,
+} from "@waku/sdk";
 
 export type WakuChatMessage = {
   id: string;
@@ -14,6 +16,8 @@ export type WakuChatMessage = {
 };
 
 const CHAT_TOPIC = "/aurora-chat/1/plain";
+const decoder = createDecoder(CHAT_TOPIC);
+const encoder = createEncoder({ contentTopic: CHAT_TOPIC });
 
 export function useWakuChat() {
   const [node, setNode] = useState<LightNode | null>(null);
@@ -29,14 +33,13 @@ export function useWakuChat() {
           defaultBootstrap: true,
           protocols: [Protocols.LightPush, Protocols.Filter],
         });
-        await n.start();
         if (!mounted) {
           await n.stop();
           return;
         }
         setNode(n);
         setReady(true);
-        await n.filter.subscribe([CHAT_TOPIC], (msg: WakuMessage) => {
+        await n.filter.subscribe(decoder, (msg: DecodedMessage) => {
           if (!msg.payload) return;
           try {
             const decoded = new TextDecoder().decode(msg.payload);
@@ -82,8 +85,7 @@ export function useWakuChat() {
       setSending(true);
       try {
         const payload = JSON.stringify({ role, content });
-        await node.lightPush.push({
-          contentTopic: CHAT_TOPIC,
+        await node.lightPush.send(encoder, {
           payload: new TextEncoder().encode(payload),
         });
       } finally {
