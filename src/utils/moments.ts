@@ -1,10 +1,10 @@
 import { db } from "@/integrations/db";
 import { toast } from "@/hooks/use-toast";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 import { uploadToStorage } from "@/integrations/storage";
 
 export async function addNote() {
-  const user = await getTonUser();
+  const user = await getNearUser();
 
   if (!user) {
     toast({ title: "Sign in required", description: "Sign in to capture notes." });
@@ -29,7 +29,7 @@ export async function addNote() {
 }
 
 export async function startVoiceNote() {
-  const user = await getTonUser();
+  const user = await getNearUser();
   if (!user) {
     toast({ title: "Sign in required", description: "Sign in to record voice notes." });
     return;

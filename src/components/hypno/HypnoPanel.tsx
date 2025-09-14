@@ -6,7 +6,7 @@ import { REWARDS } from "@/game/QuestEngine";
 import { award } from "@/game/gamification/award";
 import { db } from "@/integrations/db";
 import { logEvent } from "@/integrations/db";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 import { DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -33,7 +33,7 @@ export default function HypnoPanel({ onClose }: Props) {
     award({ xp: REWARDS.completeQuest });
 
     // Server: create a session start row (if signed-in)
-    const user = await getTonUser();
+    const user = await getNearUser();
     const uid = user?.id;
     if (uid) {
       try {

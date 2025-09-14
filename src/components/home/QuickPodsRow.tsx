@@ -9,7 +9,7 @@ import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import FocusRunner from "@/nodes/FocusRunner";
 import { useChatInputFocus } from "@/hooks/useChatInputFocus";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 import { uploadToStorage } from "@/integrations/storage";
 
 const pods: { key: string; label: string; icon: LucideIcon }[] = [
@@ -43,7 +43,7 @@ export function QuickPodsRow() {
   };
   const [noteText, setNoteText] = useState("");
   const saveNote = async () => {
-    const user = await getTonUser();
+    const user = await getNearUser();
     if (!user) {
       toast({ title: "Sign in required", description: "Sign in to capture notes." });
       return;
@@ -80,7 +80,7 @@ export function QuickPodsRow() {
   const timerRef = useRef<number | null>(null);
 
   const startRecording = async () => {
-    const authUser = await getTonUser();
+    const authUser = await getNearUser();
     if (!authUser) {
       toast({ title: "Sign in required", description: "Sign in to record voice notes." });
       return;

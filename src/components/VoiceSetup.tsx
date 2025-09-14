@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Mic, Square } from "lucide-react";
 import { db } from "@/integrations/db";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 
 export default function VoiceSetup() {
   const {
@@ -46,7 +46,7 @@ export default function VoiceSetup() {
         setMode("cloned");
         setLocale(navigator.language || "en-US");
         try {
-          const auth = await getTonUser();
+          const auth = await getNearUser();
           const uid = auth?.id;
           if (uid) {
             const { data: prof } = await db
