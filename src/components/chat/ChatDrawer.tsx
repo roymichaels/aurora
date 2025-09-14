@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useOnboardingStore } from '@/state/onboarding';
 import { useChatStore } from '@/state/chat';
+import { useWakuChat } from '@/hooks/useWakuChat';
 import { Button } from '@/components/ui/button';
 import { ChevronUp } from 'lucide-react';
 
@@ -15,8 +16,17 @@ export function ChatDrawer() {
     suggestion,
   } = useOnboardingStore();
   const { messages: chatMessages, sending: chatSending } = useChatStore();
-  const messages = hasRoadmap ? chatMessages : obMessages;
-  const sending = hasRoadmap ? chatSending : obSending;
+  const { messages: wakuMessages, sending: wakuSending, sendMessage } = useWakuChat();
+  const baseMessages = hasRoadmap ? chatMessages : obMessages;
+  const messages = [...baseMessages, ...wakuMessages];
+  const sending = (hasRoadmap ? chatSending : obSending) || wakuSending;
+
+  useEffect(() => {
+    const latest = baseMessages[baseMessages.length - 1];
+    if (latest) {
+      void sendMessage(latest.content, latest.role);
+    }
+  }, [baseMessages, sendMessage]);
 
   const [open, setOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
