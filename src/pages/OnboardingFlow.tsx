@@ -18,6 +18,7 @@ import {
 import { setMemoryKey } from "@/memory/indexedDbMemory";
 import { deriveDataKey } from "@/state/keyManager";
 import { Volume2 } from "lucide-react";
+import { keyStores } from "near-api-js";
 
 
 type Msg = { role: "assistant" | "user"; content: string };
@@ -159,9 +160,17 @@ export default function OnboardingFlow() {
       try {
         const passcode = window.prompt("Set a passcode to secure your data") || "";
         if (!passcode) return;
-        const random = crypto.getRandomValues(new Uint8Array(64));
-        const signature = Array.from(random).map((b) => b.toString(16).padStart(2, "0")).join("");
-        const keyBytes = await deriveDataKey(signature, passcode);
+
+        const keyStore = new keyStores.BrowserLocalStorageKeyStore();
+        const networkId = import.meta.env.VITE_NEAR_NETWORK_ID as string;
+        const keyPair = await keyStore.getKey(networkId, user.id);
+        if (!keyPair) throw new Error("No local key found");
+        const message = new TextEncoder().encode("aurora-derive-key");
+        const { signature } = keyPair.sign(message);
+        const signatureHex = Array.from(signature)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        const keyBytes = await deriveDataKey(signatureHex, passcode);
         const keyHex = Array.from(keyBytes)
           .map((b) => b.toString(16).padStart(2, "0"))
           .join("");
