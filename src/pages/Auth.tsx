@@ -23,7 +23,8 @@ const AuthPage = () => {
       <div className="os-bg" />
       <Card className="w-full max-w-sm p-6 space-y-4">
         <div className="space-y-1">
-          <h1 className="text-xl font-semibold">Connect Wallet</h1>
+          <h1 className="text-xl font-semibold">Connect NEAR Wallet</h1>
+
           <p className="text-sm text-muted-foreground">Use your NEAR wallet to sign in.</p>
         </div>
         <div className="flex justify-center">

@@ -10,17 +10,15 @@ export function AuthMenu() {
     return (
       <div className="flex items-center gap-2">
         <Button asChild variant="primary" size="lg">
-          <Link to="/auth">Get Started Free</Link>
+          <Link to="/auth">Connect NEAR Wallet</Link>
         </Button>
       </div>
     );
   }
 
-  const short = `${address.slice(0, 4)}…${address.slice(-4)}`;
-
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground max-w-[160px] truncate">{short}</span>
+      <span className="text-xs text-muted-foreground max-w-[160px] truncate">{address}</span>
       <Button variant="softPrimary" size="sm" onClick={logout}>Disconnect</Button>
     </div>
   );

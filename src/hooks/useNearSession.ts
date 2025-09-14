@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNearAuth } from "./useNearAuth";
 
@@ -12,5 +13,3 @@ export function useNearSession() {
   const user = address ? { id: address, email: address } : null;
   return { user, token: null, initializing, logout };
 }
-
-
