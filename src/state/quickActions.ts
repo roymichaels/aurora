@@ -9,7 +9,7 @@ import {
 import { registerQuickAction } from "@/components/navigation/quickActions";
 import { useUIStore } from "@/state/ui";
 import { db } from "@/integrations/db";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 
 registerQuickAction({
   id: "journal",
@@ -30,7 +30,7 @@ registerQuickAction({
   label: "Tasks",
   icon: ListTodo,
   onClick: async () => {
-    const user = await getTonUser();
+    const user = await getNearUser();
 
     let roadmapId: string | undefined;
 

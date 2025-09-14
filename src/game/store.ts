@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { awardXPRemote, upsertQuest, logEvent } from "@/integrations/db";
 import { db } from "@/integrations/db";
-import { getTonUser } from "@/integrations/auth";
+import { getNearUser } from "@/integrations/auth";
 import logger from "@/lib/logger";
 
 export type Stats = { hp: number; mp: number; xp: number; level: number; streak: number };
@@ -68,7 +68,7 @@ export const useGameStore = create<GameState>((set, get) => {
   return {
     ...init,
     fetchStats: async () => {
-      const user = await getTonUser();
+      const user = await getNearUser();
       if (!user) return;
       const { data: stats } = await db
         .from("user_stats")
