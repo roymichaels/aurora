@@ -9,7 +9,7 @@ import { useChatInputFocus } from "@/hooks/useChatInputFocus";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { toast } from "@/hooks/use-toast";
 import { usePlanUpdater } from "@/hooks/usePlanUpdater";
 import { UserProfile } from "@/data/profile";
@@ -34,7 +34,7 @@ interface DBHabit {
 
 export default function MasterPlanView() {
   const focusChatInput = useChatInputFocus();
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [dbPlan, setDbPlan] = useState<MasterPlan | null>(null);
   const { plan: plan, update } = usePlanUpdater(dbPlan as any);
   const [profile, setProfile] = useState<UserProfile>({ history: [] });

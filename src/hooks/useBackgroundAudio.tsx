@@ -1,7 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { toast } from "@/hooks/use-toast";
 import logger from "@/lib/logger";
 
@@ -22,7 +22,7 @@ type Sound = {
 };
 
 export function useBackgroundAudio() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [loading, setLoading] = useState(true);

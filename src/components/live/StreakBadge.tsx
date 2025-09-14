@@ -1,10 +1,10 @@
 import { Flame } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 
 export function StreakBadge() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [streak, setStreak] = useState<number>(0);
   const [spark, setSpark] = useState(false);
   const prev = useRef(0);

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { toast } from "@/hooks/use-toast";
 import { exportProfile, deleteProfile } from "@/lib/storage";
 import {
@@ -25,7 +25,7 @@ import DeviceManagerPanel from "@/components/settings/DeviceManagerPanel";
 
 
 export default function SettingsView() {
-  const { user, logout } = useTonSession();
+  const { user, logout } = useNearSession();
 
   const signOut = async () => {
     try {

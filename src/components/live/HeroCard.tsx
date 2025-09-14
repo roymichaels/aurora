@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Flame } from "lucide-react";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { db } from "@/integrations/db";
 
 interface HeroCardProps {
@@ -8,7 +8,7 @@ interface HeroCardProps {
 }
 
 export default function HeroCard({ taskTitle }: HeroCardProps) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [xp, setXp] = useState(0);
   const [mood, setMood] = useState<string | null>(null);
 
