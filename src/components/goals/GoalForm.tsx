@@ -3,10 +3,10 @@ import { useState } from "react";
 import { db } from "@/integrations/db";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 
 export default function GoalForm() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [title, setTitle] = useState("");
   const [why, setWhy] = useState("");
   const [nextAction, setNextAction] = useState("");

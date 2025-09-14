@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import { awardXPRemote } from "@/integrations/db";
 import { award } from "@/game/gamification/award";
 import { useState } from "react";
@@ -34,7 +34,7 @@ export function CurrentFocusCard({
   progressPercent?: number;
   onAdvance: () => void;
 }) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [busy, setBusy] = useState(false);
 
   const markDoneAndAdvance = async () => {

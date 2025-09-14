@@ -1,10 +1,10 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useTonAuth } from "@/hooks/useTonAuth";
+import { useNearAuth } from "@/hooks/useNearAuth";
 
 export function AuthMenu() {
-  const { address, logout } = useTonAuth();
+  const { address, logout } = useNearAuth();
 
   if (!address) {
     return (

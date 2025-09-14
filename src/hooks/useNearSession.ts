@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useTonAuth } from "./useTonAuth";
+import { useNearAuth } from "./useNearAuth";
 
-export function useTonSession() {
-  const { address, logout } = useTonAuth();
+export function useNearSession() {
+  const { address, logout } = useNearAuth();
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {

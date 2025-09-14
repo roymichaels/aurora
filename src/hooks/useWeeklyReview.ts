@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { db } from "@/integrations/db";
-import { useTonSession } from "./useTonSession";
+import { useNearSession } from "./useNearSession";
 
 /**
  * Weekly review hook
@@ -8,7 +8,7 @@ import { useTonSession } from "./useTonSession";
  * - Stores the next sprint id for quick access
  */
 export default function useWeeklyReview(missionId: string | null) {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
 
   useEffect(() => {
     if (!user || !missionId) return;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useTonSession } from '@/hooks/useTonSession';
+import { useNearSession } from '@/hooks/useNearSession';
 import { db } from '@/integrations/db';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,7 @@ type Roadmap = {
 
 
 export default function LiveFocusView() {
-  const { user, initializing } = useTonSession();
+  const { user, initializing } = useNearSession();
   const [activeRoadmap, setActiveRoadmap] = useState<Roadmap | null>(null);
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [task, setTask] = useState<Task | null>(null);

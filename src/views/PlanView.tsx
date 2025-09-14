@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { db } from "@/integrations/db";
-import { useTonSession } from "@/hooks/useTonSession";
+import { useNearSession } from "@/hooks/useNearSession";
 import useWeeklyReview from "@/hooks/useWeeklyReview";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -11,7 +11,7 @@ interface Sprint { id: string; title: string; start_date: string | null; end_dat
 interface Task { id: string; title: string; sprint_id: string }
 
 export default function PlanView() {
-  const { user } = useTonSession();
+  const { user } = useNearSession();
   const [params] = useSearchParams();
   const missionId = params.get("mission_id");
 

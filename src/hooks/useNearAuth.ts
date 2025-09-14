@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getWallet } from "@/lib/near";
 
-export function useTonAuth() {
+export function useNearAuth() {
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
